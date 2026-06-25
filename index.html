@@ -377,7 +377,7 @@ function setLoading(show, text){
 function callGS(fn, arg){
   return new Promise(function(resolve, reject){
     if(typeof google !== "undefined" && google.script){
-      var runner = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+      var runner = fetch('https://script.google.com/macros/s/AKfycbxY3ETAnfj4jKM72gIbNzHU2zB0y9cVjUYKlR1YD1AQc18H44Fr4QCpgOAuiIfwBr4qqA/exec'action=getEvents.withSuccessHandler(resolve).withFailureHandler(reject);
       if(arg !== undefined) runner[fn](arg);
       else runner[fn]();
     } else {
