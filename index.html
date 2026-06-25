@@ -336,7 +336,12 @@ var state = {
 
 // ── UTILS ──
 function $(id){ return document.getElementById(id); }
-function toYMD(date){ return date.toISOString().slice(0,10); }
+function toYMD(date){
+  var y = date.getFullYear();
+  var m = String(date.getMonth()+1).padStart(2,"0");
+  var d = String(date.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+d;
+}
 function parseDate(s){
   if(!s) return null;
   var p = s.split("-").map(Number);
