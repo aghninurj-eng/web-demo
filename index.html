@@ -320,6 +320,10 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 
 <script>
 // ── CONSTANTS ──
+// ── GANTI dengan URL Web App Apps Script kamu (harus berakhiran /exec) ──
+// Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone
+var GAS_URL = "https://script.google.com/macros/s/GANTI_DENGAN_DEPLOYMENT_ID_KAMU/exec";
+
 var COLORS = ["#4F6EF7","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#06B6D4","#F97316","#6366F1","#14B8A6"];
 var DAYS_ID   = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 var MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -373,31 +377,31 @@ function setLoading(show, text){
   $("loadingText").textContent = text||"Memuat…";
 }
 
-// ── APPS SCRIPT BRIDGE ──
+// ── APPS SCRIPT BRIDGE (via fetch, karena index.html di-hosting di GitHub Pages) ──
 function callGS(fn, arg){
   return new Promise(function(resolve, reject){
-    if(typeof google !== "undefined" && google.script){
-      var runner = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
-      if(arg !== undefined) runner[fn](arg);
-      else runner[fn]();
-    } else {
-      var db = JSON.parse(localStorage.getItem("cal_events")||"[]");
-      if(fn==="getEvents"){ resolve([].concat(db)); return; }
-      if(fn==="addEvent"){
-        var ev = Object.assign({}, arg, {id:"ev_"+Date.now()});
-        db.push(ev); localStorage.setItem("cal_events", JSON.stringify(db));
-        resolve({success:true, id:ev.id}); return;
-      }
-      if(fn==="updateEvent"){
-        var i = db.findIndex(function(e){ return e.id===arg.id; });
-        if(i>-1) db[i]=arg; localStorage.setItem("cal_events", JSON.stringify(db));
-        resolve({success:true}); return;
-      }
-      if(fn==="deleteEvent"){
-        localStorage.setItem("cal_events", JSON.stringify(db.filter(function(e){ return e.id!==arg; })));
-        resolve({success:true}); return;
-      }
+    if(fn === "getEvents"){
+      // Baca data: GET request, tidak kena CORS preflight
+      fetch(GAS_URL + "?action=getEvents")
+        .then(function(res){ return res.json(); })
+        .then(resolve)
+        .catch(reject);
+      return;
     }
+
+    // Tulis data (add/update/delete): POST, body dikirim sebagai teks biasa
+    // (TANPA header Content-Type: application/json) supaya browser tidak
+    // mengirim OPTIONS preflight — Apps Script Web App tidak bisa membalasnya.
+    fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: fn, payload: arg })
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(result){
+        if(result && result.success === false){ reject(result.error || "Gagal"); return; }
+        resolve(result);
+      })
+      .catch(reject);
   });
 }
 
