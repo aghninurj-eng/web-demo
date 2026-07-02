@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Laporan Advertiser Mingguan</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A1D2E;--blue:#4F6EF7;--blue-lt:#EEF1FE;
+  --white:#FFFFFF;--gray-50:#F8F9FB;--gray-100:#F1F3F7;
+  --gray-200:#E4E7EF;--gray-400:#9CA3AF;--gray-600:#6B7280;
+  --gray-800:#374151;--text:#1A1D2E;--radius:10px;
+  --shadow:0 2px 12px rgba(26,29,46,.10);
+  --green:#10B981;--green-lt:#ECFDF5;
+  --amber:#F59E0B;--amber-lt:#FFFBEB;
+  --slate:#6B7280;--slate-lt:#F1F3F7;
+  --red:#DC2626;--red-lt:#FEE2E2;
+  --purple:#8B5CF6;--purple-lt:#F3F0FF;
+}
+body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
+
+/* ── PASSWORD GATE ── */
+#authGate{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:100}
+.auth-card{background:var(--white);border-radius:14px;padding:36px 32px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
+.auth-icon{width:48px;height:48px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;margin:0 auto 16px}
+.auth-card h1{font-size:17px;font-weight:700;margin-bottom:4px}
+.auth-card p{font-size:12.5px;color:var(--gray-600);margin-bottom:20px}
+.auth-card input{width:100%;padding:11px 14px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;margin-bottom:10px;outline:none;transition:border-color .15s}
+.auth-card input:focus{border-color:var(--blue)}
+.auth-card button{width:100%;padding:11px 14px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s}
+.auth-card button:hover{background:#3d5de8}
+.auth-error{font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ── APP ── */
+#appRoot{display:none;min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px 60px}
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.topbar-title{font-size:20px;font-weight:700}
+.topbar-sub{font-size:12.5px;color:var(--gray-600)}
+.spacer{flex:1}
+.btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#3d5de8}
+.btn-outline{background:#fff;color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--gray-200)}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:600;color:var(--gray-600);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* KPI cards */
+.meta-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;flex-wrap:wrap}
+.meta-row label{font-size:12.5px;font-weight:600;color:var(--gray-600)}
+.meta-row input{padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;width:200px;outline:none}
+.meta-row input:focus{border-color:var(--blue)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+.kpi-label{font-size:11.5px;color:var(--gray-600);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.kpi-value{font-size:22px;font-weight:700;margin-bottom:6px}
+.kpi-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.kpi-badge.aman{background:var(--green-lt);color:#047857}
+.kpi-badge.bahaya{background:var(--red-lt);color:#B91C1C}
+.kpi-badge.baik{background:var(--green-lt);color:#047857}
+.kpi-badge.kurang{background:var(--amber-lt);color:#92400E}
+.kpi-badge.profit{background:var(--green-lt);color:#047857}
+.kpi-badge.rugi{background:var(--red-lt);color:#B91C1C}
+
+.chip-panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+.chip-panel h3{font-size:13px;font-weight:700;margin-bottom:10px}
+.chip-list{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--gray-100);color:var(--gray-800);font-size:12px;font-weight:500;padding:5px 12px;border-radius:20px}
+.chip.warn{background:var(--red-lt);color:#B91C1C}
+.chip-empty{font-size:12.5px;color:var(--gray-400)}
+
+/* Controls / table */
+.controls{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.controls input, .controls select{padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;background:#fff;outline:none}
+.controls input{flex:1;min-width:180px}
+.controls input:focus, .controls select:focus{border-color:var(--blue)}
+
+.table-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+thead th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-600);background:var(--gray-50);padding:12px 14px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+tbody td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--gray-50)}
+.cell-name{font-weight:600;color:var(--text)}
+.cell-sub{font-size:11px;color:var(--gray-400)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.badge-dot{width:6px;height:6px;border-radius:50%}
+.badge.hero{background:var(--amber-lt);color:#92400E}.badge.hero .badge-dot{background:var(--amber)}
+.badge.profit{background:var(--green-lt);color:#047857}.badge.profit .badge-dot{background:var(--green)}
+.badge.traffic{background:var(--blue-lt);color:#3d5de8}.badge.traffic .badge-dot{background:var(--blue)}
+.badge.test{background:var(--slate-lt);color:var(--gray-600)}.badge.test .badge-dot{background:var(--slate)}
+.badge.prioritas{background:var(--green-lt);color:#047857}.badge.prioritas .badge-dot{background:var(--green)}
+.badge.waspada{background:var(--amber-lt);color:#92400E}.badge.waspada .badge-dot{background:var(--amber)}
+.badge.tingkatkan{background:var(--purple-lt);color:#6D28D9}.badge.tingkatkan .badge-dot{background:var(--purple)}
+.badge.netral{background:var(--slate-lt);color:var(--gray-600)}.badge.netral .badge-dot{background:var(--slate)}
+.badge.berhasil{background:var(--green-lt);color:#047857}.badge.berhasil .badge-dot{background:var(--green)}
+.badge.tidak{background:var(--red-lt);color:#B91C1C}.badge.tidak .badge-dot{background:var(--red)}
+.badge.belum{background:var(--slate-lt);color:var(--gray-600)}.badge.belum .badge-dot{background:var(--slate)}
+.row-actions{display:flex;gap:6px}
+.row-actions button{font-size:11.5px;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;border:1px solid var(--gray-200);background:#fff;color:var(--gray-800);transition:all .12s}
+.row-actions button:hover{background:var(--gray-100)}
+.row-actions .del-btn{color:var(--red);border-color:#FCA5A5}
+.row-actions .del-btn:hover{background:var(--red-lt)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray-400)}
+.empty-state .icon{font-size:30px;margin-bottom:8px}
+.empty-state p{font-size:13px}
+input[type=checkbox]{width:16px;height:16px;cursor:pointer}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,29,46,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:480px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px}
+.field input, .field select{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
+.field input:focus, .field select:focus{border-color:var(--blue)}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.field-check{display:flex;align-items:center;gap:8px;margin-bottom:13px}
+.field-check label{font-size:12.5px;font-weight:500;color:var(--gray-800)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.field-error{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+
+.preview-box{background:var(--gray-50);border:1px dashed var(--gray-200);border-radius:8px;padding:12px 14px;margin:14px 0;font-size:12px}
+.preview-box .pv-title{font-weight:700;font-size:11.5px;color:var(--gray-600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.pv-item{display:flex;justify-content:space-between}
+.pv-item span:first-child{color:var(--gray-600)}
+.pv-item span:last-child{font-weight:600}
+
+/* ── TOAST / LOADING ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:200}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loading{position:fixed;inset:0;background:rgba(255,255,255,.6);display:none;align-items:center;justify-content:center;z-index:150;font-size:13px;color:var(--gray-600)}
+#loading.show{display:flex}
+</style>
+</head>
+<body>
+
+<!-- ── PASSWORD GATE ── -->
+<div id="authGate">
+  <div class="auth-card" id="authCard">
+    <div class="auth-icon">🔒</div>
+    <h1>Advertiser Panel</h1>
+    <p>Masukkan password untuk melanjutkan</p>
+    <div class="auth-error" id="authError"></div>
+    <input type="password" id="authInput" placeholder="Password" autocomplete="off"/>
+    <button id="authBtn">Masuk</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="appRoot">
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Laporan Advertiser Mingguan</div>
+        <div class="topbar-sub" id="topbarSub">Memuat data…</div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="ringkasan">Ringkasan</button>
+      <button class="tab-btn" data-tab="produk">Produk</button>
+      <button class="tab-btn" data-tab="konten">Konten</button>
+      <button class="tab-btn" data-tab="eval">Evaluasi</button>
+    </div>
+
+    <!-- TAB: RINGKASAN -->
+    <div class="tab-panel active" id="panel-ringkasan">
+      <div class="meta-row">
+        <label>Total Omset Marketplace (mingguan)</label>
+        <input type="number" id="omsetMarketplaceInput" placeholder="0"/>
+        <button class="btn btn-outline btn-sm" id="saveMetaBtn">Simpan</button>
+      </div>
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="chip-panel">
+        <h3>📈 Produk perlu dinaikkan harga</h3>
+        <div class="chip-list" id="naikHargaChips"></div>
+      </div>
+      <div class="chip-panel">
+        <h3>🛑 Produk perlu distop iklannya</h3>
+        <div class="chip-list" id="stopIklanChips"></div>
+      </div>
+    </div>
+
+    <!-- TAB: PRODUK -->
+    <div class="tab-panel" id="panel-produk">
+      <div class="controls">
+        <input type="text" id="produkSearch" placeholder="Cari nama produk…"/>
+        <select id="produkStatusFilter">
+          <option value="">Semua status</option>
+          <option value="Prioritas">Prioritas</option>
+          <option value="Waspada">Waspada</option>
+          <option value="Tingkatkan">Tingkatkan</option>
+          <option value="Netral">Netral</option>
+        </select>
+        <button class="btn btn-primary" id="addProdukBtn">+ Tambah Produk</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Produk</th><th>Kategori</th><th>Margin %</th><th>ACOS</th><th>Est. Profit</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="produkBody"></tbody>
+        </table>
+        <div class="empty-state" id="produkEmpty" style="display:none"><div class="icon">📦</div><p>Belum ada produk. Klik "+ Tambah Produk".</p></div>
+      </div>
+    </div>
+
+    <!-- TAB: KONTEN -->
+    <div class="tab-panel" id="panel-konten">
+      <div class="controls">
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="addKontenBtn">+ Tambah Catatan Konten</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Produk</th><th>Masalah Listing</th><th>Dampak</th><th>PIC</th><th>Deadline</th><th>Selesai</th><th></th>
+          </tr></thead>
+          <tbody id="kontenBody"></tbody>
+        </table>
+        <div class="empty-state" id="kontenEmpty" style="display:none"><div class="icon">🖼️</div><p>Belum ada catatan konten.</p></div>
+      </div>
+    </div>
+
+    <!-- TAB: EVAL -->
+    <div class="tab-panel" id="panel-eval">
+      <div class="controls">
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="addEvalBtn">+ Tambah Evaluasi</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Kategori Tindakan</th><th>Produk</th><th>Tindakan</th><th>Target</th><th>Hasil</th><th>Berhasil</th><th>Tindak Lanjut</th><th></th>
+          </tr></thead>
+          <tbody id="evalBody"></tbody>
+        </table>
+        <div class="empty-state" id="evalEmpty" style="display:none"><div class="icon">✅</div><p>Belum ada evaluasi mingguan.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL PRODUK ── -->
+<div class="modal-overlay" id="produkModal">
+  <div class="modal">
+    <h2 id="produkModalTitle">Tambah Produk</h2>
+    <div class="field">
+      <label>Nama Produk</label>
+      <input type="text" id="pName" placeholder="Nama produk"/>
+      <div class="field-error" id="pErrName">Nama wajib diisi</div>
+    </div>
+    <div class="field">
+      <label>Channel Iklan</label>
+      <input type="text" id="pChannel" placeholder="mis. SHOPEE KYX"/>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Harga Jual</label><input type="number" id="pHarga"/></div>
+      <div class="field"><label>BPP (harga pokok)</label><input type="number" id="pBpp"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Qty Penjualan</label><input type="number" id="pQty"/></div>
+      <div class="field"><label>Omset dari Iklan</label><input type="number" id="pOmset"/></div>
+    </div>
+    <div class="field"><label>Biaya Iklan</label><input type="number" id="pBiaya"/></div>
+    <div class="field-check">
+      <input type="checkbox" id="pIsTest"/>
+      <label for="pIsTest">Produk baru / masih tahap test</label>
+    </div>
+    <div class="field">
+      <label>Rekomendasi (opsional)</label>
+      <select id="pRekomendasi">
+        <option value="">-</option>
+        <option value="Naik Harga">Naik Harga</option>
+        <option value="Stop Iklan">Stop Iklan</option>
+        <option value="Ubah Konten">Ubah Konten</option>
+        <option value="Scale Up">Scale Up</option>
+      </select>
+    </div>
+
+    <div class="preview-box">
+      <div class="pv-title">Perhitungan otomatis</div>
+      <div class="pv-grid">
+        <div class="pv-item"><span>Margin Bersih</span><span id="pvMargin">Rp 0</span></div>
+        <div class="pv-item"><span>Margin %</span><span id="pvMarginPct">0%</span></div>
+        <div class="pv-item"><span>ACOS</span><span id="pvAcos">0%</span></div>
+        <div class="pv-item"><span>Est. Profit</span><span id="pvProfit">Rp 0</span></div>
+        <div class="pv-item"><span>Kategori</span><span id="pvKategori">—</span></div>
+        <div class="pv-item"><span>Status Iklan</span><span id="pvStatus">—</span></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="produkCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="produkSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL KONTEN ── -->
+<div class="modal-overlay" id="kontenModal">
+  <div class="modal">
+    <h2 id="kontenModalTitle">Tambah Catatan Konten</h2>
+    <div class="field">
+      <label>Produk</label>
+      <input type="text" id="kProduk" list="produkNameList" placeholder="Nama produk"/>
+      <datalist id="produkNameList"></datalist>
+      <div class="field-error" id="kErrProduk">Produk wajib diisi</div>
+    </div>
+    <div class="field"><label>Channel Iklan</label><input type="text" id="kChannel" placeholder="mis. SHOPEE KYX"/></div>
+    <div class="field"><label>Masalah Listing</label><input type="text" id="kMasalah" placeholder="mis. Foto kurang jelas"/></div>
+    <div class="field"><label>Dampak</label><input type="text" id="kDampak" placeholder="mis. Klik rendah / konversi rendah"/></div>
+    <div class="field"><label>Perbaikan yang diperlukan</label><input type="text" id="kPerbaikan" placeholder="mis. Foto ulang, tambah video"/></div>
+    <div class="field-row">
+      <div class="field"><label>PIC</label><input type="text" id="kPic"/></div>
+      <div class="field"><label>Deadline</label><input type="date" id="kDeadline"/></div>
+    </div>
+    <div class="field-check"><input type="checkbox" id="kSelesai"/><label for="kSelesai">Sudah selesai</label></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="kontenCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="kontenSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL EVAL ── -->
+<div class="modal-overlay" id="evalModal">
+  <div class="modal">
+    <h2 id="evalModalTitle">Tambah Evaluasi</h2>
+    <div class="field">
+      <label>Kategori Tindakan</label>
+      <select id="eKategori">
+        <option>Scale produk margin tinggi</option>
+        <option>Turunkan produk boros iklan</option>
+        <option>Perbaiki produk low margin</option>
+        <option>Test produk baru</option>
+        <option>Perbaiki listing</option>
+        <option>Lainnya</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Produk</label><input type="text" id="eProduk" list="produkNameList2" placeholder="Nama produk"/><datalist id="produkNameList2"></datalist></div>
+      <div class="field"><label>Channel</label><input type="text" id="eChannel"/></div>
+    </div>
+    <div class="field"><label>Tindakan</label><input type="text" id="eTindakan" placeholder="mis. Naikan budget bertahap"/></div>
+    <div class="field-row">
+      <div class="field"><label>Target</label><input type="text" id="eTarget" placeholder="mis. Omzet Rp 3.000.000"/></div>
+      <div class="field"><label>Hasil</label><input type="text" id="eHasil" placeholder="mis. Omzet Rp 2.800.000"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Berhasil?</label>
+        <select id="eBerhasil">
+          <option value="Belum dievaluasi">Belum dievaluasi</option>
+          <option value="Berhasil">Berhasil</option>
+          <option value="Tidak Berhasil">Tidak Berhasil</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tindak Lanjut</label>
+        <select id="eTindakLanjut">
+          <option value="">-</option>
+          <option value="Lanjut">Lanjut</option>
+          <option value="Revisi">Revisi</option>
+          <option value="Stop">Stop</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Alasan (opsional)</label><input type="text" id="eAlasan"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="evalCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="evalSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loading"><span id="loadingText">Memuat…</span></div>
+
+<script>
+// ── GANTI dengan URL Web App Apps Script khusus laporan advertiser (harus berakhiran /exec) ──
+var GAS_URL = "https://script.google.com/macros/s/AKfycbzWHuiICPSimh0J60AxTIjvkQvQL1zs7CluKOKOnOeVqkHcqSlYi-Eyvqf93Nv3EnVOAQ/exec";
+var GATE_PASSWORD = "admin1";
+
+function $(id){ return document.getElementById(id); }
+
+// ── APPS SCRIPT BRIDGE ──
+function callGS(fn, arg){
+  return new Promise(function(resolve, reject){
+    if(fn === "getReport"){
+      fetch(GAS_URL + "?action=getReport")
+        .then(function(res){ return res.json(); })
+        .then(resolve).catch(reject);
+      return;
+    }
+    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg }) })
+      .then(function(res){ return res.json(); })
+      .then(function(result){
+        if(result && result.success === false){ reject(result.error || "Gagal"); return; }
+        resolve(result);
+      }).catch(reject);
+  });
+}
+
+// ── AUTH GATE ──
+(function(){
+  if(sessionStorage.getItem("adv_authed") === "1"){ unlockApp(); return; }
+  $("authBtn").addEventListener("click", tryUnlock);
+  $("authInput").addEventListener("keydown", function(e){ if(e.key==="Enter") tryUnlock(); });
+  $("authInput").focus();
+  function tryUnlock(){
+    if($("authInput").value === GATE_PASSWORD){
+      sessionStorage.setItem("adv_authed","1");
+      unlockApp();
+    } else {
+      $("authError").textContent = "Password salah, coba lagi.";
+      $("authCard").classList.remove("shake"); void $("authCard").offsetWidth; $("authCard").classList.add("shake");
+      $("authInput").value = ""; $("authInput").focus();
+    }
+  }
+})();
+function unlockApp(){
+  $("authGate").style.display = "none";
+  $("appRoot").style.display = "block";
+  loadReport();
+}
+
+// ── STATE ──
+var state = { meta:{}, products:[], content:[], evals:[], editingProductId:null, editingContentId:null, editingEvalId:null };
+
+// ── DATA LOAD ──
+function loadReport(){
+  setLoading(true, "Memuat laporan…");
+  callGS("getReport").then(function(data){
+    state.meta = data.meta || {};
+    state.products = data.products || [];
+    state.content = data.content || [];
+    state.evals = data.evals || [];
+    $("omsetMarketplaceInput").value = state.meta.totalOmsetMarketplace || "";
+    setLoading(false);
+    renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
+}
+
+// ── HELPERS ──
+function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text || "Memuat…"; }
+function showToast(msg, dur){ dur=dur||2800; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
+function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString("id-ID"); }
+function fmtPct(n){ return (Number(n)*100).toFixed(1) + "%"; }
+function fmtDate(iso){ if(!iso) return "—"; var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}); }
+function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str||""; return d.innerHTML; }
+
+// ── CALCULATION ENGINE (mirror rumus Excel) ──
+function computeProductMetrics(p){
+  var hargaJual = Number(p.hargaJual)||0, bpp = Number(p.bpp)||0, qty = Number(p.qty)||0;
+  var omsetIklan = Number(p.omsetIklan)||0, biayaIklan = Number(p.biayaIklan)||0;
+  var marginBersih = hargaJual - bpp;
+  var marginPct = hargaJual ? marginBersih/hargaJual : 0;
+  var acos = omsetIklan ? biayaIklan/omsetIklan : 0;
+  var profit = omsetIklan - biayaIklan - (bpp*qty);
+  var profitPct = omsetIklan ? profit/omsetIklan : 0;
+  var kategori;
+  if(p.isTest){ kategori = "Test"; }
+  else if(marginPct > 0.45){ kategori = qty > 20 ? "Hero" : "Profit"; }
+  else { kategori = qty > 20 ? "Traffic" : "Test"; }
+  var status;
+  if(marginPct < 0.20) status = "Waspada";
+  else if(acos >= marginPct) status = "Waspada";
+  else if(acos >= 0.10 && acos >= marginPct*0.6) status = "Waspada";
+  else if(kategori === "Profit") status = "Tingkatkan";
+  else if(marginPct >= 0.30 && acos <= 0.10) status = "Prioritas";
+  else status = "Netral";
+  return { hargaJual:hargaJual, bpp:bpp, qty:qty, omsetIklan:omsetIklan, biayaIklan:biayaIklan,
+    marginBersih:marginBersih, marginPct:marginPct, acos:acos, profit:profit, profitPct:profitPct,
+    kategori:kategori, status:status };
+}
+function computeSummary(){
+  var totalOmsetIklan=0, totalBiayaIklan=0, totalMarginBersih=0, totalProfit=0, marginSum=0;
+  var naikHarga=[], stopIklan=[];
+  state.products.forEach(function(p){
+    var m = computeProductMetrics(p);
+    totalOmsetIklan += m.omsetIklan; totalBiayaIklan += m.biayaIklan;
+    totalMarginBersih += m.marginBersih; totalProfit += m.profit; marginSum += m.marginPct;
+    if(p.rekomendasi === "Naik Harga") naikHarga.push(p.name);
+    if(p.rekomendasi === "Stop Iklan") stopIklan.push(p.name);
+  });
+  var acosRata = totalOmsetIklan ? totalBiayaIklan/totalOmsetIklan : 0;
+  var avgMarginPct = state.products.length ? marginSum/state.products.length : 0;
+  return { totalOmsetMarketplace: Number(state.meta.totalOmsetMarketplace)||0, totalOmsetIklan:totalOmsetIklan,
+    totalBiayaIklan:totalBiayaIklan, acosRata:acosRata, totalMarginBersih:totalMarginBersih, avgMarginPct:avgMarginPct,
+    totalProfit:totalProfit, jumlahProduk:state.products.length, naikHarga:naikHarga, stopIklan:stopIklan };
+}
+
+// ── RENDER: RINGKASAN ──
+function renderRingkasan(){
+  var s = computeSummary();
+  var acosBadge = s.acosRata <= 0.10 ? '<span class="kpi-badge aman">● Aman</span>' : '<span class="kpi-badge bahaya">● Bahaya</span>';
+  var marginBadge = s.avgMarginPct >= 0.30 ? '<span class="kpi-badge baik">● Baik</span>' : '<span class="kpi-badge kurang">● Kurang</span>';
+  var profitBadge = s.totalProfit >= 0 ? '<span class="kpi-badge profit">● Profit</span>' : '<span class="kpi-badge rugi">● Rugi</span>';
+
+  $("kpiGrid").innerHTML = [
+    kpiCard("Total Omset Marketplace", fmtRp(s.totalOmsetMarketplace), ""),
+    kpiCard("Total Omset dari Iklan", fmtRp(s.totalOmsetIklan), ""),
+    kpiCard("Total Biaya Iklan", fmtRp(s.totalBiayaIklan), ""),
+    kpiCard("ACOS Rata-rata", fmtPct(s.acosRata), acosBadge + ' <span style="font-size:11px;color:var(--gray-400)">target maks 10%</span>'),
+    kpiCard("Est. Margin Bersih Total", fmtRp(s.totalMarginBersih), marginBadge),
+    kpiCard("Est. Profit setelah Iklan", fmtRp(s.totalProfit), profitBadge),
+    kpiCard("Jumlah Produk Diiklankan", s.jumlahProduk, "")
+  ].join("");
+
+  $("naikHargaChips").innerHTML = s.naikHarga.length
+    ? s.naikHarga.map(function(n){ return '<span class="chip">'+escapeHtml(n)+'</span>'; }).join("")
+    : '<span class="chip-empty">Tidak ada produk minggu ini.</span>';
+  $("stopIklanChips").innerHTML = s.stopIklan.length
+    ? s.stopIklan.map(function(n){ return '<span class="chip warn">'+escapeHtml(n)+'</span>'; }).join("")
+    : '<span class="chip-empty">Tidak ada produk minggu ini.</span>';
+
+  $("topbarSub").textContent = s.jumlahProduk + " produk · " + state.content.length + " catatan konten · " + state.evals.length + " evaluasi";
+}
+function kpiCard(label, value, extra){
+  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>';
+}
+
+// ── RENDER: PRODUK ──
+function statusBadgeHtml(status){
+  var cls = status.toLowerCase();
+  return '<span class="badge '+cls+'"><span class="badge-dot"></span>'+status+'</span>';
+}
+function kategoriBadgeHtml(kategori){
+  var cls = kategori.toLowerCase();
+  return '<span class="badge '+cls+'"><span class="badge-dot"></span>'+kategori+'</span>';
+}
+function renderProduk(){
+  var q = ($("produkSearch").value||"").trim().toLowerCase();
+  var statusF = $("produkStatusFilter").value;
+  var rows = state.products.map(function(p){ return { p:p, m: computeProductMetrics(p) }; })
+    .filter(function(r){
+      var matchQ = !q || (r.p.name||"").toLowerCase().indexOf(q) > -1;
+      var matchS = !statusF || r.m.status === statusF;
+      return matchQ && matchS;
+    });
+
+  var tbody = $("produkBody"); tbody.innerHTML = "";
+  $("produkEmpty").style.display = rows.length ? "none" : "block";
+
+  rows.forEach(function(r){
+    var p = r.p, m = r.m;
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><div class="cell-name">'+escapeHtml(p.name||"(Tanpa nama)")+'</div><div class="cell-sub">'+escapeHtml(p.channel||"")+'</div></td>'+
+      '<td>'+kategoriBadgeHtml(m.kategori)+'</td>'+
+      '<td>'+fmtPct(m.marginPct)+'</td>'+
+      '<td>'+fmtPct(m.acos)+'</td>'+
+      '<td>'+fmtRp(m.profit)+'</td>'+
+      '<td>'+statusBadgeHtml(m.status)+'</td>'+
+      '<td><div class="row-actions"><button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openProdukModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteProduk(b.dataset.id); }); });
+
+  var list = $("produkNameList"); list.innerHTML = ""; var list2 = $("produkNameList2"); list2.innerHTML = "";
+  state.products.forEach(function(p){
+    var opt = document.createElement("option"); opt.value = p.name;
+    list.appendChild(opt.cloneNode(true)); list2.appendChild(opt);
+  });
+}
+
+// ── RENDER: KONTEN ──
+function renderKonten(){
+  var tbody = $("kontenBody"); tbody.innerHTML = "";
+  $("kontenEmpty").style.display = state.content.length ? "none" : "block";
+  state.content.forEach(function(c){
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="cell-name">'+escapeHtml(c.produk||"")+'</td>'+
+      '<td>'+escapeHtml(c.masalahListing||"")+'</td>'+
+      '<td>'+escapeHtml(c.dampak||"")+'</td>'+
+      '<td>'+escapeHtml(c.pic||"")+'</td>'+
+      '<td>'+fmtDate(c.deadline)+'</td>'+
+      '<td>'+(c.selesai ? '<span class="badge berhasil"><span class="badge-dot"></span>Selesai</span>' : '<span class="badge belum"><span class="badge-dot"></span>Belum</span>')+'</td>'+
+      '<td><div class="row-actions"><button class="edit-btn" data-id="'+c.id+'">Edit</button><button class="del-btn" data-id="'+c.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openKontenModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteKonten(b.dataset.id); }); });
+}
+
+// ── RENDER: EVAL ──
+function berhasilBadgeHtml(v){
+  if(v === "Berhasil") return '<span class="badge berhasil"><span class="badge-dot"></span>Berhasil</span>';
+  if(v === "Tidak Berhasil") return '<span class="badge tidak"><span class="badge-dot"></span>Tidak Berhasil</span>';
+  return '<span class="badge belum"><span class="badge-dot"></span>Belum dievaluasi</span>';
+}
+function renderEval(){
+  var tbody = $("evalBody"); tbody.innerHTML = "";
+  $("evalEmpty").style.display = state.evals.length ? "none" : "block";
+  state.evals.forEach(function(ev){
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td>'+escapeHtml(ev.kategoriTindakan||"")+'</td>'+
+      '<td class="cell-name">'+escapeHtml(ev.produk||"")+'</td>'+
+      '<td>'+escapeHtml(ev.tindakan||"")+'</td>'+
+      '<td>'+escapeHtml(ev.target||"")+'</td>'+
+      '<td>'+escapeHtml(ev.hasil||"")+'</td>'+
+      '<td>'+berhasilBadgeHtml(ev.berhasil)+'</td>'+
+      '<td>'+escapeHtml(ev.tindakLanjut||"")+'</td>'+
+      '<td><div class="row-actions"><button class="edit-btn" data-id="'+ev.id+'">Edit</button><button class="del-btn" data-id="'+ev.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openEvalModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteEval(b.dataset.id); }); });
+}
+
+function renderAll(){ renderRingkasan(); renderProduk(); renderKonten(); renderEval(); }
+
+// ── TABS ──
+document.querySelectorAll(".tab-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    $("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ── META (Total Omset Marketplace) ──
+$("saveMetaBtn").addEventListener("click", function(){
+  var val = Number($("omsetMarketplaceInput").value)||0;
+  setLoading(true, "Menyimpan…");
+  callGS("setMeta", { key:"totalOmsetMarketplace", value: val }).then(function(){
+    state.meta.totalOmsetMarketplace = val;
+    setLoading(false); showToast("✓ Tersimpan"); renderRingkasan();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+});
+
+// ── PRODUK MODAL ──
+function updateProdukPreview(){
+  var fake = { hargaJual: $("pHarga").value, bpp: $("pBpp").value, qty: $("pQty").value,
+    omsetIklan: $("pOmset").value, biayaIklan: $("pBiaya").value, isTest: $("pIsTest").checked };
+  var m = computeProductMetrics(fake);
+  $("pvMargin").textContent = fmtRp(m.marginBersih);
+  $("pvMarginPct").textContent = fmtPct(m.marginPct);
+  $("pvAcos").textContent = fmtPct(m.acos);
+  $("pvProfit").textContent = fmtRp(m.profit);
+  $("pvKategori").textContent = m.kategori;
+  $("pvStatus").textContent = m.status;
+}
+["pHarga","pBpp","pQty","pOmset","pBiaya","pIsTest"].forEach(function(id){
+  $(id).addEventListener("input", updateProdukPreview);
+  $(id).addEventListener("change", updateProdukPreview);
+});
+function openProdukModal(id){
+  state.editingProductId = id || null;
+  $("pErrName").style.display = "none";
+  if(id){
+    var p = state.products.find(function(e){ return e.id===id; });
+    $("produkModalTitle").textContent = "Edit Produk";
+    $("pName").value = p.name||""; $("pChannel").value = p.channel||"";
+    $("pHarga").value = p.hargaJual||""; $("pBpp").value = p.bpp||"";
+    $("pQty").value = p.qty||""; $("pOmset").value = p.omsetIklan||"";
+    $("pBiaya").value = p.biayaIklan||""; $("pIsTest").checked = !!p.isTest;
+    $("pRekomendasi").value = p.rekomendasi||"";
+  } else {
+    $("produkModalTitle").textContent = "Tambah Produk";
+    ["pName","pChannel","pHarga","pBpp","pQty","pOmset","pBiaya"].forEach(function(id){ $(id).value=""; });
+    $("pIsTest").checked = false; $("pRekomendasi").value = "";
+  }
+  updateProdukPreview();
+  $("produkModal").classList.add("open");
+  $("pName").focus();
+}
+function closeProdukModal(){ $("produkModal").classList.remove("open"); state.editingProductId = null; }
+function saveProduk(){
+  var name = $("pName").value.trim();
+  if(!name){ $("pErrName").style.display = "block"; return; }
+  $("pErrName").style.display = "none";
+  var payload = {
+    name:name, channel:$("pChannel").value.trim(),
+    hargaJual:Number($("pHarga").value)||0, bpp:Number($("pBpp").value)||0,
+    qty:Number($("pQty").value)||0, omsetIklan:Number($("pOmset").value)||0,
+    biayaIklan:Number($("pBiaya").value)||0, isTest:$("pIsTest").checked,
+    rekomendasi:$("pRekomendasi").value
+  };
+  var isEdit = !!state.editingProductId;
+  if(isEdit) payload.id = state.editingProductId;
+  setLoading(true, "Menyimpan…");
+  callGS(isEdit ? "updateProduct" : "addProduct", payload).then(function(res){
+    if(isEdit){ var idx = state.products.findIndex(function(e){ return e.id===payload.id; }); if(idx>-1) state.products[idx]=payload; showToast("✓ Produk diperbarui"); }
+    else { payload.id = res.id; state.products.push(payload); showToast("✓ Produk ditambahkan"); }
+    closeProdukModal(); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+}
+function deleteProduk(id){
+  if(!confirm("Hapus produk ini?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteProduct", id).then(function(){
+    state.products = state.products.filter(function(e){ return e.id!==id; });
+    showToast("✓ Produk dihapus"); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+
+// ── KONTEN MODAL ──
+function openKontenModal(id){
+  state.editingContentId = id || null; $("kErrProduk").style.display = "none";
+  if(id){
+    var c = state.content.find(function(e){ return e.id===id; });
+    $("kontenModalTitle").textContent = "Edit Catatan Konten";
+    $("kProduk").value=c.produk||""; $("kChannel").value=c.channel||""; $("kMasalah").value=c.masalahListing||"";
+    $("kDampak").value=c.dampak||""; $("kPerbaikan").value=c.perbaikan||""; $("kPic").value=c.pic||"";
+    $("kDeadline").value=c.deadline||""; $("kSelesai").checked=!!c.selesai;
+  } else {
+    $("kontenModalTitle").textContent = "Tambah Catatan Konten";
+    ["kProduk","kChannel","kMasalah","kDampak","kPerbaikan","kPic","kDeadline"].forEach(function(id){ $(id).value=""; });
+    $("kSelesai").checked = false;
+  }
+  $("kontenModal").classList.add("open"); $("kProduk").focus();
+}
+function closeKontenModal(){ $("kontenModal").classList.remove("open"); state.editingContentId = null; }
+function saveKonten(){
+  var produk = $("kProduk").value.trim();
+  if(!produk){ $("kErrProduk").style.display = "block"; return; }
+  $("kErrProduk").style.display = "none";
+  var payload = { produk:produk, channel:$("kChannel").value.trim(), masalahListing:$("kMasalah").value.trim(),
+    dampak:$("kDampak").value.trim(), perbaikan:$("kPerbaikan").value.trim(), pic:$("kPic").value.trim(),
+    deadline:$("kDeadline").value, selesai:$("kSelesai").checked };
+  var isEdit = !!state.editingContentId;
+  if(isEdit) payload.id = state.editingContentId;
+  setLoading(true, "Menyimpan…");
+  callGS(isEdit ? "updateContent" : "addContent", payload).then(function(res){
+    if(isEdit){ var idx=state.content.findIndex(function(e){return e.id===payload.id;}); if(idx>-1) state.content[idx]=payload; showToast("✓ Catatan diperbarui"); }
+    else { payload.id = res.id; state.content.push(payload); showToast("✓ Catatan ditambahkan"); }
+    closeKontenModal(); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+}
+function deleteKonten(id){
+  if(!confirm("Hapus catatan ini?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteContent", id).then(function(){
+    state.content = state.content.filter(function(e){ return e.id!==id; });
+    showToast("✓ Catatan dihapus"); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+
+// ── EVAL MODAL ──
+function openEvalModal(id){
+  state.editingEvalId = id || null;
+  if(id){
+    var ev = state.evals.find(function(e){ return e.id===id; });
+    $("evalModalTitle").textContent = "Edit Evaluasi";
+    $("eKategori").value=ev.kategoriTindakan||""; $("eProduk").value=ev.produk||""; $("eChannel").value=ev.channel||"";
+    $("eTindakan").value=ev.tindakan||""; $("eTarget").value=ev.target||""; $("eHasil").value=ev.hasil||"";
+    $("eBerhasil").value=ev.berhasil||"Belum dievaluasi"; $("eTindakLanjut").value=ev.tindakLanjut||""; $("eAlasan").value=ev.alasan||"";
+  } else {
+    $("evalModalTitle").textContent = "Tambah Evaluasi";
+    $("eKategori").value = "Scale produk margin tinggi";
+    ["eProduk","eChannel","eTindakan","eTarget","eHasil","eAlasan"].forEach(function(id){ $(id).value=""; });
+    $("eBerhasil").value = "Belum dievaluasi"; $("eTindakLanjut").value = "";
+  }
+  $("evalModal").classList.add("open"); $("eProduk").focus();
+}
+function closeEvalModal(){ $("evalModal").classList.remove("open"); state.editingEvalId = null; }
+function saveEval(){
+  var payload = { kategoriTindakan:$("eKategori").value, produk:$("eProduk").value.trim(), channel:$("eChannel").value.trim(),
+    tindakan:$("eTindakan").value.trim(), target:$("eTarget").value.trim(), hasil:$("eHasil").value.trim(),
+    berhasil:$("eBerhasil").value, tindakLanjut:$("eTindakLanjut").value, alasan:$("eAlasan").value.trim() };
+  var isEdit = !!state.editingEvalId;
+  if(isEdit) payload.id = state.editingEvalId;
+  setLoading(true, "Menyimpan…");
+  callGS(isEdit ? "updateEval" : "addEval", payload).then(function(res){
+    if(isEdit){ var idx=state.evals.findIndex(function(e){return e.id===payload.id;}); if(idx>-1) state.evals[idx]=payload; showToast("✓ Evaluasi diperbarui"); }
+    else { payload.id = res.id; state.evals.push(payload); showToast("✓ Evaluasi ditambahkan"); }
+    closeEvalModal(); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+}
+function deleteEval(id){
+  if(!confirm("Hapus evaluasi ini?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteEval", id).then(function(){
+    state.evals = state.evals.filter(function(e){ return e.id!==id; });
+    showToast("✓ Evaluasi dihapus"); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+
+// ── WIRE-UP ──
+$("addProdukBtn").addEventListener("click", function(){ openProdukModal(); });
+$("produkCancelBtn").addEventListener("click", closeProdukModal);
+$("produkSaveBtn").addEventListener("click", saveProduk);
+$("produkModal").addEventListener("click", function(e){ if(e.target===$("produkModal")) closeProdukModal(); });
+$("produkSearch").addEventListener("input", renderProduk);
+$("produkStatusFilter").addEventListener("change", renderProduk);
+
+$("addKontenBtn").addEventListener("click", function(){ openKontenModal(); });
+$("kontenCancelBtn").addEventListener("click", closeKontenModal);
+$("kontenSaveBtn").addEventListener("click", saveKonten);
+$("kontenModal").addEventListener("click", function(e){ if(e.target===$("kontenModal")) closeKontenModal(); });
+
+$("addEvalBtn").addEventListener("click", function(){ openEvalModal(); });
+$("evalCancelBtn").addEventListener("click", closeEvalModal);
+$("evalSaveBtn").addEventListener("click", saveEval);
+$("evalModal").addEventListener("click", function(e){ if(e.target===$("evalModal")) closeEvalModal(); });
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){ closeProdukModal(); closeKontenModal(); closeEvalModal(); }
+});
+</script>
+</body>
+</html>
