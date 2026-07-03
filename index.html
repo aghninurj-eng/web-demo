@@ -348,7 +348,8 @@ function toYMD(date){
 }
 function parseDate(s){
   if(!s) return null;
-  var p = s.split("-").map(Number);
+  var datePart = String(s).split("T")[0]; // jaga-jaga kalau ada string ISO datetime nyasar
+  var p = datePart.split("-").map(Number);
   return new Date(p[0], p[1]-1, p[2]);
 }
 function isToday(date){
