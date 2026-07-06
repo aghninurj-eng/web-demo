@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hostlive & Content Commerce</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A1D2E;--blue:#4F6EF7;--blue-lt:#EEF1FE;
+  --white:#FFFFFF;--gray-50:#F8F9FB;--gray-100:#F1F3F7;
+  --gray-200:#E4E7EF;--gray-400:#9CA3AF;--gray-600:#6B7280;
+  --gray-800:#374151;--text:#1A1D2E;--radius:10px;
+  --shadow:0 2px 12px rgba(26,29,46,.10);
+  --green:#10B981;--green-lt:#ECFDF5;
+  --amber:#F59E0B;--amber-lt:#FFFBEB;
+  --slate:#6B7280;--slate-lt:#F1F3F7;
+  --red:#DC2626;--red-lt:#FEE2E2;
+  --purple:#8B5CF6;--purple-lt:#F3F0FF;
+  --indigo:#6366F1;--indigo-lt:#EEF0FE;
+}
+body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
+
+/* ── PASSWORD GATE ── */
+#authGate{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:100}
+.auth-card{background:var(--white);border-radius:14px;padding:36px 32px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
+.auth-icon{width:48px;height:48px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;margin:0 auto 16px}
+.auth-card h1{font-size:17px;font-weight:700;margin-bottom:4px}
+.auth-card p{font-size:12.5px;color:var(--gray-600);margin-bottom:20px}
+.auth-card input{width:100%;padding:11px 14px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;margin-bottom:10px;outline:none;transition:border-color .15s}
+.auth-card input:focus{border-color:var(--blue)}
+.auth-card button{width:100%;padding:11px 14px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s}
+.auth-card button:hover{background:#3d5de8}
+.auth-error{font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ── APP ── */
+#appRoot{display:none;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 24px 60px}
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.topbar-title{font-size:20px;font-weight:700}
+.topbar-sub{font-size:12.5px;color:var(--gray-600)}
+.spacer{flex:1}
+.btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#3d5de8}
+.btn-outline{background:#fff;color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--gray-200)}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:600;color:var(--gray-600);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+.kpi-label{font-size:11.5px;color:var(--gray-600);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.kpi-value{font-size:22px;font-weight:700;margin-bottom:6px}
+.kpi-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.kpi-badge.baik{background:var(--green-lt);color:#047857}
+.kpi-badge.kurang{background:var(--amber-lt);color:#92400E}
+
+.panel-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:720px){.panel-row{grid-template-columns:1fr}}
+.chip-panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+.chip-panel h3{font-size:13px;font-weight:700;margin-bottom:12px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+.stat-row:last-child{border-bottom:none}
+.stat-name{font-weight:600}
+.stat-val{color:var(--gray-600);font-size:12.5px;text-align:right}
+.stat-empty{font-size:12.5px;color:var(--gray-400);padding:6px 0}
+
+/* Period selector */
+.period-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.period-toggle{display:flex;background:var(--gray-100);border-radius:9px;padding:3px;gap:2px}
+.ptab{padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;color:var(--gray-600);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.ptab.active{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.period-nav{display:flex;align-items:center;gap:8px}
+.period-nav button{width:30px;height:30px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:14px;color:var(--gray-800);display:flex;align-items:center;justify-content:center}
+.period-nav button:hover{background:var(--gray-100)}
+.period-label{font-size:13px;font-weight:600;min-width:150px;text-align:center}
+
+/* Target KPI panels */
+.target-row{margin-bottom:14px}
+.target-row:last-child{margin-bottom:0}
+.target-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.target-label{font-size:12.5px;font-weight:600}
+.target-badge{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.target-badge.tercapai{background:var(--green-lt);color:#047857}
+.target-badge.kurang{background:var(--amber-lt);color:#92400E}
+.target-bar{height:6px;background:var(--gray-100);border-radius:4px;overflow:hidden}
+.target-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .3s}
+.target-fill.met{background:var(--green)}
+.target-sub{font-size:11px;color:var(--gray-400);margin-top:4px}
+
+/* Controls / table */
+.controls{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.controls input, .controls select{padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;background:#fff;outline:none}
+.controls input{flex:1;min-width:160px}
+.controls input:focus, .controls select:focus{border-color:var(--blue)}
+
+.table-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:920px}
+thead th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-600);background:var(--gray-50);padding:12px 14px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+tbody td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--gray-100);vertical-align:middle;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--gray-50)}
+.cell-wrap{white-space:normal;max-width:180px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.badge-dot{width:6px;height:6px;border-radius:50%}
+.badge.live{background:var(--red-lt);color:#B91C1C}.badge.live .badge-dot{background:var(--red)}
+.badge.editing{background:var(--blue-lt);color:#3d5de8}.badge.editing .badge-dot{background:var(--blue)}
+.badge.konten{background:var(--purple-lt);color:#6D28D9}.badge.konten .badge-dot{background:var(--purple)}
+.badge.bahan-video{background:var(--pink-lt,#FCE7F3);color:#BE185D}.badge.bahan-video .badge-dot{background:#EC4899}
+.badge.testing-produk{background:var(--indigo-lt);color:#4338CA}.badge.testing-produk .badge-dot{background:var(--indigo)}
+.badge.tiktok{background:var(--slate-lt);color:var(--gray-800)}.badge.tiktok .badge-dot{background:var(--navy)}
+.badge.shopee{background:var(--amber-lt);color:#92400E}.badge.shopee .badge-dot{background:var(--amber)}
+.badge.lazada{background:var(--indigo-lt);color:#4338CA}.badge.lazada .badge-dot{background:var(--indigo)}
+.badge.tokopedia{background:var(--green-lt);color:#047857}.badge.tokopedia .badge-dot{background:var(--green)}
+.row-actions{display:flex;gap:6px}
+.row-actions button{font-size:11.5px;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;border:1px solid var(--gray-200);background:#fff;color:var(--gray-800);transition:all .12s}
+.row-actions button:hover{background:var(--gray-100)}
+.row-actions .del-btn{color:var(--red);border-color:#FCA5A5}
+.row-actions .del-btn:hover{background:var(--red-lt)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray-400)}
+.empty-state .icon{font-size:30px;margin-bottom:8px}
+.empty-state p{font-size:13px}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,29,46,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:480px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px}
+.field input, .field select, .field textarea{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none;resize:vertical}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--blue)}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.field-error{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+/* ── TOAST / LOADING ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:200}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loading{position:fixed;inset:0;background:rgba(255,255,255,.6);display:none;align-items:center;justify-content:center;z-index:150;font-size:13px;color:var(--gray-600)}
+#loading.show{display:flex}
+</style>
+</head>
+<body>
+
+<!-- ── PASSWORD GATE ── -->
+<div id="authGate">
+  <div class="auth-card" id="authCard">
+    <div class="auth-icon">🔒</div>
+    <h1>Hostlive & Content Commerce</h1>
+    <p>Masukkan password untuk melanjutkan</p>
+    <div class="auth-error" id="authError"></div>
+    <input type="password" id="authInput" placeholder="Password" autocomplete="off"/>
+    <button id="authBtn">Masuk</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="appRoot">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="index.html" class="btn btn-outline btn-sm">← Kembali</a>
+      <div>
+        <div class="topbar-title">Hostlive & Content Commerce</div>
+        <div class="topbar-sub" id="topbarSub">Memuat data…</div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="ringkasan">Ringkasan</button>
+      <button class="tab-btn" data-tab="aktivitas">Activity Tracker</button>
+    </div>
+
+    <!-- TAB: RINGKASAN -->
+    <div class="tab-panel active" id="panel-ringkasan">
+      <div class="period-bar">
+        <div class="period-toggle">
+          <button class="ptab active" data-mode="minggu">Mingguan</button>
+          <button class="ptab" data-mode="bulan">Bulanan</button>
+        </div>
+        <div class="period-nav">
+          <button id="prevPeriod">‹</button>
+          <span class="period-label" id="periodLabel">—</span>
+          <button id="nextPeriod">›</button>
+        </div>
+        <button class="btn btn-outline btn-sm" id="todayPeriod">Hari ini</button>
+      </div>
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="panel-row">
+        <div class="chip-panel">
+          <h3>👥 Performa per PIC</h3>
+          <div id="picBreakdown"></div>
+        </div>
+        <div class="chip-panel">
+          <h3>🛍️ Performa per Marketplace</h3>
+          <div id="marketBreakdown"></div>
+        </div>
+      </div>
+      <div class="panel-row">
+        <div class="chip-panel">
+          <h3>🎯 Target KPI — Dewi</h3>
+          <div id="targetDewi"></div>
+        </div>
+        <div class="chip-panel">
+          <h3>🎯 Target KPI — Nazwa</h3>
+          <div id="targetNazwa"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: AKTIVITAS -->
+    <div class="tab-panel" id="panel-aktivitas">
+      <div class="controls">
+        <input type="text" id="search" placeholder="Cari akun / produk / catatan…"/>
+        <select id="filterPic"><option value="">Semua PIC</option><option>Dewi</option><option>Nazwa</option></select>
+        <select id="filterMarketplace"><option value="">Semua Marketplace</option><option>Tiktok</option><option>Shopee</option><option>Lazada</option><option>Tokopedia</option></select>
+        <select id="filterAktifitas"><option value="">Semua Aktifitas</option><option>Live</option><option>Editing</option><option>Konten</option><option>Bahan Video</option><option>Testing Produk</option></select>
+        <button class="btn btn-primary" id="addBtn">+ Tambah Aktivitas</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Tanggal</th><th>PIC</th><th>Marketplace</th><th>Akun</th><th>Aktifitas</th>
+            <th>Fokus Produk</th><th>Durasi</th><th>View/Reach</th><th>Klik/Keranjang</th><th>Penjualan/Komisi</th><th></th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none"><div class="icon">🎥</div><p>Belum ada aktivitas. Klik "+ Tambah Aktivitas".</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Tambah Aktivitas</h2>
+    <div class="field-row">
+      <div class="field"><label>Tanggal</label><input type="date" id="fTanggal"/></div>
+      <div class="field">
+        <label>PIC</label>
+        <select id="fPic"><option>Dewi</option><option>Nazwa</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Marketplace</label>
+        <select id="fMarketplace"><option>Tiktok</option><option>Shopee</option><option>Lazada</option><option>Tokopedia</option></select>
+      </div>
+      <div class="field"><label>Akun</label><input type="text" id="fAkun" placeholder="mis. @kyx.official"/></div>
+    </div>
+    <div class="field">
+      <label>Aktifitas</label>
+      <select id="fAktifitas">
+        <option value="Live">Live</option>
+        <option value="Editing">Editing</option>
+        <option value="Konten">Konten</option>
+        <option value="Bahan Video">Bahan Video</option>
+        <option value="Testing Produk">Testing Produk</option>
+      </select>
+    </div>
+    <div class="field"><label>Fokus Produk / Pinned Produk</label><input type="text" id="fFokusProduk" placeholder="Nama produk yang difokuskan"/></div>
+    <div class="field" id="durasiField"><label>Durasi Live (menit)</label><input type="number" id="fDurasi" placeholder="mis. 120"/></div>
+    <div class="field-row">
+      <div class="field"><label>View / Reach</label><input type="number" id="fView"/></div>
+      <div class="field"><label>Klik / Keranjang</label><input type="number" id="fKlik"/></div>
+    </div>
+    <div class="field"><label>Penjualan / Komisi (Rp)</label><input type="number" id="fPenjualan"/></div>
+    <div class="field"><label>Insight Produk / Catatan</label><textarea id="fCatatan" rows="3" placeholder="Catatan, insight, kendala, dll."></textarea></div>
+    <div class="field-error" id="errAkun">Akun wajib diisi</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="cancelBtn">Batal</button>
+      <button class="btn btn-primary" id="saveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loading"><span id="loadingText">Memuat…</span></div>
+
+<script>
+// ── GANTI dengan URL Web App Apps Script khusus hostlive (harus berakhiran /exec) ──
+var GAS_URL = "https://script.google.com/macros/s/AKfycbw5Ogw5rBZYRggJo6P8kG9xepB1Yxv3OJ4xTzhSyQkaXogjg2ghJvMxvVvpmbF-tPyBZA/exec";
+var GATE_PASSWORD = "admin2";
+
+function $(id){ return document.getElementById(id); }
+
+// ── APPS SCRIPT BRIDGE ──
+function callGS(fn, arg){
+  return new Promise(function(resolve, reject){
+    if(fn === "getActivities"){
+      fetch(GAS_URL + "?action=getActivities")
+        .then(function(res){ return res.json(); })
+        .then(resolve).catch(reject);
+      return;
+    }
+    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg }) })
+      .then(function(res){ return res.json(); })
+      .then(function(result){
+        if(result && result.success === false){ reject(result.error || "Gagal"); return; }
+        resolve(result);
+      }).catch(reject);
+  });
+}
+
+// ── AUTH GATE ──
+(function(){
+  if(sessionStorage.getItem("hostlive_authed") === "1"){ unlockApp(); return; }
+  $("authBtn").addEventListener("click", tryUnlock);
+  $("authInput").addEventListener("keydown", function(e){ if(e.key==="Enter") tryUnlock(); });
+  $("authInput").focus();
+  function tryUnlock(){
+    if($("authInput").value === GATE_PASSWORD){
+      sessionStorage.setItem("hostlive_authed","1");
+      unlockApp();
+    } else {
+      $("authError").textContent = "Password salah, coba lagi.";
+      $("authCard").classList.remove("shake"); void $("authCard").offsetWidth; $("authCard").classList.add("shake");
+      $("authInput").value = ""; $("authInput").focus();
+    }
+  }
+})();
+function unlockApp(){
+  $("authGate").style.display = "none";
+  $("appRoot").style.display = "block";
+  loadActivities();
+}
+
+// ── STATE ──
+var state = { items: [], search:"", filterPic:"", filterMarketplace:"", filterAktifitas:"", editingId:null,
+  periodMode:"minggu", periodAnchor:new Date() };
+
+// ── TARGET KPI TIM (dari deskripsi tugas mingguan) ──
+var KPI_TARGETS = [
+  { pic:"Dewi", label:"Live sesuai jadwal", aktifitas:"Live", metric:"count", weeklyTarget:4, unit:"sesi" },
+  { pic:"Dewi", label:"Konten produk dibuat konsisten", aktifitas:"Konten", metric:"count", weeklyTarget:10, unit:"konten" },
+  { pic:"Dewi", label:"Insight produk live dicatat", aktifitas:"Live", metric:"notePct", weeklyTarget:100, unit:"%" },
+  { pic:"Dewi", label:"Bahan video untuk Fitri", aktifitas:"Bahan Video", metric:"count", weeklyTarget:5, unit:"bahan" },
+  { pic:"Nazwa", label:"Konten keranjang kuning upload", aktifitas:"Konten", metric:"count", weeklyTarget:15, unit:"konten" },
+  { pic:"Nazwa", label:"Live akun eks-ACU", aktifitas:"Live", metric:"count", weeklyTarget:4, unit:"sesi" },
+  { pic:"Nazwa", label:"Testing produk baru", aktifitas:"Testing Produk", metric:"count", weeklyTarget:3, unit:"produk" },
+  { pic:"Nazwa", label:"Insight produk potensial dicatat", aktifitas:null, metric:"noteCount", weeklyTarget:1, unit:"catatan" }
+];
+
+// ── PERIOD HELPERS ──
+function getWeekRange(d){
+  var start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  start.setDate(start.getDate() - start.getDay()); // mundur ke Minggu
+  var end = new Date(start); end.setDate(start.getDate()+6);
+  return { start:start, end:end };
+}
+function getMonthRange(d){
+  var start = new Date(d.getFullYear(), d.getMonth(), 1);
+  var end = new Date(d.getFullYear(), d.getMonth()+1, 0);
+  return { start:start, end:end };
+}
+function getPeriodRange(){
+  return state.periodMode === "bulan" ? getMonthRange(state.periodAnchor) : getWeekRange(state.periodAnchor);
+}
+function fmtPeriodLabel(range){
+  if(state.periodMode === "bulan"){
+    return MONTHS_ID[range.start.getMonth()] + " " + range.start.getFullYear();
+  }
+  var f = function(d){ return d.getDate() + " " + MONTHS_ID_SHORT[d.getMonth()]; };
+  var sameYear = range.start.getFullYear() === range.end.getFullYear();
+  return f(range.start) + " – " + f(range.end) + " " + range.end.getFullYear();
+}
+function filterByPeriod(items, range){
+  var startYMD = toYMDLocal(range.start), endYMD = toYMDLocal(range.end);
+  return items.filter(function(it){
+    var t = it.tanggal || "";
+    return t >= startYMD && t <= endYMD;
+  });
+}
+function toYMDLocal(d){
+  var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+day;
+}
+
+// ── DATA LOAD ──
+function loadActivities(){
+  setLoading(true, "Memuat aktivitas…");
+  callGS("getActivities").then(function(data){
+    state.items = data || [];
+    setLoading(false);
+    renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
+}
+
+// ── HELPERS ──
+function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text || "Memuat…"; }
+function showToast(msg, dur){ dur=dur||2800; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
+function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString("id-ID"); }
+function fmtNum(n){ return (Number(n)||0).toLocaleString("id-ID"); }
+function fmtDate(iso){ if(!iso) return "—"; var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}); }
+function fmtDurasi(min){ min = Number(min)||0; if(!min) return "—"; var j = Math.floor(min/60), m = min%60; return j>0 ? (j+"j "+m+"m") : (m+" menit"); }
+function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str||""; return d.innerHTML; }
+function badgeCls(v){ return String(v||"").toLowerCase().replace(/\s+/g,"-"); }
+var MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+var MONTHS_ID_SHORT = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+
+// ── SUMMARY CALC ──
+function computeSummary(items){
+  var totalAktivitas = items.length;
+  var totalDurasiLive = 0, totalView = 0, totalKlik = 0, totalPenjualan = 0;
+  var perPic = {}, perMarket = {};
+  items.forEach(function(it){
+    var view = Number(it.viewReach)||0, klik = Number(it.klikKeranjang)||0, jual = Number(it.penjualanKomisi)||0, durasi = Number(it.durasi)||0;
+    totalView += view; totalKlik += klik; totalPenjualan += jual;
+    if(it.aktifitas === "Live") totalDurasiLive += durasi;
+
+    if(!perPic[it.pic]) perPic[it.pic] = { count:0, penjualan:0, durasiLive:0 };
+    perPic[it.pic].count++; perPic[it.pic].penjualan += jual;
+    if(it.aktifitas === "Live") perPic[it.pic].durasiLive += durasi;
+
+    if(!perMarket[it.marketplace]) perMarket[it.marketplace] = { count:0, penjualan:0 };
+    perMarket[it.marketplace].count++; perMarket[it.marketplace].penjualan += jual;
+  });
+  var conversionRate = totalView ? totalKlik/totalView : 0;
+  return { totalAktivitas:totalAktivitas, totalDurasiLive:totalDurasiLive, totalView:totalView,
+    totalKlik:totalKlik, totalPenjualan:totalPenjualan, conversionRate:conversionRate,
+    perPic:perPic, perMarket:perMarket };
+}
+
+// ── TARGET KPI CALC ──
+function computeTargetProgress(target, items, periodDays){
+  var scale = periodDays/7;
+  var scaledTarget = target.metric === "notePct" ? target.weeklyTarget : Math.round(target.weeklyTarget * scale);
+  var pool = items.filter(function(a){ return a.pic === target.pic && (!target.aktifitas || a.aktifitas === target.aktifitas); });
+  var actual;
+  if(target.metric === "count"){
+    actual = pool.length;
+  } else if(target.metric === "notePct"){
+    var withNote = pool.filter(function(a){ return (a.insightCatatan||"").trim().length>0; }).length;
+    actual = pool.length ? Math.round((withNote/pool.length)*100) : 0;
+  } else { // noteCount
+    actual = pool.filter(function(a){ return (a.insightCatatan||"").trim().length>0; }).length;
+  }
+  var pct = scaledTarget ? Math.min(100, Math.round((actual/scaledTarget)*100)) : (actual>0?100:0);
+  return { actual:actual, target:scaledTarget, met: actual >= scaledTarget, pct: pct };
+}
+function renderTargetPanel(containerId, pic, items, periodDays){
+  var targets = KPI_TARGETS.filter(function(t){ return t.pic === pic; });
+  $(containerId).innerHTML = targets.map(function(t){
+    var p = computeTargetProgress(t, items, periodDays);
+    var unitLabel = t.metric === "notePct" ? (p.actual+"%") : (p.actual+" / "+p.target+" "+t.unit);
+    return '<div class="target-row">'+
+      '<div class="target-head"><span class="target-label">'+t.label+'</span>'+
+      '<span class="target-badge '+(p.met?"tercapai":"kurang")+'">'+(p.met?"✓ Tercapai":"Kurang")+'</span></div>'+
+      '<div class="target-bar"><div class="target-fill '+(p.met?"met":"")+'" style="width:'+p.pct+'%"></div></div>'+
+      '<div class="target-sub">'+unitLabel+'</div>'+
+    '</div>';
+  }).join("");
+}
+
+// ── RENDER: RINGKASAN ──
+function kpiCard(label, value, extra){
+  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>';
+}
+function renderRingkasan(){
+  var range = getPeriodRange();
+  var periodDays = Math.round((range.end - range.start)/86400000) + 1;
+  var periodItems = filterByPeriod(state.items, range);
+  var s = computeSummary(periodItems);
+  var convBadge = s.conversionRate >= 0.03 ? '<span class="kpi-badge baik">● Baik</span>' : '<span class="kpi-badge kurang">● Kurang</span>';
+
+  $("periodLabel").textContent = fmtPeriodLabel(range);
+
+  $("kpiGrid").innerHTML = [
+    kpiCard("Total Aktivitas", fmtNum(s.totalAktivitas), ""),
+    kpiCard("Total Durasi Live", fmtDurasi(s.totalDurasiLive), ""),
+    kpiCard("Total View / Reach", fmtNum(s.totalView), ""),
+    kpiCard("Total Klik / Keranjang", fmtNum(s.totalKlik), ""),
+    kpiCard("Total Penjualan / Komisi", fmtRp(s.totalPenjualan), ""),
+    kpiCard("Conversion Rate", (s.conversionRate*100).toFixed(1)+"%", convBadge + ' <span style="font-size:11px;color:var(--gray-400)">asumsi baik ≥3%</span>')
+  ].join("");
+
+  var picKeys = Object.keys(s.perPic);
+  $("picBreakdown").innerHTML = picKeys.length ? picKeys.map(function(k){
+    var d = s.perPic[k];
+    return '<div class="stat-row"><span class="stat-name">'+escapeHtml(k)+'</span><span class="stat-val">'+d.count+' aktivitas · '+fmtDurasi(d.durasiLive)+' live · '+fmtRp(d.penjualan)+'</span></div>';
+  }).join("") : '<div class="stat-empty">Belum ada data di periode ini.</div>';
+
+  var marketKeys = Object.keys(s.perMarket);
+  $("marketBreakdown").innerHTML = marketKeys.length ? marketKeys.map(function(k){
+    var d = s.perMarket[k];
+    return '<div class="stat-row"><span class="stat-name">'+escapeHtml(k)+'</span><span class="stat-val">'+d.count+' aktivitas · '+fmtRp(d.penjualan)+'</span></div>';
+  }).join("") : '<div class="stat-empty">Belum ada data di periode ini.</div>';
+
+  renderTargetPanel("targetDewi", "Dewi", periodItems, periodDays);
+  renderTargetPanel("targetNazwa", "Nazwa", periodItems, periodDays);
+
+  $("topbarSub").textContent = state.items.length + " aktivitas tercatat (total keseluruhan)";
+}
+
+// ── RENDER: TABLE ──
+function renderTable(){
+  var q = state.search.trim().toLowerCase();
+  var rows = state.items.filter(function(it){
+    var matchQ = !q || (it.akun||"").toLowerCase().indexOf(q)>-1 || (it.fokusProduk||"").toLowerCase().indexOf(q)>-1 || (it.insightCatatan||"").toLowerCase().indexOf(q)>-1;
+    var matchPic = !state.filterPic || it.pic === state.filterPic;
+    var matchMarket = !state.filterMarketplace || it.marketplace === state.filterMarketplace;
+    var matchAkt = !state.filterAktifitas || it.aktifitas === state.filterAktifitas;
+    return matchQ && matchPic && matchMarket && matchAkt;
+  });
+  rows.sort(function(a,b){ return (b.tanggal||"").localeCompare(a.tanggal||""); });
+
+  var tbody = $("tableBody"); tbody.innerHTML = "";
+  $("emptyState").style.display = rows.length ? "none" : "block";
+
+  rows.forEach(function(it){
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td>'+fmtDate(it.tanggal)+'</td>'+
+      '<td>'+escapeHtml(it.pic||"")+'</td>'+
+      '<td><span class="badge '+badgeCls(it.marketplace)+'"><span class="badge-dot"></span>'+escapeHtml(it.marketplace||"")+'</span></td>'+
+      '<td>'+escapeHtml(it.akun||"")+'</td>'+
+      '<td><span class="badge '+badgeCls(it.aktifitas)+'"><span class="badge-dot"></span>'+escapeHtml(it.aktifitas||"")+'</span></td>'+
+      '<td class="cell-wrap">'+escapeHtml(it.fokusProduk||"—")+'</td>'+
+      '<td>'+(it.aktifitas==="Live" ? fmtDurasi(it.durasi) : "—")+'</td>'+
+      '<td>'+fmtNum(it.viewReach)+'</td>'+
+      '<td>'+fmtNum(it.klikKeranjang)+'</td>'+
+      '<td>'+fmtRp(it.penjualanKomisi)+'</td>'+
+      '<td><div class="row-actions"><button class="edit-btn" data-id="'+it.id+'">Edit</button><button class="del-btn" data-id="'+it.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteItem(b.dataset.id); }); });
+}
+
+function renderAll(){ renderRingkasan(); renderTable(); }
+
+// ── TABS ──
+document.querySelectorAll(".tab-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    $("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ── DURASI FIELD VISIBILITY ──
+function updateDurasiVisibility(){
+  $("durasiField").style.display = $("fAktifitas").value === "Live" ? "block" : "none";
+}
+$("fAktifitas").addEventListener("change", updateDurasiVisibility);
+
+// ── MODAL ──
+function openModal(id){
+  state.editingId = id || null;
+  $("errAkun").style.display = "none";
+  if(id){
+    var it = state.items.find(function(e){ return e.id===id; });
+    $("modalTitle").textContent = "Edit Aktivitas";
+    $("fTanggal").value = it.tanggal||""; $("fPic").value = it.pic||"Dewi";
+    $("fMarketplace").value = it.marketplace||"Tiktok"; $("fAkun").value = it.akun||"";
+    $("fAktifitas").value = it.aktifitas||"Live"; $("fFokusProduk").value = it.fokusProduk||"";
+    $("fDurasi").value = it.durasi||""; $("fView").value = it.viewReach||"";
+    $("fKlik").value = it.klikKeranjang||""; $("fPenjualan").value = it.penjualanKomisi||"";
+    $("fCatatan").value = it.insightCatatan||"";
+  } else {
+    $("modalTitle").textContent = "Tambah Aktivitas";
+    var today = new Date(); var iso = today.toISOString().slice(0,10);
+    $("fTanggal").value = iso; $("fPic").value = "Dewi"; $("fMarketplace").value = "Tiktok";
+    $("fAkun").value = ""; $("fAktifitas").value = "Live"; $("fFokusProduk").value = "";
+    $("fDurasi").value = ""; $("fView").value = ""; $("fKlik").value = ""; $("fPenjualan").value = ""; $("fCatatan").value = "";
+  }
+  updateDurasiVisibility();
+  $("modal").classList.add("open");
+  $("fAkun").focus();
+}
+function closeModal(){ $("modal").classList.remove("open"); state.editingId = null; }
+function saveItem(){
+  var akun = $("fAkun").value.trim();
+  if(!akun){ $("errAkun").style.display = "block"; return; }
+  $("errAkun").style.display = "none";
+  var payload = {
+    tanggal: $("fTanggal").value, pic: $("fPic").value, marketplace: $("fMarketplace").value,
+    akun: akun, aktifitas: $("fAktifitas").value, fokusProduk: $("fFokusProduk").value.trim(),
+    durasi: Number($("fDurasi").value)||0, viewReach: Number($("fView").value)||0,
+    klikKeranjang: Number($("fKlik").value)||0, penjualanKomisi: Number($("fPenjualan").value)||0,
+    insightCatatan: $("fCatatan").value.trim()
+  };
+  var isEdit = !!state.editingId;
+  if(isEdit) payload.id = state.editingId;
+  setLoading(true, "Menyimpan…");
+  callGS(isEdit ? "updateActivity" : "addActivity", payload).then(function(res){
+    if(isEdit){ var idx = state.items.findIndex(function(e){ return e.id===payload.id; }); if(idx>-1) state.items[idx]=payload; showToast("✓ Aktivitas diperbarui"); }
+    else { payload.id = res.id; state.items.push(payload); showToast("✓ Aktivitas ditambahkan"); }
+    closeModal(); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+}
+function deleteItem(id){
+  if(!confirm("Hapus aktivitas ini?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteActivity", id).then(function(){
+    state.items = state.items.filter(function(e){ return e.id!==id; });
+    showToast("✓ Aktivitas dihapus"); setLoading(false); renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+
+// ── PERIOD CONTROLS ──
+document.querySelectorAll(".ptab").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".ptab").forEach(function(b){ b.classList.remove("active"); });
+    btn.classList.add("active");
+    state.periodMode = btn.dataset.mode;
+    renderRingkasan();
+  });
+});
+$("prevPeriod").addEventListener("click", function(){
+  var d = new Date(state.periodAnchor);
+  if(state.periodMode === "bulan") d.setMonth(d.getMonth()-1); else d.setDate(d.getDate()-7);
+  state.periodAnchor = d; renderRingkasan();
+});
+$("nextPeriod").addEventListener("click", function(){
+  var d = new Date(state.periodAnchor);
+  if(state.periodMode === "bulan") d.setMonth(d.getMonth()+1); else d.setDate(d.getDate()+7);
+  state.periodAnchor = d; renderRingkasan();
+});
+$("todayPeriod").addEventListener("click", function(){
+  state.periodAnchor = new Date(); renderRingkasan();
+});
+
+// ── WIRE-UP ──
+$("addBtn").addEventListener("click", function(){ openModal(); });
+$("cancelBtn").addEventListener("click", closeModal);
+$("saveBtn").addEventListener("click", saveItem);
+$("modal").addEventListener("click", function(e){ if(e.target===$("modal")) closeModal(); });
+$("search").addEventListener("input", function(e){ state.search = e.target.value; renderTable(); });
+$("filterPic").addEventListener("change", function(e){ state.filterPic = e.target.value; renderTable(); });
+$("filterMarketplace").addEventListener("change", function(e){ state.filterMarketplace = e.target.value; renderTable(); });
+$("filterAktifitas").addEventListener("change", function(e){ state.filterAktifitas = e.target.value; renderTable(); });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeModal(); });
+</script>
+</body>
+</html>
