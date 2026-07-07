@@ -60,7 +60,7 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .content-area{display:flex;flex-direction:column}
 
 /* CALENDAR WRAP */
-.calendar-wrap{padding:20px 20px 4px 28px}
+.calendar-wrap{padding:20px 20px 4px 28px;overflow-x:hidden}
 
 /* DAY DETAIL PANEL — appears BELOW the calendar grid */
 .day-detail{
@@ -112,10 +112,10 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 
 /* CALENDAR GRID */
 .cal-grid{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-200);overflow:hidden;box-shadow:var(--shadow);min-height:560px}
-.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
 .cal-weekday{padding:clamp(6px,1.6vw,10px) 0;text-align:center;font-size:clamp(9px,2vw,11.5px);font-weight:600;color:var(--gray-600);letter-spacing:.5px;text-transform:uppercase}
-.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
-.cal-day{min-height:clamp(46px,12vw,100px);border-right:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);padding:clamp(3px,1vw,7px) clamp(2px,0.8vw,5px) clamp(2px,0.8vw,5px);cursor:pointer;transition:background .12s;position:relative}
+.cal-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.cal-day{min-height:clamp(46px,12vw,100px);min-width:0;overflow:hidden;border-right:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);padding:clamp(3px,1vw,7px) clamp(2px,0.8vw,5px) clamp(2px,0.8vw,5px);cursor:pointer;transition:background .12s;position:relative}
 .cal-day:nth-child(7n){border-right:none}
 .cal-day:hover{background:var(--gray-50)}
 .cal-day.other-month{background:#FAFAFA}
@@ -124,25 +124,25 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .cal-day.selected-day{background:var(--blue-lt)}
 .cal-day.selected-day:hover{background:var(--blue-lt)}
 .day-num{font-size:clamp(9.5px,2.2vw,12.5px);font-weight:500;color:var(--gray-800);margin-bottom:4px;display:inline-flex;align-items:center;justify-content:center;width:clamp(18px,5vw,26px);height:clamp(18px,5vw,26px)}
-.day-events{display:flex;flex-direction:column;gap:2px}
-.event-pill{font-size:clamp(8.5px,1.8vw,11px);font-weight:500;padding:1px clamp(3px,1vw,7px);border-radius:4px;color:var(--white);cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:opacity .12s}
+.day-events{display:flex;flex-direction:column;gap:2px;min-width:0}
+.event-pill{font-size:clamp(8.5px,1.8vw,11px);font-weight:500;padding:1px clamp(3px,1vw,7px);border-radius:4px;color:var(--white);cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:opacity .12s;min-width:0;max-width:100%}
 .event-pill:hover{opacity:.85}
 .event-more{font-size:10.5px;color:var(--gray-600);font-weight:500;padding:1px 4px;cursor:pointer}
 .event-more:hover{color:var(--blue)}
 
 /* WEEK VIEW */
 .week-grid{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-200);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
-.week-header{display:grid;grid-template-columns:56px repeat(7,1fr);border-bottom:1px solid var(--gray-200);background:var(--gray-50)}
+.week-header{display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--gray-200);background:var(--gray-50)}
 .week-time-gutter{border-right:1px solid var(--gray-200)}
 .week-day-head{padding:10px 4px;text-align:center;border-right:1px solid var(--gray-200)}
 .week-day-head:last-child{border-right:none}
 .week-day-name{font-size:10.5px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.5px}
 .week-day-num{font-size:16px;font-weight:600;color:var(--gray-800);margin-top:2px}
 .week-day-head.today .week-day-num{background:var(--blue);color:var(--white);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:4px auto 0}
-.week-body{display:grid;grid-template-columns:56px repeat(7,1fr);overflow-y:auto;max-height:calc(100vh - 220px)}
+.week-body{display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));overflow-y:auto;max-height:calc(100vh - 220px)}
 .week-time-col{border-right:1px solid var(--gray-200)}
 .week-time-slot{height:48px;display:flex;align-items:flex-start;padding:4px 6px 0;font-size:10px;color:var(--gray-400);font-weight:500;border-bottom:1px solid var(--gray-100)}
-.week-day-col{border-right:1px solid var(--gray-200);position:relative}
+.week-day-col{border-right:1px solid var(--gray-200);position:relative;min-width:0}
 .week-day-col:last-child{border-right:none}
 .week-hour-slot{height:48px;border-bottom:1px solid var(--gray-100);position:relative;cursor:pointer}
 .week-hour-slot:hover{background:var(--blue-lt)}
@@ -205,7 +205,7 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
   .calendar-wrap{padding:12px}
   .cal-grid{min-height:unset}
   .week-body{max-height:none;overflow-y:visible}
-  .week-header,.week-body{grid-template-columns:34px repeat(7,1fr)}
+  .week-header,.week-body{grid-template-columns:34px repeat(7,minmax(0,1fr))}
   .week-time-slot,.week-hour-slot{height:36px}
   .week-day-name{font-size:9px}
   .week-day-num{font-size:13px}
@@ -330,20 +330,10 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Waktu Mulai</label>
-        <input class="form-input" type="time" id="fTime"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Waktu Selesai</label>
-        <input class="form-input" type="time" id="fEndTime"/>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
         <label class="form-label">Kategori</label>
         <select class="form-select" id="fCategory">
-          <option>General</option><option>Meeting</option><option>Deadline</option>
-          <option>Sprint</option><option>Review</option><option>Lainnya</option>
+          <option>General</option><option>Marketing</option><option>Operasional</option>
+          <option>Manajemen</option><option>Lainnya</option>
         </select>
       </div>
       <div class="form-group">
@@ -375,7 +365,7 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 // Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone
 var GAS_URL = "https://script.google.com/macros/s/AKfycbzQYRSup9cTPs-HEZ1DdcvsLQBM3TXIs3SxjVa84Cb8UCKtmIR22hi4USIbwXMY3KqVbQ/exec";
 
-var COLORS = ["#4F6EF7","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#06B6D4","#F97316","#6366F1","#14B8A6"];
+var COLORS = ["#4F6EF7","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#06B6D4","#F97316","#6366F1","#14B8A6","#6B7280"];
 var DAYS_ID   = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 var MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
@@ -681,8 +671,6 @@ function openModal(id, prefillDate, prefillTime){
   $("fTitle").value    = ev ? (ev.title||"")        : "";
   $("fDate").value     = ev ? (ev.date||"")         : (prefillDate||toYMD(new Date()));
   $("fEndDate").value  = ev ? (ev.endDate||"")      : (prefillDate||toYMD(new Date()));
-  $("fTime").value     = ev ? (ev.time||"")         : (prefillTime||"");
-  $("fEndTime").value  = ev ? (ev.endTime||"")      : "";
   $("fDesc").value     = ev ? (ev.description||"")  : "";
   $("fCategory").value = ev ? (ev.category||"General") : "General";
   state.selectedColor  = ev ? (ev.color||COLORS[0]) : COLORS[0];
@@ -706,8 +694,6 @@ function saveEvent(){
     title:       title,
     date:        date,
     endDate:     $("fEndDate").value||date,
-    time:        $("fTime").value,
-    endTime:     $("fEndTime").value,
     color:       state.selectedColor,
     description: $("fDesc").value.trim(),
     category:    $("fCategory").value,
