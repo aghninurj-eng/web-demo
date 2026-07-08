@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Project Calendar</title>
+<title>KYX Space</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -111,24 +111,35 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .detail-event-actions .del-btn:hover{background:#FEE2E2}
 
 /* CALENDAR GRID */
-.cal-grid{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-200);overflow:hidden;box-shadow:var(--shadow);min-height:560px}
+.cal-grid{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-200);overflow:hidden;box-shadow:var(--shadow)}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
 .cal-weekday{padding:clamp(6px,1.6vw,10px) 0;text-align:center;font-size:clamp(9px,2vw,11.5px);font-weight:600;color:var(--gray-600);letter-spacing:.5px;text-transform:uppercase}
-.cal-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
-.cal-day{min-height:clamp(46px,12vw,100px);min-width:0;overflow:hidden;border-right:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);padding:clamp(3px,1vw,7px) clamp(2px,0.8vw,5px) clamp(2px,0.8vw,5px);cursor:pointer;transition:background .12s;position:relative}
-.cal-day:nth-child(7n){border-right:none}
-.cal-day:hover{background:var(--gray-50)}
-.cal-day.other-month{background:#FAFAFA}
-.cal-day.other-month .day-num{color:var(--gray-400)}
-.cal-day.today .day-num{background:var(--blue);color:var(--white);width:clamp(18px,5vw,26px);height:clamp(18px,5vw,26px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
-.cal-day.selected-day{background:var(--blue-lt)}
-.cal-day.selected-day:hover{background:var(--blue-lt)}
-.day-num{font-size:clamp(9.5px,2.2vw,12.5px);font-weight:500;color:var(--gray-800);margin-bottom:4px;display:inline-flex;align-items:center;justify-content:center;width:clamp(18px,5vw,26px);height:clamp(18px,5vw,26px)}
-.day-events{display:flex;flex-direction:column;gap:2px;min-width:0}
-.event-pill{font-size:clamp(8.5px,1.8vw,11px);font-weight:500;padding:1px clamp(3px,1vw,7px);border-radius:4px;color:var(--white);cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:opacity .12s;min-width:0;max-width:100%}
-.event-pill:hover{opacity:.85}
-.event-more{font-size:10.5px;color:var(--gray-600);font-weight:500;padding:1px 4px;cursor:pointer}
-.event-more:hover{color:var(--blue)}
+
+/* Each week is its own grid so ribbons can span columns AND stack in lanes,
+   producing one continuous bar for multi-day events instead of repeated pills. */
+.cal-body{display:flex;flex-direction:column}
+.week-row{display:grid;position:relative;border-bottom:1px solid var(--gray-200)}
+.week-row:last-child{border-bottom:none}
+.cal-day-bg{border-right:1px solid var(--gray-200);cursor:pointer;transition:background .12s}
+.cal-day-bg:hover{background:var(--gray-50)}
+.cal-day-bg.other-month{background:#FAFAFA}
+.day-num-label.other-month .num-badge{color:var(--gray-400)}
+.cal-day-bg.selected-day{background:var(--blue-lt)}
+.cal-day-bg.selected-day:hover{background:var(--blue-lt)}
+.day-num-label{padding:clamp(3px,1vw,7px) clamp(2px,0.8vw,5px) 2px;pointer-events:none;z-index:2}
+.num-badge{font-size:clamp(9.5px,2.2vw,12.5px);font-weight:500;color:var(--gray-800);display:inline-flex;align-items:center;justify-content:center;width:clamp(18px,5vw,26px);height:clamp(18px,5vw,26px)}
+.num-badge.today{background:var(--blue);color:var(--white);border-radius:50%;font-weight:700}
+.ribbon-bar{
+  align-self:center;margin:1px 3px;border-radius:4px;color:var(--white);
+  font-size:clamp(8.5px,1.8vw,11px);font-weight:500;padding:1px clamp(3px,1vw,7px);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;
+  min-width:0;z-index:3;transition:opacity .12s;
+}
+.ribbon-bar:hover{opacity:.85}
+.ribbon-bar.continues-left{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.ribbon-bar.continues-right{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.day-more-label{font-size:clamp(8.5px,1.6vw,10.5px);color:var(--gray-600);font-weight:500;padding:0 clamp(2px,0.8vw,5px);cursor:pointer;z-index:2}
+.day-more-label:hover{color:var(--blue)}
 
 /* WEEK VIEW */
 .week-grid{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-200);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
@@ -203,7 +214,6 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
   .month-label{min-width:auto;font-size:12.5px}
   .btn{padding:7px 11px;font-size:12px}
   .calendar-wrap{padding:12px}
-  .cal-grid{min-height:unset}
   .week-body{max-height:none;overflow-y:visible}
   .week-header,.week-body{grid-template-columns:34px repeat(7,minmax(0,1fr))}
   .week-time-slot,.week-hour-slot{height:36px}
@@ -220,7 +230,6 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
   .topbar-controls{justify-content:flex-start}
   .modal{padding:20px}
   .form-row{grid-template-columns:1fr}
-  .day-events{gap:1px}
 }
 
 /* ── PRINT STYLES ── */
@@ -232,12 +241,12 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
   .content-area { display: block !important; overflow: visible !important; }
   .calendar-wrap { overflow: visible !important; padding: 0 !important; height: auto !important; }
   .cal-grid { box-shadow: none !important; min-height: unset !important; page-break-inside: avoid; }
-  .cal-day { min-height: 80px !important; }
+  .cal-day-bg { min-height: 60px !important; }
   #printHeader { display: flex !important; }
   #printEventList { display: block !important; }
   .print-event-grid { column-count: 2; column-gap: 22px; }
   .print-event-item { break-inside: avoid; page-break-inside: avoid; }
-  .event-pill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ribbon-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .detail-event-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .print-event-color { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
@@ -480,54 +489,100 @@ function renderMonth(){
   var start    = new Date(firstDay);
   start.setDate(start.getDate() - start.getDay());
 
-  // Group events by date (support multi-day)
-  var byDate = {};
-  state.events.forEach(function(ev){
-    var cur = parseDate(ev.date);
-    var end = ev.endDate ? parseDate(ev.endDate) : new Date(cur.getTime());
-    while(cur <= end){
-      var k = toYMD(cur);
-      if(!byDate[k]) byDate[k]=[];
-      byDate[k].push(ev);
-      cur.setDate(cur.getDate()+1);
-    }
-  });
-
+  var maxLanes = window.innerWidth <= 480 ? 1 : (window.innerWidth <= 860 ? 2 : 3);
   var weekdayRow = DAYS_ID.map(function(d){ return '<div class="cal-weekday">'+d+'</div>'; }).join("");
-  var daysHTML = "";
-  for(var i=0;i<42;i++){
-    var date    = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
-    var ymd     = toYMD(date);
-    var isOther = date.getMonth()!==month;
-    var today   = isToday(date);
-    var isSel   = state.selectedDate===ymd;
-    var evs     = byDate[ymd]||[];
-    var maxShow = window.innerWidth <= 480 ? 1 : (window.innerWidth <= 860 ? 2 : 3);
-    var pills   = evs.slice(0,maxShow).map(function(ev){
-      return '<div class="event-pill" style="background:'+(ev.color||COLORS[0])+'" data-evid="'+ev.id+'">'+ev.title+'</div>';
+
+  var weeksHTML = "";
+  for(var w=0; w<6; w++){
+    var weekStart = new Date(start.getFullYear(), start.getMonth(), start.getDate()+w*7);
+    var weekEnd   = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+6);
+
+    // Collect events overlapping this week and clip them to this week's columns (0-6)
+    var items = [];
+    state.events.forEach(function(ev){
+      var evStart = parseDate(ev.date);
+      var evEnd   = ev.endDate ? parseDate(ev.endDate) : new Date(evStart.getTime());
+      if(evEnd < weekStart || evStart > weekEnd) return;
+      items.push({
+        ev: ev,
+        startCol: Math.max(0, Math.round((evStart-weekStart)/86400000)),
+        endCol:   Math.min(6, Math.round((evEnd-weekStart)/86400000)),
+        continuesLeft:  evStart < weekStart,
+        continuesRight: evEnd > weekEnd
+      });
+    });
+
+    // Greedy lane packing so overlapping events stack instead of colliding,
+    // while non-overlapping events on the same row share a lane.
+    items.sort(function(a,b){
+      if(a.startCol !== b.startCol) return a.startCol - b.startCol;
+      return (b.endCol-b.startCol) - (a.endCol-a.startCol);
+    });
+    var laneEnd = [];
+    items.forEach(function(item){
+      var placed = false;
+      for(var i=0;i<laneEnd.length;i++){
+        if(item.startCol > laneEnd[i]){ laneEnd[i]=item.endCol; item.lane=i; placed=true; break; }
+      }
+      if(!placed){ laneEnd.push(item.endCol); item.lane=laneEnd.length-1; }
+    });
+
+    var visible = items.filter(function(it){ return it.lane < maxLanes; });
+    var hidden  = items.filter(function(it){ return it.lane >= maxLanes; });
+    var hiddenByCol = [0,0,0,0,0,0,0];
+    hidden.forEach(function(it){ for(var c=it.startCol;c<=it.endCol;c++) hiddenByCol[c]++; });
+
+    var visibleLaneCount = Math.min(maxLanes, laneEnd.length);
+    var hasHiddenRow = hiddenByCol.some(function(n){ return n>0; });
+    var rowTemplate = "auto repeat("+visibleLaneCount+",20px)"+(hasHiddenRow?" 15px":"");
+
+    var cellsHTML = "";
+    for(var d=0; d<7; d++){
+      var date    = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+d);
+      var ymd     = toYMD(date);
+      var isOther = date.getMonth()!==month;
+      var today   = isToday(date);
+      var isSel   = state.selectedDate===ymd;
+      var lastCol = d===6 ? "border-right:none;" : "";
+      cellsHTML += '<div class="cal-day-bg'+(isOther?" other-month":"")+(isSel?" selected-day":"")+'" style="'+lastCol+'grid-column:'+(d+1)+';grid-row:1/-1" data-date="'+ymd+'"></div>';
+      cellsHTML += '<div class="day-num-label'+(isOther?" other-month":"")+'" style="grid-column:'+(d+1)+';grid-row:1"><span class="num-badge'+(today?" today":"")+'">'+date.getDate()+'</span></div>';
+    }
+
+    var ribbonsHTML = visible.map(function(it){
+      var span = it.endCol - it.startCol + 1;
+      var cls  = "ribbon-bar"+(it.continuesLeft?" continues-left":"")+(it.continuesRight?" continues-right":"");
+      return '<div class="'+cls+'" style="grid-column:'+(it.startCol+1)+'/span '+span+';grid-row:'+(it.lane+2)+';background:'+(it.ev.color||COLORS[0])+'" data-date="'+it.ev.date+'" data-evid="'+it.ev.id+'">'+it.ev.title+'</div>';
     }).join("");
-    if(evs.length>maxShow) pills+='<div class="event-more">+'+(evs.length-maxShow)+' lainnya</div>';
-    daysHTML += '<div class="cal-day'+(isOther?" other-month":"")+(today?" today":"")+(isSel?" selected-day":"")+'" data-date="'+ymd+'">'
-      +'<div class="day-num">'+date.getDate()+'</div>'
-      +'<div class="day-events">'+pills+'</div>'
-      +'</div>';
+
+    var moreHTML = "";
+    if(hasHiddenRow){
+      for(var c2=0;c2<7;c2++){
+        if(hiddenByCol[c2]>0){
+          var dateM = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+c2);
+          moreHTML += '<div class="day-more-label" style="grid-column:'+(c2+1)+';grid-row:'+(visibleLaneCount+2)+'" data-date="'+toYMD(dateM)+'">+'+hiddenByCol[c2]+' lainnya</div>';
+        }
+      }
+    }
+
+    weeksHTML += '<div class="week-row" style="grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:'+rowTemplate+'">'
+      + cellsHTML + ribbonsHTML + moreHTML
+      + '</div>';
   }
 
   $("calendarWrap").innerHTML =
     '<div class="cal-grid">'
     +'<div class="cal-weekdays">'+weekdayRow+'</div>'
-    +'<div class="cal-days">'+daysHTML+'</div>'
+    +'<div class="cal-body">'+weeksHTML+'</div>'
     +'</div>';
 
-  document.querySelectorAll(".cal-day").forEach(function(el){
-    el.addEventListener("click", function(e){
-      if(e.target.classList.contains("event-pill")){
-        e.stopPropagation();
-        openDayDetail(el.dataset.date);
-      } else {
-        openDayDetail(el.dataset.date);
-      }
-    });
+  document.querySelectorAll(".cal-day-bg").forEach(function(el){
+    el.addEventListener("click", function(){ openDayDetail(el.dataset.date); });
+  });
+  document.querySelectorAll(".ribbon-bar").forEach(function(el){
+    el.addEventListener("click", function(e){ e.stopPropagation(); openDayDetail(el.dataset.date); });
+  });
+  document.querySelectorAll(".day-more-label").forEach(function(el){
+    el.addEventListener("click", function(e){ e.stopPropagation(); openDayDetail(el.dataset.date); });
   });
 }
 
@@ -601,7 +656,7 @@ function renderWeek(){
 function openDayDetail(ymd){
   state.selectedDate = ymd;
   // Re-highlight selected day
-  document.querySelectorAll(".cal-day").forEach(function(el){
+  document.querySelectorAll(".cal-day-bg").forEach(function(el){
     el.classList.toggle("selected-day", el.dataset.date===ymd);
   });
   renderDayDetail(ymd);
@@ -613,7 +668,7 @@ function openDayDetail(ymd){
 function closeDayDetail(){
   state.selectedDate = null;
   $("dayDetail").classList.remove("open");
-  document.querySelectorAll(".cal-day.selected-day").forEach(function(el){
+  document.querySelectorAll(".cal-day-bg.selected-day").forEach(function(el){
     el.classList.remove("selected-day");
   });
 }
