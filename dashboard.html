@@ -847,8 +847,20 @@ function parseNumber(val){
   var cleaned = String(val).replace(/[^\d\-]/g,"");
   return cleaned ? parseInt(cleaned,10) : 0;
 }
+function excelSerialToYMD(serial){
+  // Konversi manual serial tanggal Excel (jumlah hari sejak 1899-12-30) memakai
+  // aritmatika UTC murni — sengaja TIDAK lewat getter lokal (getDate/getMonth)
+  // karena SheetJS/Excel merepresentasikan tanggal tanpa informasi timezone,
+  // dan pembacaan lewat getter lokal-lah yang menyebabkan tanggal bergeser
+  // mundur 1 hari di sebagian browser/timezone.
+  var utcDays = Math.round(serial) - 25569;
+  var d = new Date(utcDays * 86400 * 1000);
+  return d.getUTCFullYear()+"-"+pad2(d.getUTCMonth()+1)+"-"+pad2(d.getUTCDate());
+}
+function toYMDFromUTC(d){ return d.getUTCFullYear()+"-"+pad2(d.getUTCMonth()+1)+"-"+pad2(d.getUTCDate()); }
 function parseDateValue(val){
-  if(val instanceof Date) return toYMDLocal(val);
+  if(typeof val === "number") return excelSerialToYMD(val);
+  if(val instanceof Date) return toYMDFromUTC(val);
   var s = String(val||"").trim();
   if(!s) return "";
   var iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -865,7 +877,7 @@ function handleFile(file){
   var reader = new FileReader();
   reader.onload = function(e){
     try{
-      var wb = XLSX.read(e.target.result, { type:"array", cellDates:true });
+      var wb = XLSX.read(e.target.result, { type:"array" });
       var firstSheet = wb.SheetNames[0];
       var rows = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { header:1, raw:true, defval:"" });
       rows = rows.filter(function(r){ return r.some(function(c){ return c!==""; }); });
