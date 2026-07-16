@@ -10,7 +10,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lexend:wght@500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --navy:#151829;--navy-2:#232A52;--blue:#1d4ed8;--blue-deep:#1e40af;--blue-lt:#eff6ff;
+  --navy:#151829;--navy-2:#232A52;--blue:#4F6EF7;--blue-deep:#2E45CC;--blue-lt:#EEF1FE;
   --white:#FFFFFF;--gray-50:#F7F8FC;--gray-100:#F1F3F7;
   --gray-200:#E4E7EF;--gray-400:#9CA3AF;--gray-600:#6B7280;
   --gray-800:#374151;--text:#151829;--radius:14px;
@@ -70,7 +70,6 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .tab-panel.active{display:block;animation:fadeIn .25s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── STREAMING_CHUNK: Styling the layout grids... ── */
 /* Grid Layout untuk Baris Atas (Total Penjualan + Insight Panel) */
 .kpi-top-grid {
   display: grid;
@@ -296,8 +295,7 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
   font-family: 'Lexend', sans-serif;
 }
 
-/* ── STREAMING_CHUNK: Styling KPI cards & Profitability... ── */
-/* KPI cards */
+/* ── STYLING KPI CARDS ── */
 .kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;transition:transform .18s,box-shadow .18s}
 .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .kpi-hero:hover{transform:none}
@@ -330,8 +328,11 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .kpi-hero .kpi-badge.baik{background:rgba(15,169,104,.25);color:#7EEBC0}
 .kpi-hero .kpi-badge.kurang{background:rgba(240,169,58,.22);color:#FFD98C}
 
-/* Profitability Row - Full Width */
-.kpi-section-row{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+/* Baris Profitabilitas & Retur - Berdampingan Sejajar */
+.kpi-section-row{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;margin-bottom:16px}
+@media(max-width:860px){
+  .kpi-section-row{grid-template-columns:1fr}
+}
 .kpi-combo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:860px){
   .kpi-combo-grid{grid-template-columns:1fr}
@@ -362,11 +363,10 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .kpi-accent-emerald{border-top:3px solid var(--green)}
 .kpi-accent-emerald .kpi-card-title .dot{background:var(--green)}
 
-.retur-card{margin-bottom:20px;border-top:3px solid var(--red)}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.retur-card{margin-bottom:0px;border-top:3px solid var(--red)}
+.retur-card .kpi-card-title .dot{background:var(--red)}
 
-/* ── STREAMING_CHUNK: Styling the new high-density Insight Card... ── */
-/* Seksi Quick Insights (4 High-Density Grid) */
+/* ── HIGH-DENSITY INSIGHT CARD ── */
 .kpi-insight {
   background: #fff;
   border: 1px solid var(--gray-200);
@@ -465,12 +465,25 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .chart-head select{padding:7px 11px;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;background:#fff;cursor:pointer}
 .chart-wrap{position:relative;height:280px}
 .chart-wrap.short{height:280px}
-.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media(max-width:860px){.chart-row{grid-template-columns:1fr}}
+
+/* Layout Split untuk Channel Penjualan Full Width */
+.channel-split-container {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+@media(max-width:768px) {
+  .channel-split-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .empty-note{text-align:center;color:var(--gray-400);font-size:13px;padding:40px 0}
 
 /* Top Produk table */
-.top-produk-table-wrap{max-height:320px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:10px}
+.top-produk-table-wrap{max-height:450px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:10px}
 .top-produk-table{width:100%;border-collapse:collapse}
 .top-produk-table thead th{position:sticky;top:0;background:var(--gray-50);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-600);padding:10px 12px;text-align:left;border-bottom:1px solid var(--gray-200);z-index:1}
 .top-produk-table thead th:not(:first-child){text-align:right}
@@ -660,10 +673,8 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
       
       <!-- ── PREMIUM FILTER BAR ── -->
       <div class="premium-filter-container">
-        <!-- Label Periode -->
         <span style="font-family: 'Lexend', sans-serif; font-size: 14px; font-weight: 700; color: var(--gray-800); margin-right: 4px;">Periode</span>
         
-        <!-- Trigger Date Range Picker Utama -->
         <div style="position:relative">
           <button class="date-trigger-btn" id="dateRangeTrigger">
             <span id="dateRangeDisplay">10 Jul 2026 - 16 Jul 2026</span>
@@ -672,7 +683,6 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
           <!-- DROPDOWN CALENDAR DIALOG -->
           <div class="datepicker-dropdown" id="datePickerDropdown">
             <div class="picker-body">
-              <!-- Sidebar Presets -->
               <div class="picker-sidebar">
                 <button class="preset-item" data-preset="today">Hari Ini</button>
                 <button class="preset-item" data-preset="yesterday">Kemarin</button>
@@ -682,9 +692,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
                 <button class="preset-item" data-preset="lastmonth">Bulan Lalu</button>
                 <button class="preset-item" data-preset="custom">Custom</button>
               </div>
-              <!-- Area Dua Kalender -->
               <div class="picker-calendars">
-                <!-- Kalender Kiri (Bulan Saat Ini) -->
                 <div class="calendar-block" id="leftCalBlock">
                   <div class="calendar-header">
                     <button id="prevMonthBtn">◀</button>
@@ -699,7 +707,6 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
                   </div>
                   <div class="days-grid" id="leftDaysGrid"></div>
                 </div>
-                <!-- Kalender Kanan (Bulan Selanjutnya) -->
                 <div class="calendar-block" id="rightCalBlock">
                   <div class="calendar-header">
                     <span style="width:26px"></span>
@@ -716,7 +723,6 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
                 </div>
               </div>
             </div>
-            <!-- Footer Dropdown Picker -->
             <div class="picker-footer">
               <span class="selected-range-display" id="pickerRangeDisplay">2026-07-10 - 2026-07-16</span>
               <button class="btn btn-outline btn-sm" id="pickerCancelBtn" style="padding:7px 16px; font-weight:600">Batal</button>
@@ -726,11 +732,8 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
         </div>
 
         <div style="border-left: 1px solid var(--gray-200); height: 20px; margin: 0 4px;"></div>
-        
-        <!-- Label Bandingkan -->
         <span style="font-size: 13px; font-weight: 500; color: var(--gray-600); margin-right: 2px;">Bandingkan:</span>
 
-        <!-- Tombol Pilihan Perbandingan -->
         <button class="shortcut-btn active-blue" id="comparePrevPeriodBtn">
           <span>🔄 Periode Sebelumnya</span>
         </button>
@@ -739,17 +742,13 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
         </button>
 
         <div style="border-left: 1px solid var(--gray-200); height: 20px; margin: 0 4px;"></div>
-        <!-- Tombol Atur Target -->
         <button class="btn btn-outline btn-sm" id="openTargetModalBtn" style="height:38px">🎯 Atur Target</button>
       </div>
 
-      <!-- ── STREAMING_CHUNK: Rendering grid layout atas... ── -->
-      <!-- Grid Gabungan: Total Penjualan vs Target DAN Seksi Insight Pintar (Dengan Volume Penjualan) -->
+      <!-- Grid Gabungan Atas: Total Penjualan & Analisis + Volume -->
       <div class="kpi-top-grid">
-        <!-- Total Penjualan vs Target -->
         <div class="kpi-card kpi-hero" id="kpiTotalPenjualan" style="margin-bottom:0;"></div>
 
-        <!-- Seksi Quick Insights (Produk & Channel Unggulan + Volume Penjualan) -->
         <div class="kpi-insight" id="kpiInsights" style="margin-bottom:0;">
           <div class="kpi-card-title"><span class="dot" style="background:var(--blue)"></span>💡 Ringkasan Analisis &amp; Volume</div>
           <div class="insight-grid">
@@ -777,23 +776,20 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
         </div>
       </div>
 
-      <!-- ── STREAMING_CHUNK: Rendering Profitability full-width row... ── -->
-      <!-- HPP, Laba Kotor, Margin Kotor (Full Width & Berdiri Sendiri) -->
-      <div class="kpi-section-row">
-        <div class="kpi-card kpi-accent-emerald">
-          <div class="kpi-card-title"><span class="dot"></span>Profitabilitas</div>
+      <!-- HPP, Laba, Margin Bersanding dengan Retur Penjualan -->
+      <div class="kpi-section-row" style="margin-top:16px;">
+        <div class="kpi-card kpi-accent-emerald" style="margin-bottom:0;">
+          <div class="kpi-card-title"><span class="dot"></span>Profitabilitas (Net)</div>
           <div class="kpi-combo-grid" id="kpiFinancial"></div>
+        </div>
+        <div class="kpi-card retur-card" style="margin-bottom:0;">
+          <div class="kpi-card-title"><span class="dot"></span>↩️ Retur Penjualan</div>
+          <div class="kpi-combo-grid" id="returKpiGrid"></div>
         </div>
       </div>
 
-      <!-- Retur Penjualan -->
-      <div class="chart-card retur-card">
-        <h3>↩️ Retur Penjualan</h3>
-        <div class="chart-sub">Data retur diimpor terpisah lewat tab "Import Data"</div>
-        <div class="kpi-grid" id="returKpiGrid"></div>
-      </div>
-
-      <div class="chart-card">
+      <!-- Tren Penjualan -->
+      <div class="chart-card" style="margin-top:16px;">
         <div class="chart-head">
           <div>
             <h3>📈 Tren Penjualan & Laba Kotor</h3>
@@ -807,34 +803,46 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
         <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
       </div>
 
-      <div class="chart-row">
-        <div class="chart-card">
-          <h3>🛍️ Channel Penjualan</h3>
-          <div class="chart-sub">Jumlah penjualan tiap channel, dibanding periode pembanding yang dipilih</div>
-          <div class="chart-wrap short"><canvas id="kategoriChart"></canvas></div>
-          <div class="compare-table" id="channelCompareTable"></div>
+      <!-- SEKSI DATA TOP PRODUK (Full-Width Di Atas Channel) -->
+      <div class="chart-card" style="margin-top:16px;">
+        <div class="chart-head">
+          <div>
+            <h3>📦 Top Produk</h3>
+            <div class="chart-sub">Diurutkan dari penjualan tertinggi ke terendah</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <select id="topProdukLimitFilter" style="padding:7px 11px; border:1px solid var(--gray-200); border-radius:8px; font-size:12px; font-family:'Inter',sans-serif; background:#fff; cursor:pointer">
+              <option value="10">Tampilkan 10</option>
+              <option value="20">Tampilkan 20</option>
+              <option value="50">Tampilkan 50</option>
+            </select>
+            <select id="topProdukKategoriFilter" style="padding:7px 11px; border:1px solid var(--gray-200); border-radius:8px; font-size:12px; font-family:'Inter',sans-serif; background:#fff; cursor:pointer"><option value="">Semua Kategori Pelanggan</option></select>
+          </div>
         </div>
-        <div class="chart-card">
-          <div class="chart-head">
-            <div>
-              <h3>📦 Top Produk</h3>
-              <div class="chart-sub">Diurutkan dari penjualan tertinggi ke terendah</div>
-            </div>
-            <select id="topProdukKategoriFilter"><option value="">Semua Kategori Pelanggan</option></select>
-          </div>
-          <div class="top-produk-table-wrap">
-            <table class="top-produk-table">
-              <thead><tr>
-                <th class="sortable" data-key="nama">Produk<span class="sort-arrow"></span></th>
-                <th class="sortable" data-key="penjualan">Penjualan<span class="sort-arrow"></span></th>
-                <th class="sortable" data-key="kuantitas">Kuantitas<span class="sort-arrow"></span></th>
-                <th class="sortable" data-key="labaKotor">Laba Kotor<span class="sort-arrow"></span></th>
-              </tr></thead>
-              <tbody id="topProdukBody"></tbody>
-            </table>
-          </div>
+        <div class="top-produk-table-wrap">
+          <table class="top-produk-table">
+            <thead><tr>
+              <th class="sortable" data-key="nama">Produk<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="penjualan">Penjualan<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="kuantitas">Kuantitas<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="labaKotor">Laba Kotor<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="marginPct">Margin %<span class="sort-arrow"></span></th>
+            </tr></thead>
+            <tbody id="topProdukBody"></tbody>
+          </table>
         </div>
       </div>
+
+      <!-- SEKSI CHANNEL PENJUALAN (Di Bawah Top Produk dengan Split-Layout) -->
+      <div class="chart-card" style="margin-top:16px;">
+        <h3>🛍️ Channel Penjualan</h3>
+        <div class="chart-sub" style="margin-bottom: 20px;">Jumlah penjualan tiap channel, dibanding periode pembanding yang dipilih</div>
+        <div class="channel-split-container">
+          <div class="chart-wrap short" style="flex: 1; min-width: 280px; max-height: 280px;"><canvas id="kategoriChart"></canvas></div>
+          <div class="compare-table" id="channelCompareTable" style="flex: 1.2; min-width: 300px; margin-top:0;"></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- TAB: IMPORT -->
@@ -899,10 +907,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
       </div>
       <div class="table-card">
         <table class="data-table">
-          <thead><tr>
-            <th>Tanggal</th><th>No. Faktur</th><th>Barang</th>
-            <th>Kat. Pelanggan</th><th>Kat. Barang</th><th>Qty</th><th>Nilai</th><th>HPP</th><th></th>
-          </tr></thead>
+          <thead><tr id="rawTableHeader"></tr></thead>
           <tbody id="rawBody"></tbody>
         </table>
         <div class="empty-state" id="rawEmpty" style="display:none"><div class="icon">📊</div><p>Belum ada data. Silakan import lewat tab "Import Data".</p></div>
@@ -951,11 +956,11 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
 <div id="loading"><span id="loadingText">Memuat…</span></div>
 
 <script>
-// ── STREAMING_CHUNK: Initializing bridge functions & auth logic... ──
+// ── STREAMING_CHUNK: Mendefinisikan jembatan database demo dengan Local Storage ──
 var GAS_URL = "https://script.google.com/macros/s/AKfycbx_ihJa8K5k7DrTPxlvzIvwZ3J6HdrF8uhQ2O294ePf7oLpLyyCYkU01nWdbjoJPjrQHw/exec";
 var GATE_PASSWORD = "admin3";
 
-var MOCK_DATA = {
+var DEFAULT_DEMO_DATA = {
   sales: [
     { id: "m1", tanggalFaktur: "2026-07-01", nomorFaktur: "FAC-1001", namaBarang: "ASUS Vivobook Go 14", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Laptop", kuantitas: 45, penjualan: 360000000, hpp: 292500000 },
     { id: "m2", tanggalFaktur: "2026-07-03", nomorFaktur: "FAC-1002", namaBarang: "Samsung Galaxy S24 Ultra", kategoriPelanggan: "Retailer Resmi", kategoriBarang: "Smartphone", kuantitas: 32, penjualan: 640000000, hpp: 512000000 },
@@ -970,31 +975,80 @@ var MOCK_DATA = {
     { id: "m10", tanggalFaktur: "2026-06-15", nomorFaktur: "FAC-0997", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Aksesoris", kuantitas: 40, penjualan: 68000000, hpp: 48000000 }
   ],
   returs: [
-    { id: "mr1", tanggalFaktur: "2026-07-07", nomorFaktur: "RET-101", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "E-Commerce", kategoriBarang: "Aksesoris", kuantitas: 4, penjualan: 6800000, hpp: 4800000 }
+    { id: "mr1", tanggalFaktur: "2026-07-07", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "E-Commerce", kuantitas: 4, penjualan: 6800000 }
   ],
   targets: {
     "2026-07": 1500000000
   }
 };
 
+function getLocalDemoData() {
+  var stored = localStorage.getItem("dash_sales_demo_db");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch(e) {
+      return JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA));
+    }
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA));
+}
+
+function saveLocalDemoData(data) {
+  localStorage.setItem("dash_sales_demo_db", JSON.stringify(data));
+}
+
 function $(id){ return document.getElementById(id); }
 
+// ── STREAMING_CHUNK: Mengonfigurasi callGS untuk mendukung persistence layer ──
 function callGS(fn, arg){
   return new Promise(function(resolve, reject){
     if (GAS_URL.indexOf("GANTI_DENGAN_") > -1) {
-      console.warn("Menggunakan data demonstrasi otomatis.");
+      console.warn("Menggunakan Local Storage Demo Mode.");
+      var demoDb = getLocalDemoData();
       setTimeout(function(){
         if(fn === "getDashboardData") {
-          resolve(JSON.parse(JSON.stringify(MOCK_DATA)));
+          resolve(JSON.parse(JSON.stringify(demoDb)));
         } else if(fn === "setTarget") {
-          MOCK_DATA.targets[arg.month] = arg.value;
+          demoDb.targets[arg.month] = arg.value;
+          saveLocalDemoData(demoDb);
           resolve({ success: true });
-        } else if(fn.startsWith("bulkAdd")) {
+        } else if(fn === "bulkAddSales") {
+          var added = arg.map(function(item) {
+            item.id = "s_" + Math.random().toString(36).substr(2, 9);
+            return item;
+          });
+          demoDb.sales = demoDb.sales.concat(added);
+          saveLocalDemoData(demoDb);
           resolve({ success: true, count: arg.length });
+        } else if(fn === "bulkAddRetur") {
+          var added = arg.map(function(item) {
+            item.id = "r_" + Math.random().toString(36).substr(2, 9);
+            return item;
+          });
+          demoDb.returs = demoDb.returs.concat(added);
+          saveLocalDemoData(demoDb);
+          resolve({ success: true, count: arg.length });
+        } else if(fn === "deleteSales") {
+          demoDb.sales = demoDb.sales.filter(function(x){ return x.id !== arg; });
+          saveLocalDemoData(demoDb);
+          resolve({ success: true });
+        } else if(fn === "deleteRetur") {
+          demoDb.returs = demoDb.returs.filter(function(x){ return x.id !== arg; });
+          saveLocalDemoData(demoDb);
+          resolve({ success: true });
+        } else if(fn === "clearAllSales") {
+          demoDb.sales = [];
+          saveLocalDemoData(demoDb);
+          resolve({ success: true });
+        } else if(fn === "clearAllRetur") {
+          demoDb.returs = [];
+          saveLocalDemoData(demoDb);
+          resolve({ success: true });
         } else {
           resolve({ success: true });
         }
-      }, 400);
+      }, 300);
       return;
     }
 
@@ -1013,7 +1067,7 @@ function callGS(fn, arg){
   });
 }
 
-// ── STREAMING_CHUNK: Setting up custom modal handlers... ──
+// ── CUSTOM CONFIRM DIALOG ──
 var confirmCallback = null;
 function showCustomConfirm(title, message, isDanger, onConfirm) {
   $("confirmTitle").textContent = title;
@@ -1064,11 +1118,12 @@ function unlockApp(){
   loadDashboardData();
 }
 
-// ── STREAMING_CHUNK: Initializing State & Design Tokens... ──
+// ── STATE ──
 var state = {
   sales: [], returs: [], targets: {},
   filterFrom:"2026-07-10", filterTo:"2026-07-16", trendGranularity:"harian",
   compareMode:"prev_period", 
+  topProdukLimit: 10,
   topProdukKategoriFilter:"", topProdukSortKey:"penjualan", topProdukSortDir:"desc",
   importDatasetType:"sales", importHeaders:[], importRows:[], importMapping:{},
   rawDatasetType:"sales", rawSearch:"", rawPage:1, rawPageSize:50
@@ -1077,17 +1132,31 @@ var charts = { trend:null, kategori:null };
 var MONTHS_SHORT = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 var CHART_COLORS = ["#4F6EF7","#0FA968","#F0A93A","#E5486A","#8B5CF6","#5B5FEF","#2E45CC","#F97316","#14B8A6","#EC4899"];
 
-var REQUIRED_FIELDS = [
+// SKEMA KOLOM DINAMIS (Sales membutuhkan 8 kolom, Retur hanya membutuhkan 5 kolom)
+var SALES_FIELDS = [
   { key:"tanggalFaktur",      label:"Tanggal Faktur",     keywords:["tanggalfaktur","tanggal","tglfaktur","tgl","date","invoicedate"] },
   { key:"nomorFaktur",        label:"Nomor Faktur",       keywords:["nomorfaktur","nofaktur","invoiceno","nomorinvoice","noinvoice","nomor","no"] },
   { key:"namaBarang",         label:"Nama Barang",        keywords:["namabarang","barang","item","namaitem","itemname","product","namaproduk"] },
   { key:"kategoriPelanggan",  label:"Kategori Pelanggan", keywords:["kategoripelanggan","katpelanggan","customercategory","kategoricustomer"] },
   { key:"kategoriBarang",     label:"Kategori Barang",    keywords:["kategoribarang","katbarang","itemcategory","kategoriproduk","kategoriitem"] },
   { key:"kuantitas",          label:"Kuantitas",          keywords:["kuantitas","qty","quantity","jumlah"] },
-  { key:"penjualan",          label:"Penjualan / Nilai Retur", keywords:["penjualan","sales","amount","nilai","omset","total","retur"] },
+  { key:"penjualan",          label:"Penjualan / Nilai Retur", keywords:["penjualan","sales","amount","nilai","omset","total"] },
   { key:"hpp",                label:"HPP / BPP",          keywords:["hpp","bpp","cogs","costofgoods","hargapokok"] }
 ];
 
+var RETUR_FIELDS = [
+  { key:"tanggalFaktur",      label:"Tanggal Faktur",     keywords:["tanggalfaktur","tanggal","tglfaktur","tgl","date","invoicedate"] },
+  { key:"namaBarang",         label:"Nama Barang",        keywords:["namabarang","barang","item","namaitem","itemname","product","namaproduk"] },
+  { key:"kategoriPelanggan",  label:"Kategori Pelanggan", keywords:["kategoripelanggan","katpelanggan","customercategory","kategoricustomer"] },
+  { key:"kuantitas",          label:"Kuantitas",          keywords:["kuantitas","qty","quantity","jumlah"] },
+  { key:"penjualan",          label:"Nilai Retur",        keywords:["penjualan","retur","sales","amount","nilai","omset","total","nilairetur"] }
+];
+
+function getRequiredFields() {
+  return state.importDatasetType === "retur" ? RETUR_FIELDS : SALES_FIELDS;
+}
+
+// ── DATA LOAD ──
 function loadDashboardData(){
   setLoading(true, "Memuat data…");
   callGS("getDashboardData").then(function(data){
@@ -1099,6 +1168,7 @@ function loadDashboardData(){
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
 }
 
+// ── HELPERS ──
 function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text || "Memuat…"; }
 function showToast(msg, dur){ dur=dur||3000; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
 function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString("id-ID"); }
@@ -1115,6 +1185,11 @@ function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str
 function pad2(n){ n=String(n); return n.length<2 ? "0"+n : n; }
 function toYMDLocal(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
 
+function kpiCardSimple(label, value, extra){
+  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>';
+}
+
+// ── FILTERING ──
 function getFilteredRows(rows){
   var from = state.filterFrom, to = state.filterTo;
   if(!from && !to) return rows;
@@ -1128,8 +1203,8 @@ function getFilteredRows(rows){
 function getFilteredSales(){ return getFilteredRows(state.sales); }
 function getFilteredReturs(){ return getFilteredRows(state.returs); }
 
-// ── STREAMING_CHUNK: Computing financial & operational metrics... ──
-function computeKPIs(rows){
+// ── KPI COMPUTATION ──
+function computeKPIs(rows, returRows){
   var totalPenjualan=0, totalHpp=0, invoiceSet={}, totalQty=0;
   rows.forEach(function(s){
     totalPenjualan += Number(s.penjualan)||0;
@@ -1137,10 +1212,51 @@ function computeKPIs(rows){
     totalQty += Number(s.kuantitas)||0;
     if(s.nomorFaktur) invoiceSet[s.nomorFaktur]=true;
   });
-  var labaKotor = totalPenjualan - totalHpp;
-  var marginKotorPct = totalPenjualan ? (labaKotor/totalPenjualan) : 0;
-  return { totalPenjualan:totalPenjualan, totalHpp:totalHpp, labaKotor:labaKotor,
-    marginKotorPct:marginKotorPct, jumlahFaktur:Object.keys(invoiceSet).length, totalQty:totalQty };
+  
+  var totalRetur = 0;
+  var estimatedReturHpp = 0;
+  
+  if (returRows && returRows.length > 0) {
+    var hppRates = {};
+    var salesSums = {};
+    state.sales.forEach(function(s) {
+      var p = s.namaBarang;
+      if (p) {
+        hppRates[p] = (hppRates[p] || 0) + (Number(s.hpp) || 0);
+        salesSums[p] = (salesSums[p] || 0) + (Number(s.penjualan) || 0);
+      }
+    });
+    
+    returRows.forEach(function(r) {
+      var rVal = Number(r.penjualan) || 0;
+      totalRetur += rVal;
+      
+      var p = r.namaBarang;
+      var rate = 0.70; // fallback margin rate 30% -> HPP 70%
+      if (p && salesSums[p] > 0) {
+        rate = hppRates[p] / salesSums[p];
+      }
+      estimatedReturHpp += rVal * rate;
+    });
+  }
+  
+  var netSales = totalPenjualan - totalRetur;
+  var netHpp = totalHpp - estimatedReturHpp;
+  var labaKotor = netSales - netHpp;
+  var marginKotorPct = netSales ? (labaKotor/netSales) : 0;
+  
+  return { 
+    totalPenjualan: netSales, 
+    totalHpp: netHpp,         
+    labaKotor: labaKotor,     
+    marginKotorPct: marginKotorPct, 
+    jumlahFaktur: Object.keys(invoiceSet).length, 
+    totalQty: totalQty,
+    grossSales: totalPenjualan,
+    grossHpp: totalHpp,
+    totalRetur: totalRetur,
+    estimatedReturHpp: estimatedReturHpp
+  };
 }
 function computeReturKPIs(returRows, totalPenjualanForRate){
   var totalRetur=0, invoiceSet={};
@@ -1149,10 +1265,239 @@ function computeReturKPIs(returRows, totalPenjualanForRate){
     if(s.nomorFaktur) invoiceSet[s.nomorFaktur]=true;
   });
   var returRate = totalPenjualanForRate ? (totalRetur/totalPenjualanForRate) : 0;
-  return { totalRetur:totalRetur, jumlahRetur:Object.keys(invoiceSet).length, returRate:returRate };
+  return { totalRetur:totalRetur, jumlahRetur:returRows.length, returRate:returRate };
 }
 
-// ── STREAMING_CHUNK: Rendering the consolidated Insight & Volume panel... ──
+function groupSum(rows, keyFn, valFn){
+  var map = {};
+  rows.forEach(function(r){
+    var k = keyFn(r) || "(Tidak diketahui)";
+    map[k] = (map[k]||0) + (valFn(r)||0);
+  });
+  return map;
+}
+function topN(map, n){
+  return Object.keys(map).map(function(k){ return {label:k, value:map[k]}; })
+    .sort(function(a,b){ return b.value-a.value; }).slice(0,n);
+}
+
+// ── STREAMING_CHUNK: Mendefinisikan grafik tren harian/bulanan perbandingan ──
+function computeTrend(rows, granularity){
+  var map = {};
+  rows.forEach(function(s){
+    var t = s.tanggalFaktur || "";
+    if(!t) return;
+    var key = granularity==="bulanan" ? t.slice(0,7) : t;
+    if(!map[key]) map[key] = { penjualan:0, profit:0 };
+    map[key].penjualan += Number(s.penjualan)||0;
+    map[key].profit += (Number(s.penjualan)||0) - (Number(s.hpp)||0);
+  });
+  var keys = Object.keys(map).sort();
+
+  var allSalesMap = {};
+  state.sales.forEach(function(s) {
+    var t = s.tanggalFaktur || "";
+    if (!t) return;
+    var kDaily = t;
+    var kMonthly = t.slice(0, 7);
+    allSalesMap[kDaily] = (allSalesMap[kDaily] || 0) + (Number(s.penjualan) || 0);
+    allSalesMap[kMonthly] = (allSalesMap[kMonthly] || 0) + (Number(s.penjualan) || 0);
+  });
+
+  var compPenjualan = [];
+  keys.forEach(function(key) {
+    var compKey = "";
+    if (granularity === "bulanan") {
+      var curM = new Date(key + "-01T00:00:00");
+      var compM = new Date(curM);
+      if (state.compareMode === "last_month") {
+        compM.setMonth(compM.getMonth() - 1);
+      } else {
+        var monthsList = getMonthsInCalendarRange(state.filterFrom, state.filterTo);
+        compM.setMonth(compM.getMonth() - Math.max(1, monthsList.length));
+      }
+      compKey = compM.getFullYear() + "-" + pad2(compM.getMonth() + 1);
+    } else {
+      var curD = new Date(key + "T00:00:00");
+      var compD = new Date(curD);
+      if (state.compareMode === "last_month") {
+        compD.setMonth(compD.getMonth() - 1);
+      } else {
+        var numDays = 7; 
+        if (state.filterFrom && state.filterTo) {
+          numDays = Math.round((new Date(state.filterTo + "T00:00:00") - new Date(state.filterFrom + "T00:00:00")) / 86400000) + 1;
+        }
+        compD.setDate(compD.getDate() - numDays);
+      }
+      compKey = toYMDLocal(compD);
+    }
+    compPenjualan.push(allSalesMap[compKey] || 0);
+  });
+
+  return {
+    labels: keys.map(function(k){
+      if(granularity==="bulanan"){ var parts=k.split("-"); return MONTHS_SHORT[Number(parts[1])-1]+" "+parts[0]; }
+      return fmtDate(k);
+    }),
+    penjualan: keys.map(function(k){ return map[k].penjualan; }),
+    profit: keys.map(function(k){ return map[k].profit; }),
+    compPenjualan: compPenjualan
+  };
+}
+
+// ── TARGET LOGIC ──
+function getMonthsInCalendarRange(from, to){
+  if(!from || !to) return [];
+  var months = [];
+  var d = new Date(from+"T00:00:00"); d.setDate(1);
+  var end = new Date(to+"T00:00:00");
+  var guard = 0;
+  while(d <= end && guard < 240){
+    months.push(d.getFullYear()+"-"+pad2(d.getMonth()+1));
+    d.setMonth(d.getMonth()+1);
+    guard++;
+  }
+  return months;
+}
+function getTargetInfo(){
+  if(!state.filterFrom || !state.filterTo) return { hasRange:false };
+  var months = getMonthsInCalendarRange(state.filterFrom, state.filterTo);
+  var total = 0;
+  months.forEach(function(m){ total += Number(state.targets[m])||0; });
+  var anySet = months.some(function(m){ return state.targets[m] !== undefined && state.targets[m] !== ""; });
+  return { hasRange:true, total:total, anySet:anySet, months:months };
+}
+function getComparePeriodRange(){
+  if(!state.filterFrom || !state.filterTo) return null;
+  var from = new Date(state.filterFrom+"T00:00:00");
+  var to = new Date(state.filterTo+"T00:00:00");
+
+  if (state.compareMode === "prev_period") {
+    var days = Math.round((to-from)/86400000)+1;
+    var prevTo = new Date(from); prevTo.setDate(prevTo.getDate()-1);
+    var prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-(days-1));
+    return { from: toYMDLocal(prevFrom), to: toYMDLocal(prevTo) };
+  } else if (state.compareMode === "last_month") {
+    var compFrom = new Date(from);
+    compFrom.setMonth(compFrom.getMonth() - 1);
+    var compTo = new Date(to);
+    compTo.setMonth(compTo.getMonth() - 1);
+    return { from: toYMDLocal(compFrom), to: toYMDLocal(compTo) };
+  }
+  return null;
+}
+
+// ── RENDER: KPI CARDS ──
+function renderTotalPenjualanCard(kpi){
+  var targetInfo = getTargetInfo();
+  var html = '<div class="kpi-label">Total Penjualan</div><div class="kpi-value">'+fmtRp(kpi.totalPenjualan)+'</div>';
+  if(!targetInfo.hasRange){
+    html += '<div class="kpi-target-row">Pilih rentang tanggal untuk melihat perbandingan target bulanan.</div>';
+  } else if(!targetInfo.anySet){
+    html += '<div class="kpi-target-row">Target belum diset untuk periode ini ('+targetInfo.months.join(", ")+').</div>';
+  } else {
+    var pct = targetInfo.total ? (kpi.totalPenjualan/targetInfo.total*100) : 0;
+    var badgeCls = pct>=100 ? "baik" : "kurang";
+    html += '<div class="kpi-target-row">vs Target: <b>'+fmtRp(targetInfo.total)+'</b></div>'
+      + '<span class="kpi-badge '+badgeCls+'">'+pct.toFixed(1)+'% tercapai</span>';
+  }
+  $("kpiTotalPenjualan").innerHTML = html;
+}
+
+function renderFinancialCard(kpi){
+  var compRange = getComparePeriodRange();
+  var hppDeltaHtml = "", profitDeltaHtml = "", marginDeltaHtml = "";
+  
+  if (compRange) {
+    var compRows = state.sales.filter(function(s){
+      var t = s.tanggalFaktur||"";
+      return t >= compRange.from && t <= compRange.to;
+    });
+    var compReturRows = state.returs.filter(function(s){
+      var t = s.tanggalFaktur||"";
+      return t >= compRange.from && t <= compRange.to;
+    });
+    var compKpi = computeKPIs(compRows, compReturRows);
+    
+    // HPP Delta (HPP Turun = Baik/Hijau, HPP Naik = Kurang/Merah)
+    var hppDelta = compKpi.totalHpp ? ((kpi.totalHpp - compKpi.totalHpp) / compKpi.totalHpp * 100) : 0;
+    var hppCls = hppDelta <= 0.5 ? "up-green" : "down-red";
+    var hppArrow = hppDelta > 0.5 ? "▲" : (hppDelta < -0.5 ? "▼" : "—");
+    hppDeltaHtml = '<span class="compare-delta-inline '+hppCls+'">'+hppArrow+' '+Math.abs(hppDelta).toFixed(0)+'%</span>';
+    
+    // Laba Kotor Delta (Laba Naik = Baik/Hijau, Laba Turun = Kurang/Merah)
+    var profitDelta = compKpi.labaKotor ? ((kpi.labaKotor - compKpi.labaKotor) / compKpi.labaKotor * 100) : 0;
+    var profitCls = profitDelta >= -0.5 ? "up-green" : "down-red";
+    var profitArrow = profitDelta > 0.5 ? "▲" : (profitDelta < -0.5 ? "▼" : "—");
+    profitDeltaHtml = '<span class="compare-delta-inline '+profitCls+'">'+profitArrow+' '+Math.abs(profitDelta).toFixed(0)+'%</span>';
+    
+    // Margin Kotor Delta (Dalam satuan Percentage Point (pp))
+    var marginDiff = (kpi.marginKotorPct - compKpi.marginKotorPct) * 100;
+    var marginCls = marginDiff >= -0.1 ? "up-green" : "down-red";
+    var marginArrow = marginDiff > 0.1 ? "▲" : (marginDiff < -0.1 ? "▼" : "—");
+    marginDeltaHtml = '<span class="compare-delta-inline '+marginCls+'">'+marginArrow+' '+Math.abs(marginDiff).toFixed(1)+'pp</span>';
+  }
+  
+  var marginBadge = kpi.marginKotorPct >= 0.2 
+    ? '<span class="kpi-badge baik" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Baik</span>' 
+    : '<span class="kpi-badge kurang" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Kurang</span>';
+    
+  $("kpiFinancial").innerHTML = [
+    '<div class="kpi-combo-item"><div class="kpi-label">Total HPP (Net)</div><div class="kpi-value">'+fmtRp(kpi.totalHpp)+'</div>'+hppDeltaHtml+'<span style="font-size:10.5px;color:var(--gray-400);margin-top:4px">beban pokok penjualan</span></div>',
+    '<div class="kpi-combo-item"><div class="kpi-label">Laba Kotor (Net)</div><div class="kpi-value">'+fmtRp(kpi.labaKotor)+'</div>'+profitDeltaHtml+'<span style="font-size:10.5px;color:var(--gray-400);margin-top:4px">profit setelah retur</span></div>',
+    '<div class="kpi-combo-item"><div class="kpi-label">Margin Kotor (Net)</div><div class="kpi-value" style="color:var(--blue-deep)">'+(kpi.marginKotorPct*100).toFixed(1)+'%</div>'+marginDeltaHtml+' '+marginBadge+'</div>'
+  ].join("");
+}
+
+// ── STREAMING_CHUNK: Merender data perbandingan Retur Penjualan ──
+function renderReturKpiGrid(returKpi){
+  var compRange = getComparePeriodRange();
+  var returValDeltaHtml = "", returCountDeltaHtml = "", returRateDeltaHtml = "";
+
+  if (compRange) {
+    var compSalesRows = state.sales.filter(function(s){
+      var t = s.tanggalFaktur||"";
+      return t >= compRange.from && t <= compRange.to;
+    });
+    var compReturRows = state.returs.filter(function(s){
+      var t = s.tanggalFaktur||"";
+      return t >= compRange.from && t <= compRange.to;
+    });
+    
+    var compSalesKpi = computeKPIs(compSalesRows, compReturRows);
+    var compReturKpi = computeReturKPIs(compReturRows, compSalesKpi.grossSales);
+
+    // Retur Value Delta (Retur Turun = Baik/Hijau, Retur Naik = Kurang/Merah)
+    var returValDelta = compReturKpi.totalRetur ? ((returKpi.totalRetur - compReturKpi.totalRetur) / compReturKpi.totalRetur * 100) : (returKpi.totalRetur > 0 ? 100 : 0);
+    var rValCls = returValDelta <= 0.5 ? "up-green" : "down-red";
+    var rValArrow = returValDelta > 0.5 ? "▲" : (returValDelta < -0.5 ? "▼" : "—");
+    returValDeltaHtml = '<span class="compare-delta-inline ' + rValCls + '">' + rValArrow + ' ' + Math.abs(returValDelta).toFixed(0) + '%</span>';
+
+    // Retur Count Delta (Jumlah Retur Turun = Baik/Hijau, Naik = Kurang/Merah)
+    var returCountDelta = compReturKpi.jumlahRetur ? ((returKpi.jumlahRetur - compReturKpi.jumlahRetur) / compReturKpi.jumlahRetur * 100) : (returKpi.jumlahRetur > 0 ? 100 : 0);
+    var rCountCls = returCountDelta <= 0.5 ? "up-green" : "down-red";
+    var rCountArrow = returCountDelta > 0.5 ? "▲" : (returCountDelta < -0.5 ? "▼" : "—");
+    returCountDeltaHtml = '<span class="compare-delta-inline ' + rCountCls + '">' + rCountArrow + ' ' + Math.abs(returCountDelta).toFixed(0) + '%</span>';
+
+    // Retur Rate Delta (Perubahan poin persentase)
+    var rateDiff = (returKpi.returRate - compReturKpi.returRate) * 100;
+    var rRateCls = rateDiff <= 0.1 ? "up-green" : "down-red";
+    var rRateArrow = rateDiff > 0.1 ? "▲" : (rateDiff < -0.1 ? "▼" : "—");
+    returRateDeltaHtml = '<span class="compare-delta-inline ' + rRateCls + '">' + rRateArrow + ' ' + Math.abs(rateDiff).toFixed(1) + 'pp</span>';
+  }
+
+  var rateBadge = returKpi.returRate <= 0.05 
+    ? '<span class="kpi-badge baik" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Rendah</span>' 
+    : '<span class="kpi-badge kurang" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Tinggi</span>';
+
+  $("returKpiGrid").innerHTML = [
+    '<div class="kpi-combo-item"><div class="kpi-label">Total Nilai Retur</div><div class="kpi-value">' + fmtRp(returKpi.totalRetur) + '</div>' + returValDeltaHtml + '<span style="font-size:10.5px;color:var(--gray-400);margin-top:4px">nominal barang diretur</span></div>',
+    '<div class="kpi-combo-item"><div class="kpi-label">Jumlah Retur</div><div class="kpi-value">' + fmtNum(returKpi.jumlahRetur) + '</div>' + returCountDeltaHtml + '<span style="font-size:10.5px;color:var(--gray-400);margin-top:4px">total baris retur</span></div>',
+    '<div class="kpi-combo-item"><div class="kpi-label">Retur Rate</div><div class="kpi-value" style="color:var(--red)">' + (returKpi.returRate * 100).toFixed(1) + '%</div>' + returRateDeltaHtml + ' ' + rateBadge + '</div>'
+  ].join("");
+}
+
+// ── RENDER: INSIGHTS & VOLUMES ──
 function renderInsights(salesRows) {
   if (!salesRows || !salesRows.length) {
     $("insightTopProduct").textContent = "—";
@@ -1200,7 +1545,6 @@ function renderInsights(salesRows) {
   // 3. Metrik Volume Penjualan Terintegrasi (Faktur & Unit)
   var kpiCurrent = computeKPIs(salesRows);
   
-  // Hitung Delta untuk Volume
   var invoiceDeltaHtml = "";
   var qtyDeltaHtml = "";
   
@@ -1212,13 +1556,11 @@ function renderInsights(salesRows) {
     });
     var kpiComp = computeKPIs(compRows);
     
-    // Delta Jumlah Faktur
     var invDelta = kpiComp.jumlahFaktur ? ((kpiCurrent.jumlahFaktur - kpiComp.jumlahFaktur) / kpiComp.jumlahFaktur * 100) : 0;
     var invCls = invDelta >= -0.5 ? "up-green" : "down-red";
     var invArrow = invDelta > 0.5 ? "▲" : (invDelta < -0.5 ? "▼" : "—");
     invoiceDeltaHtml = '<span class="compare-delta-inline ' + invCls + '" style="margin-top:2px; font-size:10px; padding:1px 6px;">' + invArrow + ' ' + Math.abs(invDelta).toFixed(0) + '% vs ' + kpiComp.jumlahFaktur + '</span>';
 
-    // Delta Item Terjual
     var qtyDelta = kpiComp.totalQty ? ((kpiCurrent.totalQty - kpiComp.totalQty) / kpiComp.totalQty * 100) : 0;
     var qtyCls = qtyDelta >= -0.5 ? "up-green" : "down-red";
     var qtyArrow = qtyDelta > 0.5 ? "▲" : (qtyDelta < -0.5 ? "▼" : "—");
@@ -1228,7 +1570,6 @@ function renderInsights(salesRows) {
     qtyDeltaHtml = '<span style="font-size:10.5px;color:var(--gray-400)">unit barang terjual</span>';
   }
 
-  // Populate UI
   $("insightTopProduct").textContent = topProduct;
   $("insightTopProductQty").textContent = fmtNum(maxQty) + " unit terjual";
   $("insightTopChannel").textContent = topChannel;
@@ -1240,200 +1581,7 @@ function renderInsights(salesRows) {
   $("insightQtyDelta").innerHTML = qtyDeltaHtml;
 }
 
-function groupSum(rows, keyFn, valFn){
-  var map = {};
-  rows.forEach(function(r){
-    var k = keyFn(r) || "(Tidak diketahui)";
-    map[k] = (map[k]||0) + (valFn(r)||0);
-  });
-  return map;
-}
-function topN(map, n){
-  return Object.keys(map).map(function(k){ return {label:k, value:map[k]}; })
-    .sort(function(a,b){ return b.value-a.value; }).slice(0,n);
-}
-
-function computeTrend(rows, granularity){
-  // 1. Kelompokkan data penjualan & profit periode aktif
-  var map = {};
-  rows.forEach(function(s){
-    var t = s.tanggalFaktur || "";
-    if(!t) return;
-    var key = granularity==="bulanan" ? t.slice(0,7) : t;
-    if(!map[key]) map[key] = { penjualan:0, profit:0 };
-    map[key].penjualan += Number(s.penjualan)||0;
-    map[key].profit += (Number(s.penjualan)||0) - (Number(s.hpp)||0);
-  });
-  var keys = Object.keys(map).sort();
-
-  // 2. Buat map pencarian penjualan untuk SELURUH database (tidak terfilter)
-  var allSalesMap = {};
-  state.sales.forEach(function(s) {
-    var t = s.tanggalFaktur || "";
-    if (!t) return;
-    var kDaily = t;
-    var kMonthly = t.slice(0, 7);
-    allSalesMap[kDaily] = (allSalesMap[kDaily] || 0) + (Number(s.penjualan) || 0);
-    allSalesMap[kMonthly] = (allSalesMap[kMonthly] || 0) + (Number(s.penjualan) || 0);
-  });
-
-  // 3. Petakan setiap tanggal periode aktif ke tanggal pembanding
-  var compPenjualan = [];
-  keys.forEach(function(key) {
-    var compKey = "";
-    if (granularity === "bulanan") {
-      var curM = new Date(key + "-01T00:00:00");
-      var compM = new Date(curM);
-      if (state.compareMode === "last_month") {
-        compM.setMonth(compM.getMonth() - 1);
-      } else {
-        var monthsList = getMonthsInCalendarRange(state.filterFrom, state.filterTo);
-        compM.setMonth(compM.getMonth() - Math.max(1, monthsList.length));
-      }
-      compKey = compM.getFullYear() + "-" + pad2(compM.getMonth() + 1);
-    } else {
-      // Harian
-      var curD = new Date(key + "T00:00:00");
-      var compD = new Date(curD);
-      if (state.compareMode === "last_month") {
-        compD.setMonth(compD.getMonth() - 1);
-      } else {
-        var numDays = 7; // Default fallback jika filter kosong
-        if (state.filterFrom && state.filterTo) {
-          numDays = Math.round((new Date(state.filterTo + "T00:00:00") - new Date(state.filterFrom + "T00:00:00")) / 86400000) + 1;
-        }
-        compD.setDate(compD.getDate() - numDays);
-      }
-      compKey = toYMDLocal(compD);
-    }
-    compPenjualan.push(allSalesMap[compKey] || 0);
-  });
-
-  return {
-    labels: keys.map(function(k){
-      if(granularity==="bulanan"){ var parts=k.split("-"); return MONTHS_SHORT[Number(parts[1])-1]+" "+parts[0]; }
-      return fmtDate(k);
-    }),
-    penjualan: keys.map(function(k){ return map[k].penjualan; }),
-    profit: keys.map(function(k){ return map[k].profit; }),
-    compPenjualan: compPenjualan
-  };
-}
-
-function getMonthsInCalendarRange(from, to){
-  if(!from || !to) return [];
-  var months = [];
-  var d = new Date(from+"T00:00:00"); d.setDate(1);
-  var end = new Date(to+"T00:00:00");
-  var guard = 0;
-  while(d <= end && guard < 240){
-    months.push(d.getFullYear()+"-"+pad2(d.getMonth()+1));
-    d.setMonth(d.getMonth()+1);
-    guard++;
-  }
-  return months;
-}
-function getTargetInfo(){
-  if(!state.filterFrom || !state.filterTo) return { hasRange:false };
-  var months = getMonthsInCalendarRange(state.filterFrom, state.filterTo);
-  var total = 0;
-  months.forEach(function(m){ total += Number(state.targets[m])||0; });
-  var anySet = months.some(function(m){ return state.targets[m] !== undefined && state.targets[m] !== ""; });
-  return { hasRange:true, total:total, anySet:anySet, months:months };
-}
-
-function getComparePeriodRange(){
-  if(!state.filterFrom || !state.filterTo) return null;
-  var from = new Date(state.filterFrom+"T00:00:00");
-  var to = new Date(state.filterTo+"T00:00:00");
-
-  if (state.compareMode === "prev_period") {
-    var days = Math.round((to-from)/86400000)+1;
-    var prevTo = new Date(from); prevTo.setDate(prevTo.getDate()-1);
-    var prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-(days-1));
-    return { from: toYMDLocal(prevFrom), to: toYMDLocal(prevTo) };
-  } else if (state.compareMode === "last_month") {
-    var compFrom = new Date(from);
-    compFrom.setMonth(compFrom.getMonth() - 1);
-    var compTo = new Date(to);
-    compTo.setMonth(compTo.getMonth() - 1);
-    return { from: toYMDLocal(compFrom), to: toYMDLocal(compTo) };
-  }
-  return null;
-}
-
-function kpiCardSimple(label, value, extra){
-  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>';
-}
-
-function renderTotalPenjualanCard(kpi){
-  var targetInfo = getTargetInfo();
-  var html = '<div class="kpi-label">Total Penjualan</div><div class="kpi-value">'+fmtRp(kpi.totalPenjualan)+'</div>';
-  if(!targetInfo.hasRange){
-    html += '<div class="kpi-target-row">Pilih rentang tanggal untuk melihat perbandingan target bulanan.</div>';
-  } else if(!targetInfo.anySet){
-    html += '<div class="kpi-target-row">Target belum diset untuk periode ini ('+targetInfo.months.join(", ")+').</div>';
-  } else {
-    var pct = targetInfo.total ? (kpi.totalPenjualan/targetInfo.total*100) : 0;
-    var badgeCls = pct>=100 ? "baik" : "kurang";
-    html += '<div class="kpi-target-row">vs Target: <b>'+fmtRp(targetInfo.total)+'</b></div>'
-      + '<span class="kpi-badge '+badgeCls+'">'+pct.toFixed(1)+'% tercapai</span>';
-  }
-  $("kpiTotalPenjualan").innerHTML = html;
-}
-
-// ── STREAMING_CHUNK: Rendering Profitability Row (Full-width) with Dynamic Comparison Deltas... ──
-function renderFinancialCard(kpi){
-  var compRange = getComparePeriodRange();
-  var hppDeltaHtml = "", profitDeltaHtml = "", marginDeltaHtml = "";
-  
-  if (compRange) {
-    var compRows = state.sales.filter(function(s){
-      var t = s.tanggalFaktur||"";
-      return t >= compRange.from && t <= compRange.to;
-    });
-    var compKpi = computeKPIs(compRows);
-    
-    // HPP Delta (HPP Turun = Baik/Hijau, HPP Naik = Kurang/Merah)
-    var hppDelta = compKpi.totalHpp ? ((kpi.totalHpp - compKpi.totalHpp) / compKpi.totalHpp * 100) : 0;
-    var hppCls = hppDelta <= 0.5 ? "up-green" : "down-red";
-    var hppArrow = hppDelta > 0.5 ? "▲" : (hppDelta < -0.5 ? "▼" : "—");
-    hppDeltaHtml = '<span class="compare-delta-inline '+hppCls+'">'+hppArrow+' '+Math.abs(hppDelta).toFixed(0)+'%</span>';
-    
-    // Laba Kotor Delta (Laba Naik = Baik/Hijau, Laba Turun = Kurang/Merah)
-    var profitDelta = compKpi.labaKotor ? ((kpi.labaKotor - compKpi.labaKotor) / compKpi.labaKotor * 100) : 0;
-    var profitCls = profitDelta >= -0.5 ? "up-green" : "down-red";
-    var profitArrow = profitDelta > 0.5 ? "▲" : (profitDelta < -0.5 ? "▼" : "—");
-    profitDeltaHtml = '<span class="compare-delta-inline '+profitCls+'">'+profitArrow+' '+Math.abs(profitDelta).toFixed(0)+'%</span>';
-    
-    // Margin Kotor Delta (Dalam satuan Percentage Point (pp))
-    var marginDiff = (kpi.marginKotorPct - compKpi.marginKotorPct) * 100;
-    var marginCls = marginDiff >= -0.1 ? "up-green" : "down-red";
-    var marginArrow = marginDiff > 0.1 ? "▲" : (marginDiff < -0.1 ? "▼" : "—");
-    marginDeltaHtml = '<span class="compare-delta-inline '+marginCls+'">'+marginArrow+' '+Math.abs(marginDiff).toFixed(1)+'pp</span>';
-  }
-  
-  var marginBadge = kpi.marginKotorPct >= 0.2 
-    ? '<span class="kpi-badge baik" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Baik</span>' 
-    : '<span class="kpi-badge kurang" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Kurang</span>';
-    
-  $("kpiFinancial").innerHTML = [
-    '<div class="kpi-combo-item"><div class="kpi-label">Total HPP</div><div class="kpi-value">'+fmtRp(kpi.totalHpp)+'</div>'+hppDeltaHtml+'</div>',
-    '<div class="kpi-combo-item"><div class="kpi-label">Laba Kotor</div><div class="kpi-value">'+fmtRp(kpi.labaKotor)+'</div>'+profitDeltaHtml+'</div>',
-    '<div class="kpi-combo-item"><div class="kpi-label">Margin Kotor</div><div class="kpi-value" style="color:var(--blue-deep)">'+(kpi.marginKotorPct*100).toFixed(1)+'%</div>'+marginDeltaHtml+' '+marginBadge+'</div>'
-  ].join("");
-}
-
-function renderReturKpiGrid(returKpi){
-  var rateBadge = returKpi.returRate <= 0.05 ? '<span class="kpi-badge baik">● Rendah</span>' : '<span class="kpi-badge kurang">● Tinggi</span>';
-  $("returKpiGrid").innerHTML = [
-    kpiCardSimple("Total Nilai Retur", fmtRp(returKpi.totalRetur), ""),
-    kpiCardSimple("Jumlah Retur", fmtNum(returKpi.jumlahRetur), ""),
-    kpiCardSimple("Retur Rate", (returKpi.returRate*100).toFixed(1)+"%", rateBadge + ' <span style="font-size:10.5px;color:var(--gray-400)">asumsi rendah ≤5%</span>')
-  ].join("");
-}
-
-// ── STREAMING_CHUNK: Managing Charts Lifecycle... ──
+// ── STREAMING_CHUNK: Menggambar grafik tren penjualan gabungan dengan Chart.js ──
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); charts[key]=null; } }
 
 function renderTrendChart(rows){
@@ -1481,6 +1629,7 @@ function renderTrendChart(rows){
   });
 }
 
+// Merender pie chart kategori/channel penjualan
 function renderKategoriChart(rows){
   if(typeof Chart === "undefined"){ throw new Error("Library Chart.js belum termuat"); }
   destroyChart("kategori");
@@ -1587,12 +1736,15 @@ function groupProdukStats(rows){
   });
   return map;
 }
+
+// ── STREAMING_CHUNK: Merender tabel Top Produk dengan batas tampilan (dropdown limit) ──
 function renderTopProdukTable(rows){
   var filtered = state.topProdukKategoriFilter ? rows.filter(function(r){ return r.kategoriPelanggan === state.topProdukKategoriFilter; }) : rows;
   var map = groupProdukStats(filtered);
   var entries = Object.keys(map).map(function(k){
     var d = map[k];
-    return { nama:k, penjualan:d.penjualan, kuantitas:d.kuantitas, labaKotor:d.penjualan-d.hpp };
+    var marginPct = d.penjualan ? (((d.penjualan - d.hpp) / d.penjualan) * 100) : 0;
+    return { nama:k, penjualan:d.penjualan, kuantitas:d.kuantitas, labaKotor:d.penjualan-d.hpp, marginPct:marginPct };
   });
 
   var key = state.topProdukSortKey, dir = state.topProdukSortDir === "asc" ? 1 : -1;
@@ -1600,6 +1752,10 @@ function renderTopProdukTable(rows){
     if(key === "nama") return dir * a.nama.localeCompare(b.nama);
     return dir * (a[key] - b[key]);
   });
+
+  // Melakukan slice data produk sesuai dengan dropdown limit terpilih
+  var limit = parseInt(state.topProdukLimit) || 10;
+  var slicedEntries = entries.slice(0, limit);
 
   document.querySelectorAll(".top-produk-table thead th.sortable").forEach(function(th){
     var isActive = th.dataset.key === key;
@@ -1610,21 +1766,28 @@ function renderTopProdukTable(rows){
   document.querySelector(".top-produk-table").classList.toggle("sorted-by-penjualan-desc", key==="penjualan" && state.topProdukSortDir==="desc");
 
   var tbody = $("topProdukBody");
-  if(!entries.length){
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:24px">Tidak ada data</td></tr>';
+  if(!slicedEntries.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:24px">Tidak ada data</td></tr>';
     return;
   }
-  tbody.innerHTML = entries.map(function(e){
-    return '<tr><td class="cell-name">'+escapeHtml(e.nama)+'</td><td>'+fmtRp(e.penjualan)+'</td><td>'+fmtNum(e.kuantitas)+'</td><td>'+fmtRp(e.labaKotor)+'</td></tr>';
+  tbody.innerHTML = slicedEntries.map(function(e){
+    var marginColor = e.marginPct >= 20 ? 'var(--green)' : 'var(--amber)';
+    return '<tr>'
+      +'<td class="cell-name">'+escapeHtml(e.nama)+'</td>'
+      +'<td>'+fmtRp(e.penjualan)+'</td>'
+      +'<td>'+fmtNum(e.kuantitas)+'</td>'
+      +'<td>'+fmtRp(e.labaKotor)+'</td>'
+      +'<td style="font-weight:700; color:'+marginColor+'">'+e.marginPct.toFixed(1)+'%</td>'
+      +'</tr>';
   }).join("");
 }
 
-// ── STREAMING_CHUNK: Ringkasan Orchestration... ──
+// ── STREAMING_CHUNK: Mengatur orkestrator tab ringkasan data penjualan ──
 function renderRingkasan(){
   var salesRows = getFilteredSales();
   var returRows = getFilteredReturs();
-  var kpi = computeKPIs(salesRows);
-  var returKpi = computeReturKPIs(returRows, kpi.totalPenjualan);
+  var kpi = computeKPIs(salesRows, returRows);
+  var returKpi = computeReturKPIs(returRows, kpi.grossSales);
 
   renderTotalPenjualanCard(kpi);
   renderFinancialCard(kpi);
@@ -1645,7 +1808,7 @@ function safeRender(fn, label){
 
 function renderAll(){ renderRingkasan(); renderRawTable(); }
 
-// ── STREAMING_CHUNK: Adding Event Listeners... ──
+// ── TABS & CONTROLS EVENT LISTENERS ──
 document.querySelectorAll(".tab-btn").forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
@@ -1662,6 +1825,12 @@ document.querySelectorAll(".chart-toggle button").forEach(function(btn){
     state.trendGranularity = btn.dataset.gran;
     safeRender(function(){ renderTrendChart(getFilteredSales()); }, "Tren Penjualan");
   });
+});
+
+// Dropdown filter jumlah top produk
+$("topProdukLimitFilter").addEventListener("change", function(e){
+  state.topProdukLimit = parseInt(e.target.value) || 10;
+  safeRender(function(){ renderTopProdukTable(getFilteredSales()); }, "Top Produk");
 });
 
 $("topProdukKategoriFilter").addEventListener("change", function(e){
@@ -1715,7 +1884,7 @@ $("saveTargetBtn").addEventListener("click", function(){
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan target"); });
 });
 
-// ── STREAMING_CHUNK: Double Calendar date picker logcs... ──
+// ── STREAMING_CHUNK: Menggambar kalender ganda interaktif dari nol ──
 var pickerTemp = {
   start: "2026-07-10",
   end: "2026-07-16",
@@ -1827,7 +1996,7 @@ $("nextMonthBtn").addEventListener("click", function(e) {
     pickerTemp.leftMonth = 0;
     pickerTemp.leftYear++;
   } else {
-    pickerTemp.leftMonth++;
+    pickerTemp.leftMonth--;
   }
   drawCalendars();
 });
@@ -1943,7 +2112,7 @@ $("pickerApplyBtn").addEventListener("click", function(e) {
   renderRingkasan();
 });
 
-// ── STREAMING_CHUNK: Comparison handlers... ──
+// ── SAKELAR PERBANDINGAN ──
 $("comparePrevPeriodBtn").addEventListener("click", function() {
   document.getElementById("comparePrevPeriodBtn").classList.add("active-blue");
   document.getElementById("compareLastMonthBtn").classList.remove("active-blue");
@@ -1971,11 +2140,12 @@ document.querySelectorAll('.dataset-toggle button[data-type]').forEach(function(
   });
 });
 
-// ── STREAMING_CHUNK: Parsing excel columns... ──
+// ── PARSING FILE EXCEL & RETUR SKEMA ──
 function normalizeHeader(h){ return String(h||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
 function guessMapping(headers){
   var mapping = {};
-  REQUIRED_FIELDS.forEach(function(f){
+  var fields = getRequiredFields();
+  fields.forEach(function(f){
     var found = "";
     for(var i=0;i<headers.length;i++){
       var norm = normalizeHeader(headers[i]);
@@ -2045,7 +2215,8 @@ function showFileChip(name){
   $("removeFileBtn").addEventListener("click", resetImportUI);
 }
 function renderMappingUI(){
-  $("mappingGrid").innerHTML = REQUIRED_FIELDS.map(function(f){
+  var fields = getRequiredFields();
+  $("mappingGrid").innerHTML = fields.map(function(f){
     var current = state.importMapping[f.key] || "";
     var opts = '<option value="">-- pilih kolom --</option>' + state.importHeaders.map(function(h){
       return '<option value="'+escapeHtml(h)+'"'+(h===current?" selected":"")+'>'+escapeHtml(h)+'</option>';
@@ -2064,10 +2235,11 @@ function renderMappingUI(){
   });
 }
 function renderPreview(){
+  var fields = getRequiredFields();
   var sample = state.importRows.slice(0,5);
-  var headerRow = "<tr>"+REQUIRED_FIELDS.map(function(f){ return "<th>"+f.label+"</th>"; }).join("")+"</tr>";
+  var headerRow = "<tr>"+fields.map(function(f){ return "<th>"+f.label+"</th>"; }).join("")+"</tr>";
   var bodyRows = sample.map(function(row){
-    return "<tr>"+REQUIRED_FIELDS.map(function(f){
+    return "<tr>"+fields.map(function(f){
       var col = state.importHeaders.indexOf(state.importMapping[f.key]);
       var val = col>-1 ? row[col] : "";
       if(f.key==="tanggalFaktur") val = parseDateValue(val);
@@ -2083,16 +2255,17 @@ function resetImportUI(){
   $("fileInput").value = "";
 }
 
-// ── STREAMING_CHUNK: Processing bulk imports... ──
+// ── IMPOR DATA MASSAL ──
 function importAll(){
-  var missing = REQUIRED_FIELDS.filter(function(f){ return !state.importMapping[f.key]; });
+  var fields = getRequiredFields();
+  var missing = fields.filter(function(f){ return !state.importMapping[f.key]; });
   if(missing.length){
     showToast("Lengkapi dulu pemetaan kolom: "+missing.map(function(f){return f.label;}).join(", "));
     return;
   }
   var mapped = state.importRows.map(function(row){
     var obj = {};
-    REQUIRED_FIELDS.forEach(function(f){
+    fields.forEach(function(f){
       var col = state.importHeaders.indexOf(state.importMapping[f.key]);
       var val = col>-1 ? row[col] : "";
       if(f.key==="tanggalFaktur") obj[f.key] = parseDateValue(val);
@@ -2172,7 +2345,7 @@ $("clearAllReturBtn").addEventListener("click", function(){
   );
 });
 
-// ── STREAMING_CHUNK: Handling Raw Tables rendering... ──
+// ── DATA MENTAH DENGAN STRUKTUR KOLOM DINAMIS ──
 document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(function(b){ b.classList.remove("active"); });
@@ -2198,21 +2371,39 @@ function renderRawTable(){
   var startIdx = (state.rawPage-1) * state.rawPageSize;
   var pageRows = rows.slice(startIdx, startIdx+state.rawPageSize);
 
+  // Menyusun Header Dinamis sesuai Tipe Data (Retur menyembunyikan kolom No Faktur, Kat. Barang, dan HPP)
+  var header = $("rawTableHeader");
+  if (state.rawDatasetType === "retur") {
+    header.innerHTML = '<th>Tanggal</th><th>Barang</th><th>Kat. Pelanggan</th><th>Qty</th><th>Nilai Retur</th><th></th>';
+  } else {
+    header.innerHTML = '<th>Tanggal</th><th>No. Faktur</th><th>Barang</th><th>Kat. Pelanggan</th><th>Kat. Barang</th><th>Qty</th><th>Nilai</th><th>HPP</th><th></th>';
+  }
+
   var tbody = $("rawBody"); tbody.innerHTML = "";
   $("rawEmpty").style.display = rows.length ? "none" : "block";
 
   pageRows.forEach(function(s){
     var tr = document.createElement("tr");
-    tr.innerHTML =
-      "<td>"+fmtDate(s.tanggalFaktur)+"</td>"
-      +"<td>"+escapeHtml(s.nomorFaktur)+"</td>"
-      +"<td>"+escapeHtml(s.namaBarang)+"</td>"
-      +"<td>"+escapeHtml(s.kategoriPelanggan)+"</td>"
-      +"<td>"+escapeHtml(s.kategoriBarang)+"</td>"
-      +"<td>"+fmtNum(s.kuantitas)+"</td>"
-      +"<td>"+fmtRp(s.penjualan)+"</td>"
-      +"<td>"+fmtRp(s.hpp)+"</td>"
-      +'<td><div class="row-actions"><button data-id="'+s.id+'">Hapus</button></div></td>';
+    if (state.rawDatasetType === "retur") {
+      tr.innerHTML =
+        "<td>"+fmtDate(s.tanggalFaktur)+"</td>"
+        +"<td>"+escapeHtml(s.namaBarang)+"</td>"
+        +"<td>"+escapeHtml(s.kategoriPelanggan)+"</td>"
+        +"<td>"+fmtNum(s.kuantitas)+"</td>"
+        +"<td>"+fmtRp(s.penjualan)+"</td>"
+        +'<td><div class="row-actions"><button data-id="'+s.id+'">Hapus</button></div></td>';
+    } else {
+      tr.innerHTML =
+        "<td>"+fmtDate(s.tanggalFaktur)+"</td>"
+        +"<td>"+escapeHtml(s.nomorFaktur)+"</td>"
+        +"<td>"+escapeHtml(s.namaBarang)+"</td>"
+        +"<td>"+escapeHtml(s.kategoriPelanggan)+"</td>"
+        +"<td>"+escapeHtml(s.kategoriBarang)+"</td>"
+        +"<td>"+fmtNum(s.kuantitas)+"</td>"
+        +"<td>"+fmtRp(s.penjualan)+"</td>"
+        +"<td>"+fmtRp(s.hpp)+"</td>"
+        +'<td><div class="row-actions"><button data-id="'+s.id+'">Hapus</button></div></td>';
+    }
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll(".row-actions button").forEach(function(b){
