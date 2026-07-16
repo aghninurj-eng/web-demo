@@ -70,10 +70,11 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .tab-panel.active{display:block;animation:fadeIn .25s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
-/* Grid Layout untuk Baris Atas (Total Penjualan + Insight) */
+/* ── STREAMING_CHUNK: Styling the layout grids... ── */
+/* Grid Layout untuk Baris Atas (Total Penjualan + Insight Panel) */
 .kpi-top-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1.1fr 0.9fr;
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -295,6 +296,7 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
   font-family: 'Lexend', sans-serif;
 }
 
+/* ── STREAMING_CHUNK: Styling KPI cards & Profitability... ── */
 /* KPI cards */
 .kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;transition:transform .18s,box-shadow .18s}
 .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
@@ -328,93 +330,128 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .kpi-hero .kpi-badge.baik{background:rgba(15,169,104,.25);color:#7EEBC0}
 .kpi-hero .kpi-badge.kurang{background:rgba(240,169,58,.22);color:#FFD98C}
 
-/* KPI Seksi Analisis Insight */
-.kpi-insight {
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.kpi-insight .kpi-card-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--blue-deep);
-  margin-bottom: 12px;
-}
-.kpi-insight .kpi-card-title .dot {
-  background: var(--blue-deep);
-}
-.insight-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  height: 100%;
-}
-@media(min-width: 480px) and (max-width: 860px) {
-  .insight-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-.insight-item {
-  background: var(--gray-50);
-  padding: 12px 14px;
-  border-radius: 10px;
-  border-left: 4px solid var(--blue);
-  transition: transform 0.15s, border-color 0.15s;
-}
-.insight-item:hover {
-  transform: translateX(4px);
-  background: var(--blue-lt);
-}
-.insight-item.alt-accent {
-  border-left-color: var(--purple);
-}
-.insight-item.alt-accent:hover {
-  background: var(--purple-lt);
-}
-.insight-label {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  color: var(--gray-600);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  margin-bottom: 4px;
-}
-.insight-value {
-  font-family: 'Lexend', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.insight-sub {
-  font-size: 11.5px;
-  color: var(--gray-600);
-  margin-top: 2px;
-}
-
-.kpi-section-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-@media(max-width:720px){.kpi-section-row{grid-template-columns:1fr}}
+/* Profitability Row - Full Width */
+.kpi-section-row{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
 .kpi-combo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.kpi-combo-grid.cols-2{grid-template-columns:repeat(2,1fr)}
-.kpi-combo-item .kpi-label{margin-bottom:6px}
-.kpi-combo-item .kpi-value{font-size:19px}
+@media(max-width:860px){
+  .kpi-combo-grid{grid-template-columns:1fr}
+}
+.kpi-combo-item{
+  background:var(--gray-50);
+  border:1px solid var(--gray-100);
+  border-radius:10px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-height:108px;
+  transition:all .2s ease;
+}
+.kpi-combo-item:hover{
+  background:var(--blue-lt);
+  border-color:var(--blue);
+  transform:translateY(-2px);
+  box-shadow:var(--shadow);
+}
+.kpi-combo-item .kpi-label{font-size:10.5px;color:var(--gray-600);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.kpi-combo-item .kpi-value{font-size:19px;font-weight:700;color:var(--text);font-family:'Lexend',sans-serif}
+
 .kpi-card-title{display:flex;align-items:center;gap:8px;font-family:'Lexend',sans-serif;font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:14px}
 .kpi-card-title .dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 
 .kpi-accent-emerald{border-top:3px solid var(--green)}
 .kpi-accent-emerald .kpi-card-title .dot{background:var(--green)}
-.kpi-accent-indigo{border-top:3px solid var(--indigo)}
-.kpi-accent-indigo .kpi-card-title .dot{background:var(--indigo)}
 
 .retur-card{margin-bottom:20px;border-top:3px solid var(--red)}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+
+/* ── STREAMING_CHUNK: Styling the new high-density Insight Card... ── */
+/* Seksi Quick Insights (4 High-Density Grid) */
+.kpi-insight {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform .18s, box-shadow .18s;
+}
+.kpi-insight:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-lg);
+}
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+  flex-grow: 1;
+}
+.insight-item {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 90px;
+  transition: all 0.2s ease;
+}
+.insight-item:hover {
+  background: var(--blue-lt);
+  border-color: var(--blue);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.insight-label {
+  font-size: 10.5px;
+  color: var(--gray-600);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  margin-bottom: 4px;
+}
+.insight-value {
+  font-family: 'Lexend', sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+  word-break: break-word;
+}
+.insight-sub {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* Delta Indicators for Financials / Volumes */
+.compare-delta-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+  width: fit-content;
+}
+.compare-delta-inline.up-green {
+  color: #047857;
+  background: var(--green-lt);
+}
+.compare-delta-inline.down-red {
+  color: #B9275A;
+  background: var(--red-lt);
+}
 
 /* Chart cards */
 .chart-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin-bottom:18px;transition:box-shadow .18s}
@@ -706,38 +743,46 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
         <button class="btn btn-outline btn-sm" id="openTargetModalBtn" style="height:38px">🎯 Atur Target</button>
       </div>
 
-      <!-- Grid Gabungan: Total Penjualan vs Target DAN Seksi Insight Pintar -->
+      <!-- ── STREAMING_CHUNK: Rendering grid layout atas... ── -->
+      <!-- Grid Gabungan: Total Penjualan vs Target DAN Seksi Insight Pintar (Dengan Volume Penjualan) -->
       <div class="kpi-top-grid">
         <!-- Total Penjualan vs Target -->
         <div class="kpi-card kpi-hero" id="kpiTotalPenjualan" style="margin-bottom:0;"></div>
 
-        <!-- Seksi Quick Insights (Produk & Channel Unggulan) -->
-        <div class="kpi-insight" id="kpiInsights">
-          <div class="kpi-card-title"><span class="dot"></span>💡 Ringkasan Analisis (Insight)</div>
+        <!-- Seksi Quick Insights (Produk & Channel Unggulan + Volume Penjualan) -->
+        <div class="kpi-insight" id="kpiInsights" style="margin-bottom:0;">
+          <div class="kpi-card-title"><span class="dot" style="background:var(--blue)"></span>💡 Ringkasan Analisis &amp; Volume</div>
           <div class="insight-grid">
             <div class="insight-item">
               <div class="insight-label">🏆 Produk Paling Laku</div>
               <div class="insight-value" id="insightTopProduct">Mengompilasi...</div>
               <div class="insight-sub" id="insightTopProductQty">0 unit terjual</div>
             </div>
-            <div class="insight-item alt-accent">
+            <div class="insight-item">
               <div class="insight-label">📢 Channel Terbesar</div>
               <div class="insight-value" id="insightTopChannel">Mengompilasi...</div>
               <div class="insight-sub" id="insightTopChannelVal">Rp 0</div>
+            </div>
+            <div class="insight-item">
+              <div class="insight-label">📋 Jumlah Faktur</div>
+              <div class="insight-value" id="insightInvoiceCount">0 Faktur</div>
+              <div class="insight-sub" id="insightInvoiceDelta">faktur aktif</div>
+            </div>
+            <div class="insight-item">
+              <div class="insight-label">📦 Item Terjual</div>
+              <div class="insight-value" id="insightTotalQty">0 Unit</div>
+              <div class="insight-sub" id="insightQtyDelta">unit barang terjual</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- HPP, Laba Kotor, Margin Kotor -->
+      <!-- ── STREAMING_CHUNK: Rendering Profitability full-width row... ── -->
+      <!-- HPP, Laba Kotor, Margin Kotor (Full Width & Berdiri Sendiri) -->
       <div class="kpi-section-row">
         <div class="kpi-card kpi-accent-emerald">
           <div class="kpi-card-title"><span class="dot"></span>Profitabilitas</div>
           <div class="kpi-combo-grid" id="kpiFinancial"></div>
-        </div>
-        <div class="kpi-card kpi-accent-indigo">
-          <div class="kpi-card-title"><span class="dot"></span>Volume Penjualan</div>
-          <div class="kpi-combo-grid cols-2" id="kpiVolume"></div>
         </div>
       </div>
 
@@ -906,6 +951,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
 <div id="loading"><span id="loadingText">Memuat…</span></div>
 
 <script>
+// ── STREAMING_CHUNK: Initializing bridge functions & auth logic... ──
 var GAS_URL = "https://script.google.com/macros/s/AKfycbx_ihJa8K5k7DrTPxlvzIvwZ3J6HdrF8uhQ2O294ePf7oLpLyyCYkU01nWdbjoJPjrQHw/exec";
 var GATE_PASSWORD = "admin3";
 
@@ -967,6 +1013,7 @@ function callGS(fn, arg){
   });
 }
 
+// ── STREAMING_CHUNK: Setting up custom modal handlers... ──
 var confirmCallback = null;
 function showCustomConfirm(title, message, isDanger, onConfirm) {
   $("confirmTitle").textContent = title;
@@ -1017,6 +1064,7 @@ function unlockApp(){
   loadDashboardData();
 }
 
+// ── STREAMING_CHUNK: Initializing State & Design Tokens... ──
 var state = {
   sales: [], returs: [], targets: {},
   filterFrom:"2026-07-10", filterTo:"2026-07-16", trendGranularity:"harian",
@@ -1080,6 +1128,7 @@ function getFilteredRows(rows){
 function getFilteredSales(){ return getFilteredRows(state.sales); }
 function getFilteredReturs(){ return getFilteredRows(state.returs); }
 
+// ── STREAMING_CHUNK: Computing financial & operational metrics... ──
 function computeKPIs(rows){
   var totalPenjualan=0, totalHpp=0, invoiceSet={}, totalQty=0;
   rows.forEach(function(s){
@@ -1103,15 +1152,22 @@ function computeReturKPIs(returRows, totalPenjualanForRate){
   return { totalRetur:totalRetur, jumlahRetur:Object.keys(invoiceSet).length, returRate:returRate };
 }
 
+// ── STREAMING_CHUNK: Rendering the consolidated Insight & Volume panel... ──
 function renderInsights(salesRows) {
   if (!salesRows || !salesRows.length) {
     $("insightTopProduct").textContent = "—";
     $("insightTopProductQty").textContent = "0 unit terjual";
     $("insightTopChannel").textContent = "—";
     $("insightTopChannelVal").textContent = "Rp 0";
+    
+    $("insightInvoiceCount").textContent = "0 Faktur";
+    $("insightInvoiceDelta").innerHTML = "faktur aktif";
+    $("insightTotalQty").textContent = "0 Unit";
+    $("insightQtyDelta").innerHTML = "unit barang terjual";
     return;
   }
 
+  // 1. Produk Terlaris (Berdasarkan Kuantitas)
   var productQtyMap = {};
   salesRows.forEach(function(r) {
     var pName = r.namaBarang || "Tidak Diketahui";
@@ -1126,6 +1182,7 @@ function renderInsights(salesRows) {
     }
   }
 
+  // 2. Channel Penjualan Terbesar (Berdasarkan Nominal Omset)
   var channelRevMap = {};
   salesRows.forEach(function(r) {
     var cName = r.kategoriPelanggan || "Tidak Diketahui";
@@ -1140,10 +1197,47 @@ function renderInsights(salesRows) {
     }
   }
 
+  // 3. Metrik Volume Penjualan Terintegrasi (Faktur & Unit)
+  var kpiCurrent = computeKPIs(salesRows);
+  
+  // Hitung Delta untuk Volume
+  var invoiceDeltaHtml = "";
+  var qtyDeltaHtml = "";
+  
+  var compRange = getComparePeriodRange();
+  if (compRange) {
+    var compRows = state.sales.filter(function(s){
+      var t = s.tanggalFaktur||"";
+      return t >= compRange.from && t <= compRange.to;
+    });
+    var kpiComp = computeKPIs(compRows);
+    
+    // Delta Jumlah Faktur
+    var invDelta = kpiComp.jumlahFaktur ? ((kpiCurrent.jumlahFaktur - kpiComp.jumlahFaktur) / kpiComp.jumlahFaktur * 100) : 0;
+    var invCls = invDelta >= -0.5 ? "up-green" : "down-red";
+    var invArrow = invDelta > 0.5 ? "▲" : (invDelta < -0.5 ? "▼" : "—");
+    invoiceDeltaHtml = '<span class="compare-delta-inline ' + invCls + '" style="margin-top:2px; font-size:10px; padding:1px 6px;">' + invArrow + ' ' + Math.abs(invDelta).toFixed(0) + '% vs ' + kpiComp.jumlahFaktur + '</span>';
+
+    // Delta Item Terjual
+    var qtyDelta = kpiComp.totalQty ? ((kpiCurrent.totalQty - kpiComp.totalQty) / kpiComp.totalQty * 100) : 0;
+    var qtyCls = qtyDelta >= -0.5 ? "up-green" : "down-red";
+    var qtyArrow = qtyDelta > 0.5 ? "▲" : (qtyDelta < -0.5 ? "▼" : "—");
+    qtyDeltaHtml = '<span class="compare-delta-inline ' + qtyCls + '" style="margin-top:2px; font-size:10px; padding:1px 6px;">' + qtyArrow + ' ' + Math.abs(qtyDelta).toFixed(0) + '% vs ' + fmtNum(kpiComp.totalQty) + '</span>';
+  } else {
+    invoiceDeltaHtml = '<span style="font-size:10.5px;color:var(--gray-400)">faktur aktif</span>';
+    qtyDeltaHtml = '<span style="font-size:10.5px;color:var(--gray-400)">unit barang terjual</span>';
+  }
+
+  // Populate UI
   $("insightTopProduct").textContent = topProduct;
   $("insightTopProductQty").textContent = fmtNum(maxQty) + " unit terjual";
   $("insightTopChannel").textContent = topChannel;
   $("insightTopChannelVal").textContent = fmtRp(maxRev);
+  
+  $("insightInvoiceCount").textContent = fmtNum(kpiCurrent.jumlahFaktur) + " Faktur";
+  $("insightInvoiceDelta").innerHTML = invoiceDeltaHtml;
+  $("insightTotalQty").textContent = fmtNum(kpiCurrent.totalQty) + " Unit";
+  $("insightQtyDelta").innerHTML = qtyDeltaHtml;
 }
 
 function groupSum(rows, keyFn, valFn){
@@ -1160,6 +1254,7 @@ function topN(map, n){
 }
 
 function computeTrend(rows, granularity){
+  // 1. Kelompokkan data penjualan & profit periode aktif
   var map = {};
   rows.forEach(function(s){
     var t = s.tanggalFaktur || "";
@@ -1170,13 +1265,58 @@ function computeTrend(rows, granularity){
     map[key].profit += (Number(s.penjualan)||0) - (Number(s.hpp)||0);
   });
   var keys = Object.keys(map).sort();
+
+  // 2. Buat map pencarian penjualan untuk SELURUH database (tidak terfilter)
+  var allSalesMap = {};
+  state.sales.forEach(function(s) {
+    var t = s.tanggalFaktur || "";
+    if (!t) return;
+    var kDaily = t;
+    var kMonthly = t.slice(0, 7);
+    allSalesMap[kDaily] = (allSalesMap[kDaily] || 0) + (Number(s.penjualan) || 0);
+    allSalesMap[kMonthly] = (allSalesMap[kMonthly] || 0) + (Number(s.penjualan) || 0);
+  });
+
+  // 3. Petakan setiap tanggal periode aktif ke tanggal pembanding
+  var compPenjualan = [];
+  keys.forEach(function(key) {
+    var compKey = "";
+    if (granularity === "bulanan") {
+      var curM = new Date(key + "-01T00:00:00");
+      var compM = new Date(curM);
+      if (state.compareMode === "last_month") {
+        compM.setMonth(compM.getMonth() - 1);
+      } else {
+        var monthsList = getMonthsInCalendarRange(state.filterFrom, state.filterTo);
+        compM.setMonth(compM.getMonth() - Math.max(1, monthsList.length));
+      }
+      compKey = compM.getFullYear() + "-" + pad2(compM.getMonth() + 1);
+    } else {
+      // Harian
+      var curD = new Date(key + "T00:00:00");
+      var compD = new Date(curD);
+      if (state.compareMode === "last_month") {
+        compD.setMonth(compD.getMonth() - 1);
+      } else {
+        var numDays = 7; // Default fallback jika filter kosong
+        if (state.filterFrom && state.filterTo) {
+          numDays = Math.round((new Date(state.filterTo + "T00:00:00") - new Date(state.filterFrom + "T00:00:00")) / 86400000) + 1;
+        }
+        compD.setDate(compD.getDate() - numDays);
+      }
+      compKey = toYMDLocal(compD);
+    }
+    compPenjualan.push(allSalesMap[compKey] || 0);
+  });
+
   return {
     labels: keys.map(function(k){
       if(granularity==="bulanan"){ var parts=k.split("-"); return MONTHS_SHORT[Number(parts[1])-1]+" "+parts[0]; }
       return fmtDate(k);
     }),
     penjualan: keys.map(function(k){ return map[k].penjualan; }),
-    profit: keys.map(function(k){ return map[k].profit; })
+    profit: keys.map(function(k){ return map[k].profit; }),
+    compPenjualan: compPenjualan
   };
 }
 
@@ -1241,20 +1381,49 @@ function renderTotalPenjualanCard(kpi){
   }
   $("kpiTotalPenjualan").innerHTML = html;
 }
+
+// ── STREAMING_CHUNK: Rendering Profitability Row (Full-width) with Dynamic Comparison Deltas... ──
 function renderFinancialCard(kpi){
-  var marginBadge = kpi.marginKotorPct >= 0.2 ? '<span class="kpi-badge baik">● Baik</span>' : '<span class="kpi-badge kurang">● Kurang</span>';
+  var compRange = getComparePeriodRange();
+  var hppDeltaHtml = "", profitDeltaHtml = "", marginDeltaHtml = "";
+  
+  if (compRange) {
+    var compRows = state.sales.filter(function(s){
+      var t = s.tanggalFaktur||"";
+      return t >= compRange.from && t <= compRange.to;
+    });
+    var compKpi = computeKPIs(compRows);
+    
+    // HPP Delta (HPP Turun = Baik/Hijau, HPP Naik = Kurang/Merah)
+    var hppDelta = compKpi.totalHpp ? ((kpi.totalHpp - compKpi.totalHpp) / compKpi.totalHpp * 100) : 0;
+    var hppCls = hppDelta <= 0.5 ? "up-green" : "down-red";
+    var hppArrow = hppDelta > 0.5 ? "▲" : (hppDelta < -0.5 ? "▼" : "—");
+    hppDeltaHtml = '<span class="compare-delta-inline '+hppCls+'">'+hppArrow+' '+Math.abs(hppDelta).toFixed(0)+'%</span>';
+    
+    // Laba Kotor Delta (Laba Naik = Baik/Hijau, Laba Turun = Kurang/Merah)
+    var profitDelta = compKpi.labaKotor ? ((kpi.labaKotor - compKpi.labaKotor) / compKpi.labaKotor * 100) : 0;
+    var profitCls = profitDelta >= -0.5 ? "up-green" : "down-red";
+    var profitArrow = profitDelta > 0.5 ? "▲" : (profitDelta < -0.5 ? "▼" : "—");
+    profitDeltaHtml = '<span class="compare-delta-inline '+profitCls+'">'+profitArrow+' '+Math.abs(profitDelta).toFixed(0)+'%</span>';
+    
+    // Margin Kotor Delta (Dalam satuan Percentage Point (pp))
+    var marginDiff = (kpi.marginKotorPct - compKpi.marginKotorPct) * 100;
+    var marginCls = marginDiff >= -0.1 ? "up-green" : "down-red";
+    var marginArrow = marginDiff > 0.1 ? "▲" : (marginDiff < -0.1 ? "▼" : "—");
+    marginDeltaHtml = '<span class="compare-delta-inline '+marginCls+'">'+marginArrow+' '+Math.abs(marginDiff).toFixed(1)+'pp</span>';
+  }
+  
+  var marginBadge = kpi.marginKotorPct >= 0.2 
+    ? '<span class="kpi-badge baik" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Baik</span>' 
+    : '<span class="kpi-badge kurang" style="margin-top:4px; margin-bottom:0; width:fit-content;">● Kurang</span>';
+    
   $("kpiFinancial").innerHTML = [
-    '<div class="kpi-combo-item"><div class="kpi-label">Total HPP</div><div class="kpi-value">'+fmtRp(kpi.totalHpp)+'</div></div>',
-    '<div class="kpi-combo-item"><div class="kpi-label">Laba Kotor</div><div class="kpi-value">'+fmtRp(kpi.labaKotor)+'</div></div>',
-    '<div class="kpi-combo-item"><div class="kpi-label">Margin Kotor</div><div class="kpi-value">'+(kpi.marginKotorPct*100).toFixed(1)+'%</div>'+marginBadge+'</div>'
+    '<div class="kpi-combo-item"><div class="kpi-label">Total HPP</div><div class="kpi-value">'+fmtRp(kpi.totalHpp)+'</div>'+hppDeltaHtml+'</div>',
+    '<div class="kpi-combo-item"><div class="kpi-label">Laba Kotor</div><div class="kpi-value">'+fmtRp(kpi.labaKotor)+'</div>'+profitDeltaHtml+'</div>',
+    '<div class="kpi-combo-item"><div class="kpi-label">Margin Kotor</div><div class="kpi-value" style="color:var(--blue-deep)">'+(kpi.marginKotorPct*100).toFixed(1)+'%</div>'+marginDeltaHtml+' '+marginBadge+'</div>'
   ].join("");
 }
-function renderVolumeCard(kpi){
-  $("kpiVolume").innerHTML = [
-    '<div class="kpi-combo-item"><div class="kpi-label">Jumlah Faktur</div><div class="kpi-value">'+fmtNum(kpi.jumlahFaktur)+'</div></div>',
-    '<div class="kpi-combo-item"><div class="kpi-label">Item Terjual</div><div class="kpi-value">'+fmtNum(kpi.totalQty)+'</div></div>'
-  ].join("");
-}
+
 function renderReturKpiGrid(returKpi){
   var rateBadge = returKpi.returRate <= 0.05 ? '<span class="kpi-badge baik">● Rendah</span>' : '<span class="kpi-badge kurang">● Tinggi</span>';
   $("returKpiGrid").innerHTML = [
@@ -1264,6 +1433,7 @@ function renderReturKpiGrid(returKpi){
   ].join("");
 }
 
+// ── STREAMING_CHUNK: Managing Charts Lifecycle... ──
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); charts[key]=null; } }
 
 function renderTrendChart(rows){
@@ -1271,15 +1441,43 @@ function renderTrendChart(rows){
   destroyChart("trend");
   var data = computeTrend(rows, state.trendGranularity);
   if(!data.labels.length) return;
+
+  var compLabel = state.compareMode === "prev_period" ? "Penjualan (Periode Lalu)" : "Penjualan (Bulan Lalu)";
+
   charts.trend = new Chart($("trendChart"), {
     type:"line",
-    data:{ labels:data.labels, datasets:[
-      { label:"Penjualan", data:data.penjualan, borderColor:"#4F6EF7", backgroundColor:"rgba(79,110,247,.1)", fill:true, tension:.3 },
-      { label:"Laba Kotor", data:data.profit, borderColor:"#0FA968", backgroundColor:"rgba(15,169,104,.1)", fill:true, tension:.3 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{position:"bottom"}, tooltip:{callbacks:{ label:function(ctx){ return ctx.dataset.label+": "+fmtRp(ctx.parsed.y); } }} },
-      scales:{ y:{ ticks:{ callback:function(v){ return fmtRpShort(v); } } } } }
+    data:{ 
+      labels: data.labels, 
+      datasets:[
+        { label:"Penjualan", data:data.penjualan, borderColor:"#4F6EF7", backgroundColor:"rgba(79,110,247,.1)", fill:true, tension:.3 },
+        { label:"Laba Kotor", data:data.profit, borderColor:"#0FA968", backgroundColor:"rgba(15,169,104,.1)", fill:true, tension:.3 },
+        { 
+          label: compLabel, 
+          data: data.compPenjualan, 
+          borderColor: "#9CA3AF", 
+          backgroundColor: "transparent", 
+          borderDash: [6, 4], 
+          fill: false, 
+          tension: .3,
+          borderWidth: 2,
+          pointRadius: 1.5,
+          borderDashOffset: 0
+        }
+      ]
+    },
+    options:{ 
+      responsive:true, 
+      maintainAspectRatio:false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins:{ 
+        legend:{position:"bottom"}, 
+        tooltip:{callbacks:{ label:function(ctx){ return ctx.dataset.label+": "+fmtRp(ctx.parsed.y); } }} 
+      },
+      scales:{ y:{ ticks:{ callback:function(v){ return fmtRpShort(v); } } } } 
+    }
   });
 }
 
@@ -1421,6 +1619,7 @@ function renderTopProdukTable(rows){
   }).join("");
 }
 
+// ── STREAMING_CHUNK: Ringkasan Orchestration... ──
 function renderRingkasan(){
   var salesRows = getFilteredSales();
   var returRows = getFilteredReturs();
@@ -1429,7 +1628,6 @@ function renderRingkasan(){
 
   renderTotalPenjualanCard(kpi);
   renderFinancialCard(kpi);
-  renderVolumeCard(kpi);
   renderReturKpiGrid(returKpi);
   renderInsights(salesRows);
 
@@ -1447,6 +1645,7 @@ function safeRender(fn, label){
 
 function renderAll(){ renderRingkasan(); renderRawTable(); }
 
+// ── STREAMING_CHUNK: Adding Event Listeners... ──
 document.querySelectorAll(".tab-btn").forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
@@ -1516,6 +1715,7 @@ $("saveTargetBtn").addEventListener("click", function(){
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan target"); });
 });
 
+// ── STREAMING_CHUNK: Double Calendar date picker logcs... ──
 var pickerTemp = {
   start: "2026-07-10",
   end: "2026-07-16",
@@ -1743,6 +1943,7 @@ $("pickerApplyBtn").addEventListener("click", function(e) {
   renderRingkasan();
 });
 
+// ── STREAMING_CHUNK: Comparison handlers... ──
 $("comparePrevPeriodBtn").addEventListener("click", function() {
   document.getElementById("comparePrevPeriodBtn").classList.add("active-blue");
   document.getElementById("compareLastMonthBtn").classList.remove("active-blue");
@@ -1770,6 +1971,7 @@ document.querySelectorAll('.dataset-toggle button[data-type]').forEach(function(
   });
 });
 
+// ── STREAMING_CHUNK: Parsing excel columns... ──
 function normalizeHeader(h){ return String(h||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
 function guessMapping(headers){
   var mapping = {};
@@ -1881,6 +2083,7 @@ function resetImportUI(){
   $("fileInput").value = "";
 }
 
+// ── STREAMING_CHUNK: Processing bulk imports... ──
 function importAll(){
   var missing = REQUIRED_FIELDS.filter(function(f){ return !state.importMapping[f.key]; });
   if(missing.length){
@@ -1969,6 +2172,7 @@ $("clearAllReturBtn").addEventListener("click", function(){
   );
 });
 
+// ── STREAMING_CHUNK: Handling Raw Tables rendering... ──
 document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(function(b){ b.classList.remove("active"); });
