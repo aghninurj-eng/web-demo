@@ -10,7 +10,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lexend:wght@500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --navy:#151829;--navy-2:#232A52;--blue:#4F6EF7;--blue-deep:#2E45CC;--blue-lt:#EEF1FE;
+  --navy:#151829;--navy-2:#232A52;--blue:#1d4ed8;--blue-deep:#1e40af;--blue-lt:#eff6ff;
   --white:#FFFFFF;--gray-50:#F7F8FC;--gray-100:#F1F3F7;
   --gray-200:#E4E7EF;--gray-400:#9CA3AF;--gray-600:#6B7280;
   --gray-800:#374151;--text:#151829;--radius:14px;
@@ -70,19 +70,230 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .tab-panel.active{display:block;animation:fadeIn .25s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
-/* Filter bar */
-.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:13px 18px;margin-bottom:16px;box-shadow:var(--shadow)}
-.filter-bar label{font-size:12px;font-weight:600;color:var(--gray-600)}
-.filter-bar input[type=date]{padding:7px 10px;border:1px solid var(--gray-200);border-radius:8px;font-size:12.5px;font-family:'Inter',sans-serif;transition:border-color .15s}
-.filter-bar input[type=date]:focus{outline:none;border-color:var(--blue)}
+/* Grid Layout untuk Baris Atas (Total Penjualan + Insight) */
+.kpi-top-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media(max-width:860px){
+  .kpi-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
-/* Target panel */
-.target-panel{background:linear-gradient(135deg,#fff,var(--blue-lt) 180%);border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
-.target-panel h3{font-family:'Lexend',sans-serif;font-size:13.5px;font-weight:600;margin-bottom:10px}
-.target-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.target-controls input{padding:8px 11px;border:1px solid var(--gray-200);border-radius:8px;font-size:12.5px;font-family:'Inter',sans-serif;background:#fff;transition:border-color .15s}
-.target-controls input:focus{outline:none;border-color:var(--blue)}
-.target-note{font-size:11.5px;color:var(--gray-400);margin-top:8px}
+/* ── PREMIUM FILTER BAR ── */
+.premium-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.date-trigger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 9px;
+  padding: 0 24px;
+  height: 38px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.15s;
+  position: relative;
+  user-select: none;
+}
+.date-trigger-btn:hover {
+  border-color: var(--blue);
+}
+.shortcut-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 9px;
+  padding: 0 14px;
+  height: 38px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-800);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.shortcut-btn:hover {
+  background: var(--blue-lt);
+  border-color: var(--blue);
+}
+.shortcut-btn.active-blue {
+  background: var(--blue-deep) !important;
+  color: #fff !important;
+  border-color: var(--blue-deep) !important;
+}
+
+/* ── DOUBLE CALENDAR DROPDOWN DIALOG ── */
+.datepicker-dropdown {
+  display: none;
+  position: absolute;
+  top: 44px;
+  left: 0;
+  z-index: 250;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.datepicker-dropdown.show {
+  display: flex;
+  flex-direction: column;
+}
+.picker-body {
+  display: flex;
+  border-bottom: 1px solid var(--gray-100);
+}
+.picker-sidebar {
+  width: 170px;
+  background: #fff;
+  border-right: 1px solid var(--gray-100);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+.preset-item {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-800);
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: none;
+  width: 100%;
+}
+.preset-item:hover {
+  background: var(--gray-50);
+}
+.preset-item.active {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+.picker-calendars {
+  display: flex;
+  padding: 16px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.calendar-block {
+  width: 250px;
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.calendar-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--gray-600);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.calendar-header button:hover {
+  background: var(--gray-100);
+}
+.month-year-label {
+  font-family: 'Lexend', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.weekdays-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.weekday-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+}
+.day-cell {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.day-cell.inactive {
+  color: var(--gray-200);
+  pointer-events: none;
+}
+.day-cell .day-num {
+  z-index: 2;
+  position: relative;
+}
+.day-cell:hover:not(.inactive) {
+  background: var(--gray-100);
+  border-radius: 6px;
+}
+
+/* Highlight jangkauan tanggal */
+.day-cell.range-start, .day-cell.range-end {
+  background: var(--blue) !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  font-weight: 700;
+}
+.day-cell.range-mid {
+  background: var(--blue-lt) !important;
+  color: var(--blue-deep) !important;
+  border-radius: 0 !important;
+}
+
+/* Footer of the picker dropdown */
+.picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 18px;
+  background: var(--gray-50);
+}
+.selected-range-display {
+  margin-right: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-800);
+  font-family: 'Lexend', sans-serif;
+}
 
 /* KPI cards */
 .kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;transition:transform .18s,box-shadow .18s}
@@ -97,7 +308,6 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .kpi-target-row b{color:var(--text)}
 
 /* Hero: Total Penjualan */
-.kpi-wide{margin-bottom:16px}
 .kpi-hero{
   background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 55%,var(--blue-deep) 100%);
   border:none;color:#fff;position:relative;overflow:hidden;padding:26px 28px;
@@ -117,6 +327,77 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .kpi-hero .kpi-target-row b{color:#fff}
 .kpi-hero .kpi-badge.baik{background:rgba(15,169,104,.25);color:#7EEBC0}
 .kpi-hero .kpi-badge.kurang{background:rgba(240,169,58,.22);color:#FFD98C}
+
+/* KPI Seksi Analisis Insight */
+.kpi-insight {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.kpi-insight .kpi-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--blue-deep);
+  margin-bottom: 12px;
+}
+.kpi-insight .kpi-card-title .dot {
+  background: var(--blue-deep);
+}
+.insight-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  height: 100%;
+}
+@media(min-width: 480px) and (max-width: 860px) {
+  .insight-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.insight-item {
+  background: var(--gray-50);
+  padding: 12px 14px;
+  border-radius: 10px;
+  border-left: 4px solid var(--blue);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.insight-item:hover {
+  transform: translateX(4px);
+  background: var(--blue-lt);
+}
+.insight-item.alt-accent {
+  border-left-color: var(--purple);
+}
+.insight-item.alt-accent:hover {
+  background: var(--purple-lt);
+}
+.insight-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  color: var(--gray-600);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.insight-value {
+  font-family: 'Lexend', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.insight-sub {
+  font-size: 11.5px;
+  color: var(--gray-600);
+  margin-top: 2px;
+}
 
 .kpi-section-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:720px){.kpi-section-row{grid-template-columns:1fr}}
@@ -156,13 +437,20 @@ h1,h2,h3,.font-display{font-family:'Lexend',sans-serif}
 .top-produk-table{width:100%;border-collapse:collapse}
 .top-produk-table thead th{position:sticky;top:0;background:var(--gray-50);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-600);padding:10px 12px;text-align:left;border-bottom:1px solid var(--gray-200);z-index:1}
 .top-produk-table thead th:not(:first-child){text-align:right}
+.top-produk-table thead th.sortable{cursor:pointer;user-select:none;transition:color .15s}
+.top-produk-table thead th.sortable:hover{color:var(--blue-deep)}
+.top-produk-table thead th.sort-active{color:var(--blue-deep)}
+.top-produk-table thead th .sort-arrow{display:inline-block;width:10px;font-size:9px;margin-left:2px}
+.top-produk-table thead th .sort-arrow::after{content:""}
+.top-produk-table thead th.sort-active.sort-asc .sort-arrow::after{content:"▲"}
+.top-produk-table thead th.sort-active.sort-desc .sort-arrow::after{content:"▼"}
 .top-produk-table tbody td{padding:9px 12px;font-size:12.5px;border-bottom:1px solid var(--gray-100)}
 .top-produk-table tbody td:not(:first-child){text-align:right;font-family:'Lexend',sans-serif;font-variant-numeric:tabular-nums;font-size:12px}
 .top-produk-table tbody tr{transition:background .12s}
 .top-produk-table tbody tr:hover{background:var(--blue-lt)}
 .top-produk-table tbody td.cell-name{font-weight:600;color:var(--text);font-family:'Inter',sans-serif}
 .top-produk-table tbody tr:first-child td{font-weight:700}
-.top-produk-table tbody tr:first-child td.cell-name::before{content:"🏆 ";font-size:11px}
+.top-produk-table.sorted-by-penjualan-desc tbody tr:first-child td.cell-name::before{content:"🏆 ";font-size:11px}
 
 /* Compare table (channel vs previous period) */
 .compare-table{margin-top:16px;border-top:1px solid var(--gray-100);padding-top:12px}
@@ -235,6 +523,62 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
 .empty-state{text-align:center;padding:56px 20px;color:var(--gray-400)}
 .empty-state .icon{font-size:34px;margin-bottom:10px;opacity:.6}
 
+/* ── MODAL KONFIRMASI KUSTOM ── */
+.custom-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 24, 41, 0.6);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+.custom-modal.show {
+  display: flex;
+}
+.custom-modal-content {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: modalScaleUp 0.2s ease-out;
+}
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.custom-modal-content h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.custom-modal-content p {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.custom-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ── TARGET INPUT MODAL (POPUP) ── */
+#targetModal .custom-modal-content {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+}
+
 /* ── TOAST / LOADING ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:200;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -276,27 +620,114 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
 
     <!-- TAB: RINGKASAN -->
     <div class="tab-panel active" id="panel-ringkasan">
-      <div class="filter-bar">
-        <label>Dari</label>
-        <input type="date" id="filterFrom"/>
-        <label>Sampai</label>
-        <input type="date" id="filterTo"/>
-        <button class="btn btn-outline btn-sm" id="applyFilterBtn">Terapkan</button>
-        <button class="btn btn-outline btn-sm" id="resetFilterBtn">Semua Data</button>
-      </div>
-
-      <div class="target-panel">
-        <h3>🎯 Target Penjualan Bulanan</h3>
-        <div class="target-controls">
-          <input type="month" id="targetMonth"/>
-          <input type="number" id="targetValue" placeholder="Target penjualan (Rp)" style="width:200px"/>
-          <button class="btn btn-outline btn-sm" id="saveTargetBtn">Simpan Target</button>
+      
+      <!-- ── PREMIUM FILTER BAR ── -->
+      <div class="premium-filter-container">
+        <!-- Label Periode -->
+        <span style="font-family: 'Lexend', sans-serif; font-size: 14px; font-weight: 700; color: var(--gray-800); margin-right: 4px;">Periode</span>
+        
+        <!-- Trigger Date Range Picker Utama -->
+        <div style="position:relative">
+          <button class="date-trigger-btn" id="dateRangeTrigger">
+            <span id="dateRangeDisplay">10 Jul 2026 - 16 Jul 2026</span>
+          </button>
+          
+          <!-- DROPDOWN CALENDAR DIALOG -->
+          <div class="datepicker-dropdown" id="datePickerDropdown">
+            <div class="picker-body">
+              <!-- Sidebar Presets -->
+              <div class="picker-sidebar">
+                <button class="preset-item" data-preset="today">Hari Ini</button>
+                <button class="preset-item" data-preset="yesterday">Kemarin</button>
+                <button class="preset-item active" data-preset="7days">7 Hari Terakhir</button>
+                <button class="preset-item" data-preset="30days">30 Hari Terakhir</button>
+                <button class="preset-item" data-preset="thismonth">Bulan Ini</button>
+                <button class="preset-item" data-preset="lastmonth">Bulan Lalu</button>
+                <button class="preset-item" data-preset="custom">Custom</button>
+              </div>
+              <!-- Area Dua Kalender -->
+              <div class="picker-calendars">
+                <!-- Kalender Kiri (Bulan Saat Ini) -->
+                <div class="calendar-block" id="leftCalBlock">
+                  <div class="calendar-header">
+                    <button id="prevMonthBtn">◀</button>
+                    <span class="month-year-label" id="leftMonthLabel">Jul 2026</span>
+                    <span style="width:26px"></span>
+                  </div>
+                  <div class="weekdays-header">
+                    <div class="weekday-label">Su</div><div class="weekday-label">Mo</div>
+                    <div class="weekday-label">Tu</div><div class="weekday-label">We</div>
+                    <div class="weekday-label">Th</div><div class="weekday-label">Fr</div>
+                    <div class="weekday-label">Sa</div>
+                  </div>
+                  <div class="days-grid" id="leftDaysGrid"></div>
+                </div>
+                <!-- Kalender Kanan (Bulan Selanjutnya) -->
+                <div class="calendar-block" id="rightCalBlock">
+                  <div class="calendar-header">
+                    <span style="width:26px"></span>
+                    <span class="month-year-label" id="rightMonthLabel">Aug 2026</span>
+                    <button id="nextMonthBtn">▶</button>
+                  </div>
+                  <div class="weekdays-header">
+                    <div class="weekday-label">Su</div><div class="weekday-label">Mo</div>
+                    <div class="weekday-label">Tu</div><div class="weekday-label">We</div>
+                    <div class="weekday-label">Th</div><div class="weekday-label">Fr</div>
+                    <div class="weekday-label">Sa</div>
+                  </div>
+                  <div class="days-grid" id="rightDaysGrid"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Footer Dropdown Picker -->
+            <div class="picker-footer">
+              <span class="selected-range-display" id="pickerRangeDisplay">2026-07-10 - 2026-07-16</span>
+              <button class="btn btn-outline btn-sm" id="pickerCancelBtn" style="padding:7px 16px; font-weight:600">Batal</button>
+              <button class="btn btn-primary btn-sm" id="pickerApplyBtn" style="padding:7px 16px; font-weight:600">Terapkan</button>
+            </div>
+          </div>
         </div>
-        <div class="target-note">Target dihitung per bulan. Kalau rentang tanggal di atas mencakup beberapa bulan, target yang dibandingkan adalah jumlah target bulan-bulan yang tercakup.</div>
+
+        <div style="border-left: 1px solid var(--gray-200); height: 20px; margin: 0 4px;"></div>
+        
+        <!-- Label Bandingkan -->
+        <span style="font-size: 13px; font-weight: 500; color: var(--gray-600); margin-right: 2px;">Bandingkan:</span>
+
+        <!-- Tombol Pilihan Perbandingan -->
+        <button class="shortcut-btn active-blue" id="comparePrevPeriodBtn">
+          <span>🔄 Periode Sebelumnya</span>
+        </button>
+        <button class="shortcut-btn" id="compareLastMonthBtn">
+          <span>📅 Bulan Lalu</span>
+        </button>
+
+        <div style="border-left: 1px solid var(--gray-200); height: 20px; margin: 0 4px;"></div>
+        <!-- Tombol Atur Target -->
+        <button class="btn btn-outline btn-sm" id="openTargetModalBtn" style="height:38px">🎯 Atur Target</button>
       </div>
 
-      <!-- Total Penjualan vs Target -->
-      <div class="kpi-card kpi-wide kpi-hero" id="kpiTotalPenjualan"></div>
+      <!-- Grid Gabungan: Total Penjualan vs Target DAN Seksi Insight Pintar -->
+      <div class="kpi-top-grid">
+        <!-- Total Penjualan vs Target -->
+        <div class="kpi-card kpi-hero" id="kpiTotalPenjualan" style="margin-bottom:0;"></div>
+
+        <!-- Seksi Quick Insights (Produk & Channel Unggulan) -->
+        <div class="kpi-insight" id="kpiInsights">
+          <div class="kpi-card-title"><span class="dot"></span>💡 Ringkasan Analisis (Insight)</div>
+          <div class="insight-grid">
+            <div class="insight-item">
+              <div class="insight-label">🏆 Produk Paling Laku</div>
+              <div class="insight-value" id="insightTopProduct">Mengompilasi...</div>
+              <div class="insight-sub" id="insightTopProductQty">0 unit terjual</div>
+            </div>
+            <div class="insight-item alt-accent">
+              <div class="insight-label">📢 Channel Terbesar</div>
+              <div class="insight-value" id="insightTopChannel">Mengompilasi...</div>
+              <div class="insight-sub" id="insightTopChannelVal">Rp 0</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- HPP, Laba Kotor, Margin Kotor -->
       <div class="kpi-section-row">
@@ -334,7 +765,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
       <div class="chart-row">
         <div class="chart-card">
           <h3>🛍️ Channel Penjualan</h3>
-          <div class="chart-sub">Jumlah penjualan tiap channel, dibanding periode sebelumnya</div>
+          <div class="chart-sub">Jumlah penjualan tiap channel, dibanding periode pembanding yang dipilih</div>
           <div class="chart-wrap short"><canvas id="kategoriChart"></canvas></div>
           <div class="compare-table" id="channelCompareTable"></div>
         </div>
@@ -348,7 +779,12 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
           </div>
           <div class="top-produk-table-wrap">
             <table class="top-produk-table">
-              <thead><tr><th>Produk</th><th>Penjualan</th><th>Kuantitas</th><th>Laba Kotor</th></tr></thead>
+              <thead><tr>
+                <th class="sortable" data-key="nama">Produk<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="penjualan">Penjualan<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="kuantitas">Kuantitas<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="labaKotor">Laba Kotor<span class="sort-arrow"></span></th>
+              </tr></thead>
               <tbody id="topProdukBody"></tbody>
             </table>
           </div>
@@ -431,19 +867,91 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
   </div>
 </div>
 
+<!-- ── CUSTOM CONFIRM MODAL ── -->
+<div id="customConfirmModal" class="custom-modal">
+  <div class="custom-modal-content">
+    <h3 id="confirmTitle">Konfirmasi</h3>
+    <p id="confirmMessage">Apakah Anda yakin ingin melakukan tindakan ini?</p>
+    <div class="custom-modal-actions">
+      <button class="btn btn-outline btn-sm" id="confirmCancelBtn">Batal</button>
+      <button class="btn btn-danger btn-sm" id="confirmOkBtn">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TARGET INPUT MODAL (POPUP) ── -->
+<div id="targetModal" class="custom-modal">
+  <div class="custom-modal-content">
+    <h3 style="font-size: 16px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">🎯 Target Penjualan</h3>
+    <p style="font-size: 12px; color: var(--gray-600); margin-bottom: 16px; line-height: 1.45;">Tentukan target penjualan bulanan untuk dibandingkan dengan pencapaian aktual.</p>
+    
+    <div style="margin-bottom: 14px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.3px;">Bulan</label>
+      <input type="month" id="targetMonth" style="width: 100%; padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 13px; outline: none; transition: border-color 0.15s; font-family: 'Inter', sans-serif;"/>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.3px;">Nilai Target (Rp)</label>
+      <input type="number" id="targetValue" placeholder="Contoh: 1500000000" style="width: 100%; padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 13px; outline: none; transition: border-color 0.15s; font-family: 'Inter', sans-serif;"/>
+    </div>
+    
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+      <button class="btn btn-outline btn-sm" id="closeTargetModalBtn">Batal</button>
+      <button class="btn btn-primary btn-sm" id="saveTargetBtn">Simpan Target</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <div id="loading"><span id="loadingText">Memuat…</span></div>
 
 <script>
-// ── GANTI dengan URL Web App Apps Script khusus dashboard penjualan (harus berakhiran /exec) ──
 var GAS_URL = "https://script.google.com/macros/s/AKfycbx_ihJa8K5k7DrTPxlvzIvwZ3J6HdrF8uhQ2O294ePf7oLpLyyCYkU01nWdbjoJPjrQHw/exec";
 var GATE_PASSWORD = "admin3";
 
+var MOCK_DATA = {
+  sales: [
+    { id: "m1", tanggalFaktur: "2026-07-01", nomorFaktur: "FAC-1001", namaBarang: "ASUS Vivobook Go 14", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Laptop", kuantitas: 45, penjualan: 360000000, hpp: 292500000 },
+    { id: "m2", tanggalFaktur: "2026-07-03", nomorFaktur: "FAC-1002", namaBarang: "Samsung Galaxy S24 Ultra", kategoriPelanggan: "Retailer Resmi", kategoriBarang: "Smartphone", kuantitas: 32, penjualan: 640000000, hpp: 512000000 },
+    { id: "m3", tanggalFaktur: "2026-07-05", nomorFaktur: "FAC-1003", namaBarang: "ASUS Vivobook Go 14", kategoriPelanggan: "E-Commerce", kategoriBarang: "Laptop", kuantitas: 18, penjualan: 144000000, hpp: 117000000 },
+    { id: "m4", tanggalFaktur: "2026-07-08", nomorFaktur: "FAC-1004", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "E-Commerce", kategoriBarang: "Aksesoris", kuantitas: 110, penjualan: 187000000, hpp: 132000000 },
+    { id: "m5", tanggalFaktur: "2026-07-10", nomorFaktur: "FAC-1005", namaBarang: "Dell UltraSharp 27 Monitor", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Monitor", kuantitas: 24, penjualan: 192000000, hpp: 156000000 },
+    { id: "m6", tanggalFaktur: "2026-07-12", nomorFaktur: "FAC-1006", namaBarang: "Samsung Galaxy S24 Ultra", kategoriPelanggan: "E-Commerce", kategoriBarang: "Smartphone", kuantitas: 15, penjualan: 300000000, hpp: 240000000 },
+    { id: "m7", tanggalFaktur: "2026-07-15", nomorFaktur: "FAC-1007", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Aksesoris", kuantitas: 50, penjualan: 85000000, hpp: 60000000 },
+    // Data tambahan perbandingan Bulan Lalu (Juni 2026)
+    { id: "m8", tanggalFaktur: "2026-06-10", nomorFaktur: "FAC-0995", namaBarang: "Dell UltraSharp 27 Monitor", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Monitor", kuantitas: 20, penjualan: 160000000, hpp: 130000000 },
+    { id: "m9", tanggalFaktur: "2026-06-12", nomorFaktur: "FAC-0996", namaBarang: "Samsung Galaxy S24 Ultra", kategoriPelanggan: "E-Commerce", kategoriBarang: "Smartphone", kuantitas: 12, penjualan: 240000000, hpp: 192000000 },
+    { id: "m10", tanggalFaktur: "2026-06-15", nomorFaktur: "FAC-0997", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "Distributor B2B", kategoriBarang: "Aksesoris", kuantitas: 40, penjualan: 68000000, hpp: 48000000 }
+  ],
+  returs: [
+    { id: "mr1", tanggalFaktur: "2026-07-07", nomorFaktur: "RET-101", namaBarang: "Logitech MX Master 3S", kategoriPelanggan: "E-Commerce", kategoriBarang: "Aksesoris", kuantitas: 4, penjualan: 6800000, hpp: 4800000 }
+  ],
+  targets: {
+    "2026-07": 1500000000
+  }
+};
+
 function $(id){ return document.getElementById(id); }
 
-// ── APPS SCRIPT BRIDGE ──
 function callGS(fn, arg){
   return new Promise(function(resolve, reject){
+    if (GAS_URL.indexOf("GANTI_DENGAN_") > -1) {
+      console.warn("Menggunakan data demonstrasi otomatis.");
+      setTimeout(function(){
+        if(fn === "getDashboardData") {
+          resolve(JSON.parse(JSON.stringify(MOCK_DATA)));
+        } else if(fn === "setTarget") {
+          MOCK_DATA.targets[arg.month] = arg.value;
+          resolve({ success: true });
+        } else if(fn.startsWith("bulkAdd")) {
+          resolve({ success: true, count: arg.length });
+        } else {
+          resolve({ success: true });
+        }
+      }, 400);
+      return;
+    }
+
     if(fn === "getDashboardData"){
       fetch(GAS_URL + "?action=getDashboardData")
         .then(function(res){ return res.json(); })
@@ -459,7 +967,32 @@ function callGS(fn, arg){
   });
 }
 
-// ── AUTH GATE ──
+var confirmCallback = null;
+function showCustomConfirm(title, message, isDanger, onConfirm) {
+  $("confirmTitle").textContent = title;
+  $("confirmMessage").textContent = message;
+  confirmCallback = onConfirm;
+  
+  var okBtn = $("confirmOkBtn");
+  if (isDanger) {
+    okBtn.className = "btn btn-danger btn-sm";
+  } else {
+    okBtn.className = "btn btn-primary btn-sm";
+  }
+  $("customConfirmModal").classList.add("show");
+}
+
+$("confirmCancelBtn").addEventListener("click", function() {
+  $("customConfirmModal").classList.remove("show");
+  confirmCallback = null;
+});
+
+$("confirmOkBtn").addEventListener("click", function() {
+  $("customConfirmModal").classList.remove("show");
+  if (confirmCallback) confirmCallback();
+  confirmCallback = null;
+});
+
 (function(){
   if(sessionStorage.getItem("dash_authed") === "1"){ unlockApp(); return; }
   $("authBtn").addEventListener("click", tryUnlock);
@@ -484,11 +1017,11 @@ function unlockApp(){
   loadDashboardData();
 }
 
-// ── STATE ──
 var state = {
   sales: [], returs: [], targets: {},
-  filterFrom:"", filterTo:"", trendGranularity:"harian",
-  topProdukKategoriFilter:"",
+  filterFrom:"2026-07-10", filterTo:"2026-07-16", trendGranularity:"harian",
+  compareMode:"prev_period", 
+  topProdukKategoriFilter:"", topProdukSortKey:"penjualan", topProdukSortDir:"desc",
   importDatasetType:"sales", importHeaders:[], importRows:[], importMapping:{},
   rawDatasetType:"sales", rawSearch:"", rawPage:1, rawPageSize:50
 };
@@ -507,7 +1040,6 @@ var REQUIRED_FIELDS = [
   { key:"hpp",                label:"HPP / BPP",          keywords:["hpp","bpp","cogs","costofgoods","hargapokok"] }
 ];
 
-// ── DATA LOAD ──
 function loadDashboardData(){
   setLoading(true, "Memuat data…");
   callGS("getDashboardData").then(function(data){
@@ -519,7 +1051,6 @@ function loadDashboardData(){
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
 }
 
-// ── HELPERS ──
 function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text || "Memuat…"; }
 function showToast(msg, dur){ dur=dur||3000; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
 function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString("id-ID"); }
@@ -536,7 +1067,6 @@ function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str
 function pad2(n){ n=String(n); return n.length<2 ? "0"+n : n; }
 function toYMDLocal(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
 
-// ── FILTERING ──
 function getFilteredRows(rows){
   var from = state.filterFrom, to = state.filterTo;
   if(!from && !to) return rows;
@@ -550,7 +1080,6 @@ function getFilteredRows(rows){
 function getFilteredSales(){ return getFilteredRows(state.sales); }
 function getFilteredReturs(){ return getFilteredRows(state.returs); }
 
-// ── KPI COMPUTATION ──
 function computeKPIs(rows){
   var totalPenjualan=0, totalHpp=0, invoiceSet={}, totalQty=0;
   rows.forEach(function(s){
@@ -573,6 +1102,50 @@ function computeReturKPIs(returRows, totalPenjualanForRate){
   var returRate = totalPenjualanForRate ? (totalRetur/totalPenjualanForRate) : 0;
   return { totalRetur:totalRetur, jumlahRetur:Object.keys(invoiceSet).length, returRate:returRate };
 }
+
+function renderInsights(salesRows) {
+  if (!salesRows || !salesRows.length) {
+    $("insightTopProduct").textContent = "—";
+    $("insightTopProductQty").textContent = "0 unit terjual";
+    $("insightTopChannel").textContent = "—";
+    $("insightTopChannelVal").textContent = "Rp 0";
+    return;
+  }
+
+  var productQtyMap = {};
+  salesRows.forEach(function(r) {
+    var pName = r.namaBarang || "Tidak Diketahui";
+    productQtyMap[pName] = (productQtyMap[pName] || 0) + (Number(r.kuantitas) || 0);
+  });
+  var topProduct = "—";
+  var maxQty = -1;
+  for (var prod in productQtyMap) {
+    if (productQtyMap[prod] > maxQty) {
+      maxQty = productQtyMap[prod];
+      topProduct = prod;
+    }
+  }
+
+  var channelRevMap = {};
+  salesRows.forEach(function(r) {
+    var cName = r.kategoriPelanggan || "Tidak Diketahui";
+    channelRevMap[cName] = (channelRevMap[cName] || 0) + (Number(r.penjualan) || 0);
+  });
+  var topChannel = "—";
+  var maxRev = -1;
+  for (var chan in channelRevMap) {
+    if (channelRevMap[chan] > maxRev) {
+      maxRev = channelRevMap[chan];
+      topChannel = chan;
+    }
+  }
+
+  $("insightTopProduct").textContent = topProduct;
+  $("insightTopProductQty").textContent = fmtNum(maxQty) + " unit terjual";
+  $("insightTopChannel").textContent = topChannel;
+  $("insightTopChannelVal").textContent = fmtRp(maxRev);
+}
+
 function groupSum(rows, keyFn, valFn){
   var map = {};
   rows.forEach(function(r){
@@ -585,6 +1158,7 @@ function topN(map, n){
   return Object.keys(map).map(function(k){ return {label:k, value:map[k]}; })
     .sort(function(a,b){ return b.value-a.value; }).slice(0,n);
 }
+
 function computeTrend(rows, granularity){
   var map = {};
   rows.forEach(function(s){
@@ -606,7 +1180,6 @@ function computeTrend(rows, granularity){
   };
 }
 
-// ── TARGET LOGIC ──
 function getMonthsInCalendarRange(from, to){
   if(!from || !to) return [];
   var months = [];
@@ -628,25 +1201,36 @@ function getTargetInfo(){
   var anySet = months.some(function(m){ return state.targets[m] !== undefined && state.targets[m] !== ""; });
   return { hasRange:true, total:total, anySet:anySet, months:months };
 }
-function getPreviousPeriodRange(){
+
+function getComparePeriodRange(){
   if(!state.filterFrom || !state.filterTo) return null;
   var from = new Date(state.filterFrom+"T00:00:00");
   var to = new Date(state.filterTo+"T00:00:00");
-  var days = Math.round((to-from)/86400000)+1;
-  var prevTo = new Date(from); prevTo.setDate(prevTo.getDate()-1);
-  var prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-(days-1));
-  return { from: toYMDLocal(prevFrom), to: toYMDLocal(prevTo) };
+
+  if (state.compareMode === "prev_period") {
+    var days = Math.round((to-from)/86400000)+1;
+    var prevTo = new Date(from); prevTo.setDate(prevTo.getDate()-1);
+    var prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-(days-1));
+    return { from: toYMDLocal(prevFrom), to: toYMDLocal(prevTo) };
+  } else if (state.compareMode === "last_month") {
+    var compFrom = new Date(from);
+    compFrom.setMonth(compFrom.getMonth() - 1);
+    var compTo = new Date(to);
+    compTo.setMonth(compTo.getMonth() - 1);
+    return { from: toYMDLocal(compFrom), to: toYMDLocal(compTo) };
+  }
+  return null;
 }
 
-// ── RENDER: KPI CARDS ──
 function kpiCardSimple(label, value, extra){
   return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>';
 }
+
 function renderTotalPenjualanCard(kpi){
   var targetInfo = getTargetInfo();
   var html = '<div class="kpi-label">Total Penjualan</div><div class="kpi-value">'+fmtRp(kpi.totalPenjualan)+'</div>';
   if(!targetInfo.hasRange){
-    html += '<div class="kpi-target-row">Pilih rentang tanggal (Dari–Sampai) untuk melihat perbandingan target bulanan.</div>';
+    html += '<div class="kpi-target-row">Pilih rentang tanggal untuk melihat perbandingan target bulanan.</div>';
   } else if(!targetInfo.anySet){
     html += '<div class="kpi-target-row">Target belum diset untuk periode ini ('+targetInfo.months.join(", ")+').</div>';
   } else {
@@ -680,11 +1264,10 @@ function renderReturKpiGrid(returKpi){
   ].join("");
 }
 
-// ── RENDER: CHARTS ──
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); charts[key]=null; } }
 
 function renderTrendChart(rows){
-  if(typeof Chart === "undefined"){ throw new Error("Library Chart.js belum termuat (cek koneksi internet / ad-blocker)"); }
+  if(typeof Chart === "undefined"){ throw new Error("Library Chart.js belum termuat"); }
   destroyChart("trend");
   var data = computeTrend(rows, state.trendGranularity);
   if(!data.labels.length) return;
@@ -699,57 +1282,93 @@ function renderTrendChart(rows){
       scales:{ y:{ ticks:{ callback:function(v){ return fmtRpShort(v); } } } } }
   });
 }
+
 function renderKategoriChart(rows){
-  if(typeof Chart === "undefined"){ throw new Error("Library Chart.js belum termuat (cek koneksi internet / ad-blocker)"); }
+  if(typeof Chart === "undefined"){ throw new Error("Library Chart.js belum termuat"); }
   destroyChart("kategori");
   var map = groupSum(rows, function(r){ return r.kategoriPelanggan; }, function(r){ return Number(r.penjualan)||0; });
   var entries = topN(map, 8);
   if(!entries.length){ renderChannelCompareTable(null); return; }
+  
+  var totalVal = entries.reduce(function(sum, item){ return sum + item.value; }, 0);
+
   charts.kategori = new Chart($("kategoriChart"), {
-    type:"bar",
-    data:{ labels:entries.map(function(e){return e.label;}), datasets:[{
-      label:"Penjualan", data:entries.map(function(e){return e.value;}),
-      backgroundColor:CHART_COLORS, borderRadius:6, maxBarThickness:56
-    }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{callbacks:{ label:function(ctx){ return "Penjualan: "+fmtRp(ctx.parsed.y); } }} },
-      scales:{
-        y:{ ticks:{ callback:function(v){ return fmtRpShort(v); } }, grid:{color:"#F1F3F7"} },
-        x:{ ticks:{font:{size:11.5}}, grid:{display:false} }
-      } }
+    type:"pie",
+    data:{
+      labels:entries.map(function(e){
+        var pct = totalVal ? ((e.value / totalVal) * 100).toFixed(1) : 0;
+        return e.label + " (" + pct + "%)";
+      }),
+      datasets:[{
+        data:entries.map(function(e){return e.value;}),
+        backgroundColor:CHART_COLORS,
+        borderWidth: 1
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{
+            boxWidth: 12,
+            font:{size:11},
+            color:"#374151"
+          }
+        },
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              var val = ctx.parsed;
+              var pct = totalVal ? ((val / totalVal) * 100).toFixed(1) : 0;
+              return ctx.label + ": " + fmtRp(val) + " (" + pct + "%)";
+            }
+          }
+        }
+      }
+    }
   });
   renderChannelCompareTable(rows);
 }
+
 function renderChannelCompareTable(currentRows){
-  var prevRange = getPreviousPeriodRange();
-  if(!currentRows || !currentRows.length || !prevRange){
-    $("channelCompareTable").innerHTML = '<div class="compare-hint">Pilih rentang tanggal (Dari–Sampai) untuk melihat perbandingan dengan periode sebelumnya.</div>';
+  var compareRange = getComparePeriodRange();
+  if(!currentRows || !currentRows.length || !compareRange){
+    $("channelCompareTable").innerHTML = '<div class="compare-hint">Pilih jangkauan tanggal di atas untuk melihat perbandingan penjualan.</div>';
     return;
   }
-  var prevRows = state.sales.filter(function(s){
+  var compareRows = state.sales.filter(function(s){
     var t = s.tanggalFaktur||"";
-    return t >= prevRange.from && t <= prevRange.to;
+    return t >= compareRange.from && t <= compareRange.to;
   });
   var currentMap = groupSum(currentRows, function(r){ return r.kategoriPelanggan; }, function(r){ return Number(r.penjualan)||0; });
-  var prevMap = groupSum(prevRows, function(r){ return r.kategoriPelanggan; }, function(r){ return Number(r.penjualan)||0; });
+  var compareMap = groupSum(compareRows, function(r){ return r.kategoriPelanggan; }, function(r){ return Number(r.penjualan)||0; });
   var labels = Object.keys(currentMap).sort(function(a,b){ return currentMap[b]-currentMap[a]; });
-  if(!labels.length){ $("channelCompareTable").innerHTML = '<div class="compare-hint">Tidak ada data.</div>'; return; }
+  if(!labels.length){ $("channelCompareTable").innerHTML = '<div class="compare-hint">Tidak ada data aktif.</div>'; return; }
+  
+  var totalCurrent = labels.reduce(function(sum, label) { return sum + (currentMap[label]||0); }, 0);
+  var labelPembandingText = state.compareMode === "prev_period" ? "Periode Sebelumnya" : "Bulan Lalu";
+
   $("channelCompareTable").innerHTML = labels.map(function(label, i){
     var cur = currentMap[label]||0;
-    var prev = prevMap[label]||0;
+    var prev = compareMap[label]||0;
     var delta = prev ? ((cur-prev)/prev*100) : (cur>0?100:0);
     var cls = delta>0.5 ? "up" : (delta<-0.5 ? "down" : "flat");
     var arrow = cls==="up" ? "▲" : (cls==="down" ? "▼" : "—");
+    var contributionPct = totalCurrent ? ((cur / totalCurrent) * 100).toFixed(1) : 0;
+    
     return '<div class="compare-row">'
       +'<span class="compare-dot" style="background:'+CHART_COLORS[i%CHART_COLORS.length]+'"></span>'
       +'<span class="compare-name">'+escapeHtml(label)+'</span>'
-      +'<span class="compare-val">'+fmtRpShort(cur)+'</span>'
+      +'<span class="compare-val">'+fmtRpShort(cur)+' ('+contributionPct+'%)</span>'
       +'<span class="compare-prev">vs '+fmtRpShort(prev)+'</span>'
       +'<span class="compare-delta '+cls+'">'+arrow+' '+Math.abs(delta).toFixed(0)+'%</span>'
       +'</div>';
-  }).join("") + '<div class="compare-hint">Periode sebelumnya: '+fmtDate(prevRange.from)+' – '+fmtDate(prevRange.to)+'</div>';
+  }).join("") + '<div class="compare-hint">Pembanding ('+labelPembandingText+'): '+fmtDate(compareRange.from)+' – '+fmtDate(compareRange.to)+'</div>';
 }
+
 function populateKategoriFilterOptions(){
   var cats = {};
   state.sales.forEach(function(s){ if(s.kategoriPelanggan) cats[s.kategoriPelanggan]=true; });
@@ -776,7 +1395,21 @@ function renderTopProdukTable(rows){
   var entries = Object.keys(map).map(function(k){
     var d = map[k];
     return { nama:k, penjualan:d.penjualan, kuantitas:d.kuantitas, labaKotor:d.penjualan-d.hpp };
-  }).sort(function(a,b){ return b.penjualan - a.penjualan; });
+  });
+
+  var key = state.topProdukSortKey, dir = state.topProdukSortDir === "asc" ? 1 : -1;
+  entries.sort(function(a,b){
+    if(key === "nama") return dir * a.nama.localeCompare(b.nama);
+    return dir * (a[key] - b[key]);
+  });
+
+  document.querySelectorAll(".top-produk-table thead th.sortable").forEach(function(th){
+    var isActive = th.dataset.key === key;
+    th.classList.toggle("sort-active", isActive);
+    th.classList.toggle("sort-asc", isActive && state.topProdukSortDir==="asc");
+    th.classList.toggle("sort-desc", isActive && state.topProdukSortDir==="desc");
+  });
+  document.querySelector(".top-produk-table").classList.toggle("sorted-by-penjualan-desc", key==="penjualan" && state.topProdukSortDir==="desc");
 
   var tbody = $("topProdukBody");
   if(!entries.length){
@@ -788,7 +1421,6 @@ function renderTopProdukTable(rows){
   }).join("");
 }
 
-// ── RENDER: RINGKASAN ORCHESTRATOR ──
 function renderRingkasan(){
   var salesRows = getFilteredSales();
   var returRows = getFilteredReturs();
@@ -799,6 +1431,7 @@ function renderRingkasan(){
   renderFinancialCard(kpi);
   renderVolumeCard(kpi);
   renderReturKpiGrid(returKpi);
+  renderInsights(salesRows);
 
   $("topbarSub").textContent = state.sales.length + " baris penjualan · " + state.returs.length + " baris retur";
 
@@ -814,7 +1447,6 @@ function safeRender(fn, label){
 
 function renderAll(){ renderRingkasan(); renderRawTable(); }
 
-// ── TABS ──
 document.querySelectorAll(".tab-btn").forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
@@ -824,19 +1456,6 @@ document.querySelectorAll(".tab-btn").forEach(function(btn){
   });
 });
 
-// ── FILTER BAR ──
-$("applyFilterBtn").addEventListener("click", function(){
-  state.filterFrom = $("filterFrom").value;
-  state.filterTo = $("filterTo").value;
-  renderRingkasan();
-});
-$("resetFilterBtn").addEventListener("click", function(){
-  state.filterFrom = ""; state.filterTo = "";
-  $("filterFrom").value = ""; $("filterTo").value = "";
-  renderRingkasan();
-});
-
-// ── TREND GRANULARITY TOGGLE ──
 document.querySelectorAll(".chart-toggle button").forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll(".chart-toggle button").forEach(function(b){ b.classList.remove("active"); });
@@ -846,17 +1465,43 @@ document.querySelectorAll(".chart-toggle button").forEach(function(btn){
   });
 });
 
-// ── TOP PRODUK KATEGORI FILTER ──
 $("topProdukKategoriFilter").addEventListener("change", function(e){
   state.topProdukKategoriFilter = e.target.value;
   safeRender(function(){ renderTopProdukTable(getFilteredSales()); }, "Top Produk");
 });
 
-// ── TARGET PENJUALAN ──
+document.querySelectorAll(".top-produk-table thead th.sortable").forEach(function(th){
+  th.addEventListener("click", function(){
+    var key = th.dataset.key;
+    if(state.topProdukSortKey === key){
+      state.topProdukSortDir = state.topProdukSortDir === "desc" ? "asc" : "desc";
+    } else {
+      state.topProdukSortKey = key;
+      state.topProdukSortDir = key === "nama" ? "asc" : "desc";
+    }
+    safeRender(function(){ renderTopProdukTable(getFilteredSales()); }, "Top Produk");
+  });
+});
+
+$("openTargetModalBtn").addEventListener("click", function() {
+  var now = new Date();
+  if(!$("targetMonth").value) {
+    $("targetMonth").value = now.getFullYear() + "-" + pad2(now.getMonth() + 1);
+  }
+  var month = $("targetMonth").value;
+  $("targetValue").value = state.targets[month] !== undefined ? state.targets[month] : "";
+  $("targetModal").classList.add("show");
+});
+
+$("closeTargetModalBtn").addEventListener("click", function() {
+  $("targetModal").classList.remove("show");
+});
+
 $("targetMonth").addEventListener("change", function(){
   var month = $("targetMonth").value;
   $("targetValue").value = state.targets[month] !== undefined ? state.targets[month] : "";
 });
+
 $("saveTargetBtn").addEventListener("click", function(){
   var month = $("targetMonth").value;
   var value = Number($("targetValue").value)||0;
@@ -864,12 +1509,256 @@ $("saveTargetBtn").addEventListener("click", function(){
   setLoading(true, "Menyimpan target…");
   callGS("setTarget", {month:month, value:value}).then(function(){
     state.targets[month] = value;
-    setLoading(false); showToast("✓ Target tersimpan");
+    setLoading(false); 
+    showToast("✓ Target tersimpan");
+    $("targetModal").classList.remove("show");
     renderRingkasan();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan target"); });
 });
 
-// ── IMPORT: DATASET TOGGLE ──
+var pickerTemp = {
+  start: "2026-07-10",
+  end: "2026-07-16",
+  leftYear: 2026,
+  leftMonth: 6 
+};
+
+function fmtDateReadable(iso) {
+  if(!iso) return "";
+  var d = new Date(iso+"T00:00:00");
+  if(isNaN(d)) return iso;
+  var months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  return d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+}
+
+function updateDateTriggerUI() {
+  var displayStr = fmtDateReadable(state.filterFrom) + " - " + fmtDateReadable(state.filterTo);
+  $("dateRangeDisplay").textContent = displayStr;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function drawCalendars() {
+  var ly = pickerTemp.leftYear;
+  var lm = pickerTemp.leftMonth;
+  $("leftMonthLabel").textContent = MONTHS_SHORT[lm] + " " + ly;
+  renderMonthGrid($("leftDaysGrid"), ly, lm);
+
+  var ry = lm === 11 ? ly + 1 : ly;
+  var rm = lm === 11 ? 0 : lm + 1;
+  $("rightMonthLabel").textContent = MONTHS_SHORT[rm] + " " + ry;
+  renderMonthGrid($("rightDaysGrid"), ry, rm);
+
+  $("pickerRangeDisplay").textContent = (pickerTemp.start || "—") + " - " + (pickerTemp.end || "—");
+}
+
+function renderMonthGrid(container, year, month) {
+  container.innerHTML = "";
+  var firstDayIndex = new Date(year, month, 1).getDay();
+  var totalDays = getDaysInMonth(year, month);
+
+  var prevMonth = month === 0 ? 11 : month - 1;
+  var prevYear = month === 0 ? year - 1 : year;
+  var totalDaysPrev = getDaysInMonth(prevYear, prevMonth);
+  for (var i = firstDayIndex - 1; i >= 0; i--) {
+    var cell = document.createElement("div");
+    cell.className = "day-cell inactive";
+    cell.innerHTML = '<span class="day-num">' + (totalDaysPrev - i) + '</span>';
+    container.appendChild(cell);
+  }
+
+  for (var d = 1; d <= totalDays; d++) {
+    var cell = document.createElement("div");
+    cell.className = "day-cell";
+    var iso = year + "-" + pad2(month + 1) + "-" + pad2(d);
+    cell.dataset.date = iso;
+    cell.innerHTML = '<span class="day-num">' + d + '</span>';
+
+    if (pickerTemp.start && iso === pickerTemp.start) {
+      cell.classList.add("range-start");
+    } else if (pickerTemp.end && iso === pickerTemp.end) {
+      cell.classList.add("range-end");
+    } else if (pickerTemp.start && pickerTemp.end && iso > pickerTemp.start && iso < pickerTemp.end) {
+      cell.classList.add("range-mid");
+    }
+
+    cell.addEventListener("click", function(e) {
+      var clickedDate = e.currentTarget.dataset.date;
+      handleDatePickerSelection(clickedDate);
+    });
+
+    container.appendChild(cell);
+  }
+}
+
+function handleDatePickerSelection(dateStr) {
+  if (!pickerTemp.start || (pickerTemp.start && pickerTemp.end)) {
+    pickerTemp.start = dateStr;
+    pickerTemp.end = null;
+    document.querySelectorAll(".preset-item").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelector('.preset-item[data-preset="custom"]').classList.add("active");
+  } else {
+    if (dateStr < pickerTemp.start) {
+      pickerTemp.end = pickerTemp.start;
+      pickerTemp.start = dateStr;
+    } else {
+      pickerTemp.end = dateStr;
+    }
+  }
+  drawCalendars();
+}
+
+$("prevMonthBtn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  if (pickerTemp.leftMonth === 0) {
+    pickerTemp.leftMonth = 11;
+    pickerTemp.leftYear--;
+  } else {
+    pickerTemp.leftMonth--;
+  }
+  drawCalendars();
+});
+
+$("nextMonthBtn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  if (pickerTemp.leftMonth === 11) {
+    pickerTemp.leftMonth = 0;
+    pickerTemp.leftYear++;
+  } else {
+    pickerTemp.leftMonth++;
+  }
+  drawCalendars();
+});
+
+$("dateRangeTrigger").addEventListener("click", function(e) {
+  e.stopPropagation();
+  var picker = $("datePickerDropdown");
+  var isOpen = picker.classList.contains("show");
+  if (!isOpen) {
+    pickerTemp.start = state.filterFrom;
+    pickerTemp.end = state.filterTo;
+    
+    if (state.filterFrom) {
+      var parts = state.filterFrom.split("-");
+      pickerTemp.leftYear = parseInt(parts[0], 10);
+      pickerTemp.leftMonth = parseInt(parts[1], 10) - 1;
+    }
+    
+    drawCalendars();
+    picker.classList.add("show");
+  } else {
+    picker.classList.remove("show");
+  }
+});
+
+document.addEventListener("click", function(e) {
+  var picker = $("datePickerDropdown");
+  if (!picker.contains(e.target) && e.target !== $("dateRangeTrigger") && !$("dateRangeTrigger").contains(e.target)) {
+    picker.classList.remove("show");
+  }
+});
+
+document.querySelectorAll(".preset-item").forEach(function(btn) {
+  btn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    document.querySelectorAll(".preset-item").forEach(function(b){ b.classList.remove("active"); });
+    btn.classList.add("active");
+    
+    var preset = btn.dataset.preset;
+    applyDatePreset(preset);
+  });
+});
+
+function applyDatePreset(preset) {
+  var today = new Date(2026, 6, 16); 
+  var start, end;
+
+  switch (preset) {
+    case "today":
+      start = toYMDLocal(today);
+      end = toYMDLocal(today);
+      break;
+    case "yesterday":
+      var yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      start = toYMDLocal(yesterday);
+      end = toYMDLocal(yesterday);
+      break;
+    case "7days":
+      var last7 = new Date(today);
+      last7.setDate(today.getDate() - 6);
+      start = toYMDLocal(last7);
+      end = toYMDLocal(today);
+      break;
+    case "30days":
+      var last30 = new Date(today);
+      last30.setDate(today.getDate() - 29);
+      start = toYMDLocal(last30);
+      end = toYMDLocal(today);
+      break;
+    case "thismonth":
+      start = today.getFullYear() + "-" + pad2(today.getMonth() + 1) + "-01";
+      end = toYMDLocal(today);
+      break;
+    case "lastmonth":
+      var lm = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+      var ly = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+      start = ly + "-" + pad2(lm + 1) + "-01";
+      end = ly + "-" + pad2(lm + 1) + "-" + pad2(getDaysInMonth(ly, lm));
+      break;
+    case "custom":
+      return;
+  }
+
+  pickerTemp.start = start;
+  pickerTemp.end = end;
+
+  if (start) {
+    var parts = start.split("-");
+    pickerTemp.leftYear = parseInt(parts[0], 10);
+    pickerTemp.leftMonth = parseInt(parts[1], 10) - 1;
+  }
+
+  drawCalendars();
+}
+
+$("pickerCancelBtn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  $("datePickerDropdown").classList.remove("show");
+});
+
+$("pickerApplyBtn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  if (!pickerTemp.start || !pickerTemp.end) {
+    showToast("Silakan pilih rentang tanggal yang lengkap");
+    return;
+  }
+  state.filterFrom = pickerTemp.start;
+  state.filterTo = pickerTemp.end;
+  updateDateTriggerUI();
+  $("datePickerDropdown").classList.remove("show");
+  
+  renderRingkasan();
+});
+
+$("comparePrevPeriodBtn").addEventListener("click", function() {
+  document.getElementById("comparePrevPeriodBtn").classList.add("active-blue");
+  document.getElementById("compareLastMonthBtn").classList.remove("active-blue");
+  state.compareMode = "prev_period";
+  renderRingkasan();
+  showToast("✓ Pembanding diset: Periode Sebelumnya");
+});
+
+$("compareLastMonthBtn").addEventListener("click", function() {
+  document.getElementById("compareLastMonthBtn").classList.add("active-blue");
+  document.getElementById("comparePrevPeriodBtn").classList.remove("active-blue");
+  state.compareMode = "last_month";
+  renderRingkasan();
+  showToast("✓ Pembanding diset: Bulan Lalu (Tanggal Sama)");
+});
+
 document.querySelectorAll('.dataset-toggle button[data-type]').forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll('.dataset-toggle button[data-type]').forEach(function(b){ b.classList.remove("active"); });
@@ -881,7 +1770,6 @@ document.querySelectorAll('.dataset-toggle button[data-type]').forEach(function(
   });
 });
 
-// ── IMPORT: FILE PARSING ──
 function normalizeHeader(h){ return String(h||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
 function guessMapping(headers){
   var mapping = {};
@@ -904,11 +1792,6 @@ function parseNumber(val){
   return cleaned ? parseInt(cleaned,10) : 0;
 }
 function excelSerialToYMD(serial){
-  // Konversi manual serial tanggal Excel (jumlah hari sejak 1899-12-30) memakai
-  // aritmatika UTC murni — sengaja TIDAK lewat getter lokal (getDate/getMonth)
-  // karena SheetJS/Excel merepresentasikan tanggal tanpa informasi timezone,
-  // dan pembacaan lewat getter lokal-lah yang menyebabkan tanggal bergeser
-  // mundur 1 hari di sebagian browser/timezone.
   var utcDays = Math.round(serial) - 25569;
   var d = new Date(utcDays * 86400 * 1000);
   return d.getUTCFullYear()+"-"+pad2(d.getUTCMonth()+1)+"-"+pad2(d.getUTCDate());
@@ -922,7 +1805,7 @@ function parseDateValue(val){
   var iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if(iso) return iso[1]+"-"+pad2(iso[2])+"-"+pad2(iso[3]);
   var dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if(dmy) return dmy[3]+"-"+pad2(dmy[2])+"-"+pad2(dmy[1]); // asumsi format DD/MM/YYYY
+  if(dmy) return dmy[3]+"-"+pad2(dmy[2])+"-"+pad2(dmy[1]);
   var d = new Date(s);
   if(!isNaN(d)) return toYMDLocal(d);
   return s;
@@ -992,12 +1875,12 @@ function renderPreview(){
   $("previewTable").innerHTML = headerRow + bodyRows;
 }
 
-// ── IMPORT: BULK SEND ──
 function resetImportUI(){
   $("fileChipWrap").innerHTML = ""; $("mappingCard").style.display = "none";
   state.importHeaders=[]; state.importRows=[]; state.importMapping={};
   $("fileInput").value = "";
 }
+
 function importAll(){
   var missing = REQUIRED_FIELDS.filter(function(f){ return !state.importMapping[f.key]; });
   if(missing.length){
@@ -1046,6 +1929,7 @@ function importAll(){
   }
   sendNext();
 }
+
 $("dropzone").addEventListener("click", function(){ $("fileInput").click(); });
 $("fileInput").addEventListener("change", function(e){ handleFile(e.target.files[0]); });
 $("dropzone").addEventListener("dragover", function(e){ e.preventDefault(); $("dropzone").classList.add("drag"); });
@@ -1056,22 +1940,35 @@ $("dropzone").addEventListener("drop", function(e){
 });
 $("importAllBtn").addEventListener("click", importAll);
 $("cancelImportBtn").addEventListener("click", resetImportUI);
+
 $("clearAllSalesBtn").addEventListener("click", function(){
-  if(!confirm("Yakin ingin menghapus SEMUA data penjualan? Tindakan ini tidak bisa dibatalkan.")) return;
-  setLoading(true, "Menghapus semua data penjualan…");
-  callGS("clearAllSales").then(function(){
-    setLoading(false); showToast("✓ Semua data penjualan dihapus"); loadDashboardData();
-  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus data"); });
-});
-$("clearAllReturBtn").addEventListener("click", function(){
-  if(!confirm("Yakin ingin menghapus SEMUA data retur? Tindakan ini tidak bisa dibatalkan.")) return;
-  setLoading(true, "Menghapus semua data retur…");
-  callGS("clearAllRetur").then(function(){
-    setLoading(false); showToast("✓ Semua data retur dihapus"); loadDashboardData();
-  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus data"); });
+  showCustomConfirm(
+    "Hapus Semua Data Penjualan",
+    "Yakin ingin menghapus SEMUA data penjualan? Tindakan ini tidak bisa dibatalkan.",
+    true,
+    function() {
+      setLoading(true, "Menghapus semua data penjualan…");
+      callGS("clearAllSales").then(function(){
+        setLoading(false); showToast("✓ Semua data penjualan dihapus"); loadDashboardData();
+      }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus data"); });
+    }
+  );
 });
 
-// ── DATA MENTAH: DATASET TOGGLE ──
+$("clearAllReturBtn").addEventListener("click", function(){
+  showCustomConfirm(
+    "Hapus Semua Data Retur",
+    "Yakin ingin menghapus SEMUA data retur? Tindakan ini tidak bisa dibatalkan.",
+    true,
+    function() {
+      setLoading(true, "Menghapus semua data retur…");
+      callGS("clearAllRetur").then(function(){
+        setLoading(false); showToast("✓ Semua data retur dihapus"); loadDashboardData();
+      }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus data"); });
+    }
+  );
+});
+
 document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(function(btn){
   btn.addEventListener("click", function(){
     document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(function(b){ b.classList.remove("active"); });
@@ -1082,7 +1979,6 @@ document.querySelectorAll('.dataset-toggle button[data-rawtype]').forEach(functi
   });
 });
 
-// ── RAW DATA TABLE ──
 function renderRawTable(){
   var source = state.rawDatasetType==="retur" ? state.returs : state.sales;
   var q = state.rawSearch.trim().toLowerCase();
@@ -1127,17 +2023,28 @@ function renderRawTable(){
   if(prevBtn) prevBtn.addEventListener("click", function(){ state.rawPage--; renderRawTable(); });
   if(nextBtn) nextBtn.addEventListener("click", function(){ state.rawPage++; renderRawTable(); });
 }
+
 function deleteRawRow(id){
-  if(!confirm("Hapus baris data ini?")) return;
-  var actionName = state.rawDatasetType==="retur" ? "deleteRetur" : "deleteSales";
-  setLoading(true, "Menghapus…");
-  callGS(actionName, id).then(function(){
-    if(state.rawDatasetType==="retur"){ state.returs = state.returs.filter(function(s){ return s.id!==id; }); }
-    else { state.sales = state.sales.filter(function(s){ return s.id!==id; }); }
-    showToast("✓ Baris dihapus"); setLoading(false); renderAll();
-  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+  showCustomConfirm(
+    "Hapus Baris Data",
+    "Yakin ingin menghapus baris data terpilih ini dari sistem?",
+    true,
+    function() {
+      var actionName = state.rawDatasetType==="retur" ? "deleteRetur" : "deleteSales";
+      setLoading(true, "Menghapus…");
+      callGS(actionName, id).then(function(){
+        if(state.rawDatasetType==="retur"){ state.returs = state.returs.filter(function(s){ return s.id!==id; }); }
+        else { state.sales = state.sales.filter(function(s){ return s.id!==id; }); }
+        showToast("✓ Baris dihapus"); setLoading(false); renderAll();
+      }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+    }
+  );
 }
 $("rawSearch").addEventListener("input", function(e){ state.rawSearch = e.target.value; state.rawPage = 1; renderRawTable(); });
+
+window.onload = function() {
+  updateDateTriggerUI();
+};
 </script>
 </body>
 </html>
