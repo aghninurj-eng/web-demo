@@ -677,7 +677,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
         
         <div style="position:relative">
           <button class="date-trigger-btn" id="dateRangeTrigger">
-            <span id="dateRangeDisplay">10 Jul 2026 - 16 Jul 2026</span>
+            <span id="dateRangeDisplay">Memuat…</span>
           </button>
           
           <!-- DROPDOWN CALENDAR DIALOG -->
@@ -724,7 +724,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
               </div>
             </div>
             <div class="picker-footer">
-              <span class="selected-range-display" id="pickerRangeDisplay">2026-07-10 - 2026-07-16</span>
+              <span class="selected-range-display" id="pickerRangeDisplay">—</span>
               <button class="btn btn-outline btn-sm" id="pickerCancelBtn" style="padding:7px 16px; font-weight:600">Batal</button>
               <button class="btn btn-primary btn-sm" id="pickerApplyBtn" style="padding:7px 16px; font-weight:600">Terapkan</button>
             </div>
@@ -1119,9 +1119,12 @@ function unlockApp(){
 }
 
 // ── STATE ──
+var defaultToday_ = new Date();
+var defaultFrom_  = new Date(defaultToday_);
+defaultFrom_.setDate(defaultFrom_.getDate() - 6);
 var state = {
   sales: [], returs: [], targets: {},
-  filterFrom:"2026-07-10", filterTo:"2026-07-16", trendGranularity:"harian",
+  filterFrom: toYMDLocal(defaultFrom_), filterTo: toYMDLocal(defaultToday_), trendGranularity:"harian",
   compareMode:"prev_period", 
   topProdukLimit: 10,
   topProdukKategoriFilter:"", topProdukSortKey:"penjualan", topProdukSortDir:"desc",
@@ -1944,10 +1947,10 @@ $("saveTargetBtn").addEventListener("click", function(){
 
 // ── STREAMING_CHUNK: Menggambar kalender ganda interaktif dari nol ──
 var pickerTemp = {
-  start: "2026-07-10",
-  end: "2026-07-16",
-  leftYear: 2026,
-  leftMonth: 6 
+  start: state.filterFrom,
+  end: state.filterTo,
+  leftYear: defaultFrom_.getFullYear(),
+  leftMonth: defaultFrom_.getMonth()
 };
 
 function fmtDateReadable(iso) {
@@ -2099,7 +2102,7 @@ document.querySelectorAll(".preset-item").forEach(function(btn) {
 });
 
 function applyDatePreset(preset) {
-  var today = new Date(2026, 6, 16); 
+  var today = new Date();
   var start, end;
 
   switch (preset) {
@@ -2501,9 +2504,3 @@ window.onload = function() {
 </script>
 </body>
 </html>
-```
-eof
-
-Sistem **Top Produk** Anda sekarang menyajikan data perbandingan dengan tingkat kegunaan (*usability*) yang setara dengan dashboard analitis bisnis kelas dunia.
-
-Silakan tekan tombol **`Preview`** di sisi kanan peramban Anda untuk mengamati langsung bagaimana nilai penjualan dan laba kotor setiap produk diiringi oleh kalkulator pertumbuhan persentase yang cerdas!
