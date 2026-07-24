@@ -1295,7 +1295,17 @@ function computeTrend(rows, granularity){
     map[key].penjualan += Number(s.penjualan)||0;
     map[key].profit += (Number(s.penjualan)||0) - (Number(s.hpp)||0);
   });
-  var keys = Object.keys(map).sort();
+  var keys;
+  if (granularity === "bulanan") {
+    keys = getMonthsInCalendarRange(state.filterFrom, state.filterTo);
+  } else {
+    keys = getDatesInRange(state.filterFrom, state.filterTo);
+  }
+  // Jaga-jaga: kalau periode filter tidak diset, atau ada data di luar rentang yang
+  // tersimpan, pastikan tetap ikut ditampilkan.
+  Object.keys(map).forEach(function(k){ if(keys.indexOf(k) === -1) keys.push(k); });
+  keys.sort();
+  keys.forEach(function(k){ if(!map[k]) map[k] = { penjualan:0, profit:0 }; });
 
   var allSalesMap = {};
   state.sales.forEach(function(s) {
@@ -1349,6 +1359,19 @@ function computeTrend(rows, granularity){
 }
 
 // ── TARGET LOGIC ──
+function getDatesInRange(from, to){
+  if(!from || !to) return [];
+  var dates = [];
+  var d = new Date(from+"T00:00:00");
+  var end = new Date(to+"T00:00:00");
+  var guard = 0;
+  while(d <= end && guard < 3660){
+    dates.push(toYMDLocal(d));
+    d.setDate(d.getDate()+1);
+    guard++;
+  }
+  return dates;
+}
 function getMonthsInCalendarRange(from, to){
   if(!from || !to) return [];
   var months = [];
