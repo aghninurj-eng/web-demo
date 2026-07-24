@@ -2015,6 +2015,7 @@ function renderMonthGrid(container, year, month) {
     }
 
     cell.addEventListener("click", function(e) {
+      e.stopPropagation();
       var clickedDate = e.currentTarget.dataset.date;
       handleDatePickerSelection(clickedDate);
     });
