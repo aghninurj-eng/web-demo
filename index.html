@@ -100,6 +100,7 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
   border-radius:20px;background:var(--blue-lt);color:var(--blue);margin-bottom:5px;
 }
 .detail-event-desc{font-size:11.5px;color:var(--gray-800);white-space:pre-wrap;line-height:1.5}
+.detail-event-recur{display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--gray-100);color:var(--gray-600);margin-bottom:5px;margin-left:5px}
 .detail-event-actions{display:flex;gap:6px;margin-top:8px}
 .detail-event-actions button{
   font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;
@@ -174,6 +175,7 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,110,247,.1)}
 .form-textarea{resize:vertical;min-height:70px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--gray-400);margin-top:6px;line-height:1.4}
 .color-picker-row{display:flex;gap:8px;flex-wrap:wrap}
 .color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .12s}
 .color-dot:hover{transform:scale(1.15)}
@@ -338,6 +340,25 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
         <input class="form-input" type="date" id="fEndDate"/>
       </div>
     </div>
+    <div class="form-row" id="repeatRow">
+      <div class="form-group">
+        <label class="form-label">Ulangi</label>
+        <select class="form-select" id="fRepeat">
+          <option value="none">Tidak berulang</option>
+          <option value="daily">Setiap hari</option>
+          <option value="weekly">Setiap minggu</option>
+          <option value="monthly">Setiap bulan</option>
+        </select>
+      </div>
+      <div class="form-group" id="repeatUntilGroup" style="display:none">
+        <label class="form-label">Ulangi Sampai</label>
+        <input class="form-input" type="date" id="fRepeatUntil"/>
+      </div>
+    </div>
+    <div class="form-hint" id="repeatHint" style="display:none;margin-top:-8px;margin-bottom:16px"></div>
+    <div class="form-group" id="repeatNoteEdit" style="display:none">
+      <span class="detail-event-recur">🔁 Bagian dari event berulang — perubahan hanya berlaku untuk tanggal ini</span>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Kategori</label>
@@ -416,6 +437,22 @@ function fmtDateShort(ymd){
   if(!ymd) return "";
   var d = parseDate(ymd);
   return d.getDate()+" "+MONTHS_ID[d.getMonth()].slice(0,3);
+}
+var MAX_RECUR_OCCURRENCES = 120; // batas aman agar tidak membuat ribuan event tanpa sengaja
+function generateRecurringDates(startDate, durationDays, freq, untilYMD){
+  var untilDate = parseDate(untilYMD);
+  var results = [];
+  var cur = new Date(startDate.getTime());
+  while(cur <= untilDate && results.length < MAX_RECUR_OCCURRENCES){
+    var curEnd = new Date(cur.getTime());
+    curEnd.setDate(curEnd.getDate()+durationDays);
+    results.push({ date: toYMD(cur), endDate: toYMD(curEnd) });
+    if(freq==="daily")        cur.setDate(cur.getDate()+1);
+    else if(freq==="weekly")  cur.setDate(cur.getDate()+7);
+    else if(freq==="monthly") cur.setMonth(cur.getMonth()+1);
+    else break;
+  }
+  return results;
 }
 function showToast(msg, dur){
   dur = dur||3000;
@@ -698,10 +735,12 @@ function renderDayDetail(ymd){
     var descHTML = ev.description
       ? '<div class="detail-event-desc">'+ev.description.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n/g,"<br>")+'</div>'
       : "";
+    var recurBadge = ev.recurringId ? '<span class="detail-event-recur">🔁 Berulang</span>' : "";
     return '<div class="detail-event-card" style="border-left-color:'+(ev.color||COLORS[0])+';">'
       +'<div class="detail-event-title">'+ev.title+'</div>'
       +'<div class="detail-event-meta">📅 '+dateRange+(timeStr?" · "+timeStr:"")+'</div>'
       +'<span class="detail-event-cat">'+( ev.category||"General")+'</span>'
+      +recurBadge
       +descHTML
       +'<div class="detail-event-actions">'
       +'<button onclick="openModal(\''+ev.id+'\')">Edit</button>'
@@ -731,6 +770,21 @@ function openModal(id, prefillDate, prefillTime){
   $("fCategory").value = ev ? (ev.category||"General") : "General";
   state.selectedColor  = ev ? (ev.color||COLORS[0]) : COLORS[0];
   $("deleteEventBtn").style.display = ev ? "flex" : "none";
+
+  // Recurrence: hanya bisa diatur saat menambah event baru, bukan saat edit
+  if(ev){
+    $("repeatRow").style.display = "none";
+    $("repeatHint").style.display = "none";
+    $("repeatNoteEdit").style.display = ev.recurringId ? "block" : "none";
+  } else {
+    $("repeatRow").style.display = "grid";
+    $("repeatNoteEdit").style.display = "none";
+    $("fRepeat").value = "none";
+    $("fRepeatUntil").value = "";
+    $("repeatUntilGroup").style.display = "none";
+    $("repeatHint").style.display = "none";
+  }
+
   buildColorPicker();
   $("eventModal").classList.add("open");
   $("fTitle").focus();
@@ -744,42 +798,137 @@ function saveEvent(){
   if(!title){ showToast("Judul harus diisi"); return; }
   var date  = $("fDate").value;
   if(!date){ showToast("Tanggal harus diisi"); return; }
+  var endDate = $("fEndDate").value||date;
   var isEdit  = !!state.editingId;
-  var payload = {
-    id:          state.editingId,
+
+  var base = {
     title:       title,
-    date:        date,
-    endDate:     $("fEndDate").value||date,
     color:       state.selectedColor,
     description: $("fDesc").value.trim(),
     category:    $("fCategory").value,
   };
-  setLoading(true, isEdit?"Menyimpan perubahan…":"Menambah event…");
-  callGS(isEdit?"updateEvent":"addEvent", payload).then(function(res){
-    if(isEdit){
+
+  // ── EDIT: selalu hanya mengubah satu instance (recurringId, jika ada, tetap dipertahankan) ──
+  if(isEdit){
+    var existing = state.events.find(function(e){ return e.id===state.editingId; });
+    var payload = {
+      id:          state.editingId,
+      title:       base.title,
+      date:        date,
+      endDate:     endDate,
+      color:       base.color,
+      description: base.description,
+      category:    base.category,
+      recurringId: existing ? (existing.recurringId||null) : null
+    };
+    setLoading(true, "Menyimpan perubahan…");
+    callGS("updateEvent", payload).then(function(){
       var idx = state.events.findIndex(function(e){ return e.id===payload.id; });
       if(idx>-1) state.events[idx]=payload;
       showToast("✓ Event diperbarui");
-    } else {
+      closeModal();
+      setLoading(false);
+      render();
+    }).catch(function(err){
+      setLoading(false);
+      showToast("Gagal menyimpan");
+    });
+    return;
+  }
+
+  // ── TAMBAH BARU: cek apakah event ini berulang ──
+  var repeat = $("fRepeat").value;
+  if(repeat==="none"){
+    var payload = {
+      id: null, title: base.title, date: date, endDate: endDate,
+      color: base.color, description: base.description, category: base.category,
+      recurringId: null
+    };
+    setLoading(true, "Menambah event…");
+    callGS("addEvent", payload).then(function(res){
       payload.id = res.id;
       state.events.push(payload);
       showToast("✓ Event ditambahkan");
-    }
+      closeModal();
+      setLoading(false);
+      render();
+    }).catch(function(err){
+      setLoading(false);
+      showToast("Gagal menyimpan");
+    });
+    return;
+  }
+
+  // ── EVENT BERULANG ──
+  var untilYMD = $("fRepeatUntil").value;
+  if(!untilYMD){ showToast("Isi tanggal akhir pengulangan"); return; }
+  var startD = parseDate(date);
+  var untilD = parseDate(untilYMD);
+  if(untilD < startD){ showToast("Tanggal akhir pengulangan harus setelah tanggal mulai"); return; }
+
+  var durationDays = Math.round((parseDate(endDate)-startD)/86400000);
+  var occurrences  = generateRecurringDates(startD, durationDays, repeat, untilYMD);
+  if(occurrences.length===0){ showToast("Tidak ada tanggal yang dihasilkan"); return; }
+  if(occurrences.length > 40 && !confirm("Ini akan membuat "+occurrences.length+" event berulang. Lanjutkan?")) return;
+
+  var recurringId = "rec_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+  setLoading(true, "Menambah "+occurrences.length+" event berulang…");
+
+  var chain = Promise.resolve();
+  var failCount = 0;
+  occurrences.forEach(function(occ){
+    chain = chain.then(function(){
+      var payload = {
+        id: null, title: base.title, date: occ.date, endDate: occ.endDate,
+        color: base.color, description: base.description, category: base.category,
+        recurringId: recurringId
+      };
+      return callGS("addEvent", payload).then(function(res){
+        payload.id = res.id;
+        state.events.push(payload);
+      }).catch(function(){ failCount++; });
+    });
+  });
+
+  chain.then(function(){
     closeModal();
     setLoading(false);
     render();
-  }).catch(function(err){
-    setLoading(false);
-    showToast("Gagal menyimpan");
+    if(failCount===0) showToast("✓ "+occurrences.length+" event berulang ditambahkan");
+    else showToast("Selesai, tapi "+failCount+" dari "+occurrences.length+" gagal disimpan");
   });
 }
 function deleteEvent(id){
-  if(!confirm("Hapus event ini?")) return;
-  setLoading(true, "Menghapus event…");
-  callGS("deleteEvent", id).then(function(){
-    state.events = state.events.filter(function(e){ return e.id!==id; });
+  var ev = state.events.find(function(e){ return e.id===id; });
+  if(!ev) return;
+
+  var deleteWholeSeries = false;
+  if(ev.recurringId){
+    deleteWholeSeries = confirm(
+      "Event ini bagian dari rangkaian berulang.\n\n"+
+      "Klik OK untuk menghapus SELURUH rangkaian ("+ev.title+"),\n"+
+      "atau Cancel untuk hanya menghapus tanggal ini saja."
+    );
+    if(!deleteWholeSeries){
+      if(!confirm("Hapus event ini saja ("+fmtDate(ev.date)+")?")) return;
+    }
+  } else {
+    if(!confirm("Hapus event ini?")) return;
+  }
+
+  var idsToDelete = deleteWholeSeries
+    ? state.events.filter(function(e){ return e.recurringId===ev.recurringId; }).map(function(e){ return e.id; })
+    : [id];
+
+  setLoading(true, deleteWholeSeries ? "Menghapus rangkaian…" : "Menghapus event…");
+  var chain = Promise.resolve();
+  idsToDelete.forEach(function(delId){
+    chain = chain.then(function(){ return callGS("deleteEvent", delId); });
+  });
+  chain.then(function(){
+    state.events = state.events.filter(function(e){ return idsToDelete.indexOf(e.id)===-1; });
     closeModal();
-    showToast("✓ Event dihapus");
+    showToast(deleteWholeSeries ? "✓ Rangkaian dihapus ("+idsToDelete.length+" event)" : "✓ Event dihapus");
     setLoading(false);
     render();
     if(state.selectedDate) renderDayDetail(state.selectedDate);
@@ -815,19 +964,53 @@ function printCalendarPDF(){
   // Sort by date
   relevantEvs.sort(function(a,b){ return a.date.localeCompare(b.date); });
 
+  // Gabungkan instance dari event berulang (recurringId sama) menjadi SATU item,
+  // supaya tidak tampil terpisah — hanya tanggalnya saja yang menjadi banyak.
+  var monthStart = new Date(year, month, 1);
+  var monthEnd   = new Date(year, month+1, 0);
+  var printItems = [];
+  var seenRecurring = {};
+  relevantEvs.forEach(function(ev){
+    if(ev.recurringId){
+      if(seenRecurring[ev.recurringId]) return; // sudah diwakili oleh grup
+      seenRecurring[ev.recurringId] = true;
+      var seriesEvs = state.events.filter(function(e){
+        if(e.recurringId!==ev.recurringId) return false;
+        var s = parseDate(e.date), en = e.endDate ? parseDate(e.endDate) : s;
+        return s<=monthEnd && en>=monthStart; // hanya tanggal yang relevan di bulan ini
+      });
+      seriesEvs.sort(function(a,b){ return a.date.localeCompare(b.date); });
+      printItems.push({ base: ev, occurrences: seriesEvs, isRecurring: true });
+    } else {
+      printItems.push({ base: ev, occurrences: [ev], isRecurring: false });
+    }
+  });
+
   var listHTML = '<div style="margin-top:24px;page-break-before:always;">'
     +'<div style="background:#1A1D2E;color:#fff;padding:10px 20px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">'
     +'<span style="font-size:13px;font-weight:700;">Daftar Campaign &amp; Kegiatan — '+monthLabel+'</span>'
-    +'<span style="font-size:10px;opacity:.7;">'+relevantEvs.length+' kegiatan</span>'
+    +'<span style="font-size:10px;opacity:.7;">'+printItems.length+' kegiatan</span>'
     +'</div>'
     +'<div class="print-event-grid">';
 
-  if(relevantEvs.length===0){
+  if(printItems.length===0){
     listHTML += '<p style="color:#6B7280;font-size:13px;">Tidak ada kegiatan di bulan ini.</p>';
   } else {
-    relevantEvs.forEach(function(ev){
-      var dateRange = fmtDate(ev.date);
-      if(ev.endDate && ev.endDate!==ev.date) dateRange += " \u2192 "+fmtDate(ev.endDate);
+    printItems.forEach(function(item){
+      var ev = item.base;
+      var dateRange;
+      var recurBadge = "";
+      if(item.isRecurring){
+        dateRange = item.occurrences.map(function(occ){
+          var s = fmtDateShort(occ.date);
+          if(occ.endDate && occ.endDate!==occ.date) s += "\u2013"+fmtDateShort(occ.endDate);
+          return s;
+        }).join(", ");
+        recurBadge = '&nbsp;&nbsp;<span style="background:#F1F3F7;color:#6B7280;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:600;">🔁 '+item.occurrences.length+'x berulang</span>';
+      } else {
+        dateRange = fmtDate(ev.date);
+        if(ev.endDate && ev.endDate!==ev.date) dateRange += " \u2192 "+fmtDate(ev.endDate);
+      }
       var timeStr = ev.time ? ev.time+(ev.endTime?" \u2013 "+ev.endTime:"") : "";
       var descLines = ev.description
         ? ev.description.split("\n").map(function(l){ return '<span style="display:block;margin-left:12px;color:#374151;">'+l+'</span>'; }).join("")
@@ -836,6 +1019,7 @@ function printCalendarPDF(){
         +'<div style="font-size:13px;font-weight:700;color:#1A1D2E;margin-bottom:3px;">'+ev.title+'</div>'
         +'<div style="font-size:11px;color:#6B7280;margin-bottom:4px;">📅 '+dateRange+(timeStr?" &nbsp;·&nbsp; "+timeStr:"")
         +'&nbsp;&nbsp;<span style="background:#EEF1FE;color:#4F6EF7;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:600;">'+(ev.category||"General")+'</span>'
+        +recurBadge
         +'</div>'
         +(ev.description
           ? '<div style="font-size:11.5px;color:#374151;margin-top:5px;line-height:1.6;">'+descLines+'</div>'
@@ -896,6 +1080,14 @@ $("modalClose").addEventListener("click",   closeModal);
 $("cancelBtn").addEventListener("click",    closeModal);
 $("saveBtn").addEventListener("click",      saveEvent);
 $("deleteEventBtn").addEventListener("click", function(){ deleteEvent(state.editingId); });
+$("fRepeat").addEventListener("change", function(){
+  var on = $("fRepeat").value !== "none";
+  $("repeatUntilGroup").style.display = on ? "block" : "none";
+  $("repeatHint").style.display = on ? "block" : "none";
+  $("repeatHint").textContent = on
+    ? "Event akan dibuat berulang mulai dari Tanggal Mulai sampai tanggal di atas (maks "+MAX_RECUR_OCCURRENCES+" kejadian)."
+    : "";
+});
 $("detailClose").addEventListener("click",  closeDayDetail);
 $("printBtn").addEventListener("click",     printCalendarPDF);
 $("eventModal").addEventListener("click",   function(e){ if(e.target===$("eventModal")) closeModal(); });
