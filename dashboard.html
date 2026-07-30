@@ -824,7 +824,7 @@ table.data-table tbody tr:hover{background:var(--blue-lt)}
             <thead><tr>
               <th class="sortable" data-key="nama">Produk<span class="sort-arrow"></span></th>
               <th class="sortable" data-key="penjualan">Penjualan (Tren %)<span class="sort-arrow"></span></th>
-              <th class="sortable" data-key="kuantitas">Kuantitas<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="kuantitas">Kuantitas (Tren %)<span class="sort-arrow"></span></th>
               <th class="sortable" data-key="labaKotor">Laba Kotor (Tren %)<span class="sort-arrow"></span></th>
               <th class="sortable" data-key="marginPct">Margin %<span class="sort-arrow"></span></th>
             </tr></thead>
@@ -1789,6 +1789,9 @@ function renderTopProdukTable(rows){
     var salesDelta = prevSales ? ((d.penjualan - prevSales) / prevSales * 100) : (d.penjualan > 0 ? 100 : 0);
     var hasPrev = compMap[k] ? true : false;
 
+    var prevKuantitas = compMap[k] ? compMap[k].kuantitas : 0;
+    var kuantitasDelta = prevKuantitas ? ((d.kuantitas - prevKuantitas) / prevKuantitas * 100) : (d.kuantitas > 0 ? 100 : 0);
+
     var currentLaba = d.penjualan - d.hpp;
     var prevLaba = compMap[k] ? (compMap[k].penjualan - compMap[k].hpp) : 0;
     var labaDelta = prevLaba ? ((currentLaba - prevLaba) / prevLaba * 100) : (currentLaba > 0 ? 100 : 0);
@@ -1801,6 +1804,8 @@ function renderTopProdukTable(rows){
       marginPct: marginPct,
       salesDelta: salesDelta,
       labaDelta: labaDelta,
+      kuantitasDelta: kuantitasDelta,
+      prevKuantitas: prevKuantitas,
       hasPrev: hasPrev,
       prevSales: prevSales,
       prevLaba: prevLaba
@@ -1835,7 +1840,19 @@ function renderTopProdukTable(rows){
     
     var salesDeltaHtml = "";
     var labaDeltaHtml = "";
-    
+    var kuantitasDeltaHtml = "";
+
+    if (compRange) {
+      if (e.hasPrev && e.prevKuantitas > 0) {
+        var qDelta = e.kuantitasDelta;
+        var qCls = qDelta > 0.5 ? "up" : (qDelta < -0.5 ? "down" : "flat");
+        var qArrow = qCls === "up" ? "▲" : (qCls === "down" ? "▼" : "—");
+        kuantitasDeltaHtml = '<div class="compare-delta ' + qCls + '" style="font-size: 10px; padding: 1px 6px; display: inline-block; margin-top: 2px;">' + qArrow + ' ' + Math.abs(qDelta).toFixed(0) + '% <span style="opacity:.65; font-weight:600;">(dulu: ' + fmtNum(e.prevKuantitas) + ')</span></div>';
+      } else {
+        kuantitasDeltaHtml = '<div class="compare-delta up" style="font-size: 10px; padding: 1px 6px; display: inline-block; margin-top: 2px; background: var(--purple-lt); color: var(--purple);">✨ Baru</div>';
+      }
+    }
+
     if (compRange) {
       if (e.hasPrev && e.prevSales > 0) {
         var sDelta = e.salesDelta;
@@ -1859,7 +1876,7 @@ function renderTopProdukTable(rows){
     return '<tr>'
       +'<td class="cell-name">'+escapeHtml(e.nama)+'</td>'
       +'<td><div style="font-weight:700;">'+fmtRp(e.penjualan)+'</div>'+salesDeltaHtml+'</td>'
-      +'<td>'+fmtNum(e.kuantitas)+'</td>'
+      +'<td><div style="font-weight:700;">'+fmtNum(e.kuantitas)+'</div>'+kuantitasDeltaHtml+'</td>'
       +'<td><div style="font-weight:700;">'+fmtRp(e.labaKotor)+'</div>'+labaDeltaHtml+'</td>'
       +'<td style="font-weight:800; color:'+marginColor+'">'+e.marginPct.toFixed(1)+'%</td>'
       +'</tr>';
