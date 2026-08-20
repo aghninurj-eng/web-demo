@@ -22,22 +22,8 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
 
-/* ── PASSWORD GATE ── */
-#authGate{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:100}
-.auth-card{background:var(--white);border-radius:14px;padding:36px 32px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
-.auth-icon{width:48px;height:48px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;margin:0 auto 16px}
-.auth-card h1{font-size:17px;font-weight:700;margin-bottom:4px}
-.auth-card p{font-size:12.5px;color:var(--gray-600);margin-bottom:20px}
-.auth-card input{width:100%;padding:11px 14px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;margin-bottom:10px;outline:none;transition:border-color .15s}
-.auth-card input:focus{border-color:var(--blue)}
-.auth-card button{width:100%;padding:11px 14px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s}
-.auth-card button:hover{background:#3d5de8}
-.auth-error{font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px}
-.shake{animation:shake .35s}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-
 /* ── APP ── */
-#appRoot{display:none;min-height:100vh}
+#appRoot{min-height:100vh}
 .wrap{max-width:1200px;margin:0 auto;padding:28px 24px 60px}
 .topbar{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
 .topbar-title{font-size:20px;font-weight:700}
@@ -107,7 +93,7 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .controls input:focus, .controls select:focus{border-color:var(--blue)}
 
 .table-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:920px}
+table{width:100%;border-collapse:collapse;min-width:1080px}
 thead th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-600);background:var(--gray-50);padding:12px 14px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
 tbody td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--gray-100);vertical-align:middle;white-space:nowrap}
 tbody tr:last-child td{border-bottom:none}
@@ -118,7 +104,6 @@ tbody tr:hover{background:var(--gray-50)}
 .badge.live{background:var(--red-lt);color:#B91C1C}.badge.live .badge-dot{background:var(--red)}
 .badge.editing{background:var(--blue-lt);color:#3d5de8}.badge.editing .badge-dot{background:var(--blue)}
 .badge.konten{background:var(--purple-lt);color:#6D28D9}.badge.konten .badge-dot{background:var(--purple)}
-.badge.bahan-video{background:var(--pink-lt,#FCE7F3);color:#BE185D}.badge.bahan-video .badge-dot{background:#EC4899}
 .badge.testing-produk{background:var(--indigo-lt);color:#4338CA}.badge.testing-produk .badge-dot{background:var(--indigo)}
 .badge.tiktok{background:var(--slate-lt);color:var(--gray-800)}.badge.tiktok .badge-dot{background:var(--navy)}
 .badge.shopee{background:var(--amber-lt);color:#92400E}.badge.shopee .badge-dot{background:var(--amber)}
@@ -145,6 +130,7 @@ tbody tr:hover{background:var(--gray-50)}
 .field-row{display:flex;gap:10px}
 .field-row .field{flex:1}
 .field-error{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+.field-hint{font-size:11.5px;color:var(--gray-600);background:var(--blue-lt);border-radius:6px;padding:8px 10px;margin-bottom:13px;display:none;line-height:1.4}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 
 /* ── TOAST / LOADING ── */
@@ -155,18 +141,6 @@ tbody tr:hover{background:var(--gray-50)}
 </style>
 </head>
 <body>
-
-<!-- ── PASSWORD GATE ── -->
-<div id="authGate">
-  <div class="auth-card" id="authCard">
-    <div class="auth-icon">🔒</div>
-    <h1>Hostlive & Content Commerce</h1>
-    <p>Masukkan password untuk melanjutkan</p>
-    <div class="auth-error" id="authError"></div>
-    <input type="password" id="authInput" placeholder="Password" autocomplete="off"/>
-    <button id="authBtn">Masuk</button>
-  </div>
-</div>
 
 <!-- ── APP ── -->
 <div id="appRoot">
@@ -229,14 +203,14 @@ tbody tr:hover{background:var(--gray-50)}
         <input type="text" id="search" placeholder="Cari akun / produk / catatan…"/>
         <select id="filterPic"><option value="">Semua PIC</option><option>Dewi</option><option>Nazwa</option></select>
         <select id="filterMarketplace"><option value="">Semua Marketplace</option><option>Tiktok</option><option>Shopee</option><option>Lazada</option><option>Tokopedia</option></select>
-        <select id="filterAktifitas"><option value="">Semua Aktifitas</option><option>Live</option><option>Editing</option><option>Konten</option><option>Bahan Video</option><option>Testing Produk</option></select>
+        <select id="filterAktifitas"><option value="">Semua Aktifitas</option><option>Live</option><option>Editing</option><option>Konten</option><option>Testing Produk</option></select>
         <button class="btn btn-primary" id="addBtn">+ Tambah Aktivitas</button>
       </div>
       <div class="table-card">
         <table>
           <thead><tr>
             <th>Tanggal</th><th>PIC</th><th>Marketplace</th><th>Akun</th><th>Aktifitas</th>
-            <th>Fokus Produk</th><th>Durasi</th><th>View/Reach</th><th>Klik/Keranjang</th><th>Penjualan/Komisi</th><th></th>
+            <th>Fokus Produk</th><th>Durasi</th><th>View/Reach</th><th>Klik/Keranjang</th><th>Penjualan/Komisi</th><th>Detail</th><th></th>
           </tr></thead>
           <tbody id="tableBody"></tbody>
         </table>
@@ -257,32 +231,66 @@ tbody tr:hover{background:var(--gray-50)}
         <select id="fPic"><option>Dewi</option><option>Nazwa</option></select>
       </div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Marketplace</label>
-        <select id="fMarketplace"><option>Tiktok</option><option>Shopee</option><option>Lazada</option><option>Tokopedia</option></select>
-      </div>
-      <div class="field"><label>Akun</label><input type="text" id="fAkun" placeholder="mis. @kyx.official"/></div>
-    </div>
     <div class="field">
       <label>Aktifitas</label>
       <select id="fAktifitas">
         <option value="Live">Live</option>
         <option value="Editing">Editing</option>
         <option value="Konten">Konten</option>
-        <option value="Bahan Video">Bahan Video</option>
         <option value="Testing Produk">Testing Produk</option>
       </select>
     </div>
-    <div class="field"><label>Fokus Produk / Pinned Produk</label><input type="text" id="fFokusProduk" placeholder="Nama produk yang difokuskan"/></div>
-    <div class="field" id="durasiField"><label>Durasi Live (menit)</label><input type="number" id="fDurasi" placeholder="mis. 120"/></div>
-    <div class="field-row">
-      <div class="field"><label>View / Reach</label><input type="number" id="fView"/></div>
-      <div class="field"><label>Klik / Keranjang</label><input type="number" id="fKlik"/></div>
+    <div class="field-hint" id="aktifitasHint"></div>
+
+    <div class="field-row" id="marketAkunRow">
+      <div class="field">
+        <label>Marketplace</label>
+        <select id="fMarketplace"><option>Tiktok</option><option>Shopee</option><option>Lazada</option><option>Tokopedia</option></select>
+      </div>
+      <div class="field"><label>Akun</label><input type="text" id="fAkun" placeholder="mis. @kyx.official"/></div>
     </div>
-    <div class="field"><label>Penjualan / Komisi (Rp)</label><input type="number" id="fPenjualan"/></div>
-    <div class="field"><label>Insight Produk / Catatan</label><textarea id="fCatatan" rows="3" placeholder="Catatan, insight, kendala, dll."></textarea></div>
     <div class="field-error" id="errAkun">Akun wajib diisi</div>
+
+    <div class="field-row" id="sosmedRow">
+      <div class="field">
+        <label>Sosial Media</label>
+        <select id="fSosmed"><option>Instagram</option><option>TikTok</option><option>Facebook</option><option>YouTube</option><option>Lainnya</option></select>
+      </div>
+      <div class="field"><label>Akun Sosial Media</label><input type="text" id="fAkunSosmed" placeholder="mis. @kyx.editorial"/></div>
+    </div>
+
+    <div class="field" id="jenisKontenField">
+      <label>Jenis Konten</label>
+      <select id="fJenisKonten">
+        <option>Review Produk</option>
+        <option>Edukasi</option>
+        <option>Cara Penggunaan</option>
+      </select>
+    </div>
+
+    <div class="field" id="fokusProdukField"><label id="lblFokusProduk">Fokus Produk / Pinned Produk</label><input type="text" id="fFokusProduk" placeholder="Nama produk yang difokuskan"/></div>
+
+    <div class="field" id="durasiField"><label>Durasi Live (menit)</label><input type="number" id="fDurasi" placeholder="mis. 120"/></div>
+
+    <div class="field-row" id="fileFields">
+      <div class="field">
+        <label>Jenis File</label>
+        <select id="fJenisFile"><option>Foto</option><option>Video</option></select>
+      </div>
+      <div class="field"><label>Jumlah</label><input type="number" id="fJumlahFile" placeholder="mis. 5"/></div>
+    </div>
+
+    <div id="metricsFields">
+      <div class="field-row">
+        <div class="field"><label>View / Reach</label><input type="number" id="fView"/></div>
+        <div class="field"><label>Klik / Keranjang</label><input type="number" id="fKlik"/></div>
+      </div>
+      <div class="field"><label>Penjualan / Komisi (Rp)</label><input type="number" id="fPenjualan"/></div>
+    </div>
+
+    <div class="field"><label id="lblCatatan">Insight Produk / Catatan</label><textarea id="fCatatan" rows="3" placeholder="Catatan, insight, kendala, dll."></textarea></div>
+    <div class="field-error" id="errCatatan">Insight/catatan wajib diisi untuk Testing Produk</div>
+
     <div class="modal-actions">
       <button class="btn btn-outline" id="cancelBtn">Batal</button>
       <button class="btn btn-primary" id="saveBtn">Simpan</button>
@@ -295,8 +303,7 @@ tbody tr:hover{background:var(--gray-50)}
 
 <script>
 // ── GANTI dengan URL Web App Apps Script khusus hostlive (harus berakhiran /exec) ──
-var GAS_URL = "https://script.google.com/macros/s/AKfycbw5Ogw5rBZYRggJo6P8kG9xepB1Yxv3OJ4xTzhSyQkaXogjg2ghJvMxvVvpmbF-tPyBZA/exec";
-var GATE_PASSWORD = "admin2";
+var GAS_URL = "https://script.google.com/macros/s/AKfycbzHoeXxQ9bl69rR1DLpP-U8b2Ho8LFiOC3OmIhAh0gjpz4Q2Y2HhhY39rI98V9Qmflk/exec";
 
 function $(id){ return document.getElementById(id); }
 
@@ -318,29 +325,6 @@ function callGS(fn, arg){
   });
 }
 
-// ── AUTH GATE ──
-(function(){
-  if(sessionStorage.getItem("hostlive_authed") === "1"){ unlockApp(); return; }
-  $("authBtn").addEventListener("click", tryUnlock);
-  $("authInput").addEventListener("keydown", function(e){ if(e.key==="Enter") tryUnlock(); });
-  $("authInput").focus();
-  function tryUnlock(){
-    if($("authInput").value === GATE_PASSWORD){
-      sessionStorage.setItem("hostlive_authed","1");
-      unlockApp();
-    } else {
-      $("authError").textContent = "Password salah, coba lagi.";
-      $("authCard").classList.remove("shake"); void $("authCard").offsetWidth; $("authCard").classList.add("shake");
-      $("authInput").value = ""; $("authInput").focus();
-    }
-  }
-})();
-function unlockApp(){
-  $("authGate").style.display = "none";
-  $("appRoot").style.display = "block";
-  loadActivities();
-}
-
 // ── STATE ──
 var state = { items: [], search:"", filterPic:"", filterMarketplace:"", filterAktifitas:"", editingId:null,
   periodMode:"minggu", periodAnchor:new Date() };
@@ -348,10 +332,9 @@ var state = { items: [], search:"", filterPic:"", filterMarketplace:"", filterAk
 // ── TARGET KPI TIM (dari deskripsi tugas mingguan) ──
 var KPI_TARGETS = [
   { pic:"Dewi", label:"Live sesuai jadwal", aktifitas:"Live", metric:"count", weeklyTarget:4, unit:"sesi" },
-  { pic:"Dewi", label:"Konten produk dibuat konsisten", aktifitas:"Konten", metric:"count", weeklyTarget:10, unit:"konten" },
+  { pic:"Dewi", label:"Konten & bahan video (utk Fitri) dikumpulkan", aktifitas:"Konten", metric:"count", weeklyTarget:15, unit:"konten" },
   { pic:"Dewi", label:"Insight produk live dicatat", aktifitas:"Live", metric:"notePct", weeklyTarget:100, unit:"%" },
-  { pic:"Dewi", label:"Bahan video untuk Fitri", aktifitas:"Bahan Video", metric:"count", weeklyTarget:5, unit:"bahan" },
-  { pic:"Nazwa", label:"Konten keranjang kuning upload", aktifitas:"Konten", metric:"count", weeklyTarget:15, unit:"konten" },
+  { pic:"Nazwa", label:"Konten keranjang kuning diedit & diupload", aktifitas:"Editing", metric:"count", weeklyTarget:15, unit:"konten" },
   { pic:"Nazwa", label:"Live akun eks-ACU", aktifitas:"Live", metric:"count", weeklyTarget:4, unit:"sesi" },
   { pic:"Nazwa", label:"Testing produk baru", aktifitas:"Testing Produk", metric:"count", weeklyTarget:3, unit:"produk" },
   { pic:"Nazwa", label:"Insight produk potensial dicatat", aktifitas:null, metric:"noteCount", weeklyTarget:1, unit:"catatan" }
@@ -525,22 +508,35 @@ function renderTable(){
 
   rows.forEach(function(it){
     var tr = document.createElement("tr");
+    var isLive = it.aktifitas === "Live";
     tr.innerHTML =
       '<td>'+fmtDate(it.tanggal)+'</td>'+
       '<td>'+escapeHtml(it.pic||"")+'</td>'+
-      '<td><span class="badge '+badgeCls(it.marketplace)+'"><span class="badge-dot"></span>'+escapeHtml(it.marketplace||"")+'</span></td>'+
-      '<td>'+escapeHtml(it.akun||"")+'</td>'+
+      '<td>'+(it.marketplace ? '<span class="badge '+badgeCls(it.marketplace)+'"><span class="badge-dot"></span>'+escapeHtml(it.marketplace)+'</span>' : "—")+'</td>'+
+      '<td>'+escapeHtml(it.akun||"—")+'</td>'+
       '<td><span class="badge '+badgeCls(it.aktifitas)+'"><span class="badge-dot"></span>'+escapeHtml(it.aktifitas||"")+'</span></td>'+
       '<td class="cell-wrap">'+escapeHtml(it.fokusProduk||"—")+'</td>'+
-      '<td>'+(it.aktifitas==="Live" ? fmtDurasi(it.durasi) : "—")+'</td>'+
-      '<td>'+fmtNum(it.viewReach)+'</td>'+
-      '<td>'+fmtNum(it.klikKeranjang)+'</td>'+
-      '<td>'+fmtRp(it.penjualanKomisi)+'</td>'+
-      '<td><div class="row-actions"><button class="edit-btn" data-id="'+it.id+'">Edit</button><button class="del-btn" data-id="'+it.id+'">Hapus</button></div></td>';
+      '<td>'+(isLive ? fmtDurasi(it.durasi) : "—")+'</td>'+
+      '<td>'+(isLive ? fmtNum(it.viewReach) : "—")+'</td>'+
+      '<td>'+(isLive ? fmtNum(it.klikKeranjang) : "—")+'</td>'+
+      '<td>'+(isLive ? fmtRp(it.penjualanKomisi) : "—")+'</td>'+
+      '<td class="cell-wrap">'+detailCell(it)+'</td>'+
+      '<td><div class="row-actions"><button class="dup-btn" data-id="'+it.id+'">Duplikat</button><button class="edit-btn" data-id="'+it.id+'">Edit</button><button class="del-btn" data-id="'+it.id+'">Hapus</button></div></td>';
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".dup-btn").forEach(function(b){ b.addEventListener("click", function(){ duplicateItem(b.dataset.id); }); });
   tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteItem(b.dataset.id); }); });
+}
+function detailCell(it){
+  if(it.aktifitas === "Editing" || it.aktifitas === "Konten"){
+    var parts = [];
+    if(it.jenisFile) parts.push(escapeHtml(it.jenisFile) + (it.jumlahFile ? " × "+fmtNum(it.jumlahFile) : ""));
+    if(it.aktifitas === "Konten" && it.jenisKonten) parts.push(escapeHtml(it.jenisKonten));
+    if(it.aktifitas === "Editing" && it.sosialMedia) parts.push(escapeHtml(it.sosialMedia) + (it.akunSosmed ? " ("+escapeHtml(it.akunSosmed)+")" : ""));
+    return parts.length ? parts.join(" · ") : "—";
+  }
+  return "—";
 }
 
 function renderAll(){ renderRingkasan(); renderTable(); }
@@ -555,47 +551,122 @@ document.querySelectorAll(".tab-btn").forEach(function(btn){
   });
 });
 
-// ── DURASI FIELD VISIBILITY ──
-function updateDurasiVisibility(){
-  $("durasiField").style.display = $("fAktifitas").value === "Live" ? "block" : "none";
+// ── CONDITIONAL FIELD VISIBILITY ──
+// Live: bisa 2 channel sekaligus (view/klik/penjualan beda per channel) -> dicatat sbg
+//       2 baris terpisah (1 per channel), gunakan tombol "Duplikat" di tabel utk channel ke-2.
+// Editing: hasilkan foto/video (jumlah tidak menentu), diupload ke sosmed/marketplace.
+// Konten: mengumpulkan bahan (foto/video) utk editing — review/edukasi/cara pakai — TIDAK diupload.
+// Testing Produk: tidak ada output selain insight/catatan.
+function updateFieldVisibility(){
+  var akt = $("fAktifitas").value;
+  var isLive = akt === "Live";
+  var isEditing = akt === "Editing";
+  var isKonten = akt === "Konten";
+  var isTesting = akt === "Testing Produk";
+
+  $("durasiField").style.display = isLive ? "block" : "none";
+  $("metricsFields").style.display = isLive ? "block" : "none";
+  $("marketAkunRow").style.display = (isLive || isEditing) ? "flex" : "none";
+  $("sosmedRow").style.display = isEditing ? "flex" : "none";
+  $("fileFields").style.display = (isEditing || isKonten) ? "flex" : "none";
+  $("jenisKontenField").style.display = isKonten ? "block" : "none";
+  $("fokusProdukField").style.display = "block";
+  $("lblFokusProduk").textContent = isTesting ? "Produk yang Diuji" : "Fokus Produk / Pinned Produk";
+
+  $("lblCatatan").textContent = isTesting ? "Insight Produk (wajib diisi)" : "Insight Produk / Catatan";
+
+  var hint = $("aktifitasHint");
+  if(isLive){
+    hint.style.display = "block";
+    hint.textContent = "💡 Kalau live di 2 channel sekaligus, simpan channel pertama dulu, lalu klik \"Duplikat\" pada baris tabelnya untuk mengisi channel kedua (view/klik/penjualan bisa berbeda).";
+  } else if(isKonten){
+    hint.style.display = "block";
+    hint.textContent = "💡 Konten = mengumpulkan bahan foto/video (review, edukasi, atau cara pakai) untuk diedit nanti — belum diupload ke mana pun.";
+  } else if(isEditing){
+    hint.style.display = "block";
+    hint.textContent = "💡 Editing = hasil foto/video sudah jadi. Isi ke mana saja diupload — marketplace, sosial media, atau keduanya.";
+  } else if(isTesting){
+    hint.style.display = "block";
+    hint.textContent = "💡 Testing Produk hanya menghasilkan insight — isi kolom catatan di bawah dengan hasil pengujian.";
+  } else {
+    hint.style.display = "none";
+  }
 }
-$("fAktifitas").addEventListener("change", updateDurasiVisibility);
+$("fAktifitas").addEventListener("change", updateFieldVisibility);
 
 // ── MODAL ──
-function openModal(id){
+function fillForm(it, clearChannelFields){
+  $("fTanggal").value = it.tanggal||"";
+  $("fPic").value = it.pic||"Dewi";
+  $("fMarketplace").value = clearChannelFields ? "Tiktok" : (it.marketplace||"Tiktok");
+  $("fAkun").value = clearChannelFields ? "" : (it.akun||"");
+  $("fSosmed").value = clearChannelFields ? "Instagram" : (it.sosialMedia||"Instagram");
+  $("fAkunSosmed").value = clearChannelFields ? "" : (it.akunSosmed||"");
+  $("fAktifitas").value = it.aktifitas||"Live";
+  $("fFokusProduk").value = it.fokusProduk||"";
+  $("fDurasi").value = it.durasi||"";
+  $("fView").value = clearChannelFields ? "" : (it.viewReach||"");
+  $("fKlik").value = clearChannelFields ? "" : (it.klikKeranjang||"");
+  $("fPenjualan").value = clearChannelFields ? "" : (it.penjualanKomisi||"");
+  $("fJenisFile").value = it.jenisFile||"Foto";
+  $("fJumlahFile").value = it.jumlahFile||"";
+  $("fJenisKonten").value = it.jenisKonten||"Review Produk";
+  $("fCatatan").value = clearChannelFields ? "" : (it.insightCatatan||"");
+}
+function openModal(id, duplicateFrom){
   state.editingId = id || null;
   $("errAkun").style.display = "none";
+  $("errCatatan").style.display = "none";
   if(id){
     var it = state.items.find(function(e){ return e.id===id; });
     $("modalTitle").textContent = "Edit Aktivitas";
-    $("fTanggal").value = it.tanggal||""; $("fPic").value = it.pic||"Dewi";
-    $("fMarketplace").value = it.marketplace||"Tiktok"; $("fAkun").value = it.akun||"";
-    $("fAktifitas").value = it.aktifitas||"Live"; $("fFokusProduk").value = it.fokusProduk||"";
-    $("fDurasi").value = it.durasi||""; $("fView").value = it.viewReach||"";
-    $("fKlik").value = it.klikKeranjang||""; $("fPenjualan").value = it.penjualanKomisi||"";
-    $("fCatatan").value = it.insightCatatan||"";
+    fillForm(it, false);
+  } else if(duplicateFrom){
+    $("modalTitle").textContent = "Tambah Aktivitas (Duplikat — isi channel kedua)";
+    fillForm(duplicateFrom, true);
   } else {
     $("modalTitle").textContent = "Tambah Aktivitas";
     var today = new Date(); var iso = today.toISOString().slice(0,10);
-    $("fTanggal").value = iso; $("fPic").value = "Dewi"; $("fMarketplace").value = "Tiktok";
-    $("fAkun").value = ""; $("fAktifitas").value = "Live"; $("fFokusProduk").value = "";
-    $("fDurasi").value = ""; $("fView").value = ""; $("fKlik").value = ""; $("fPenjualan").value = ""; $("fCatatan").value = "";
+    fillForm({ tanggal: iso, pic:"Dewi", marketplace:"Tiktok", akun:"", sosialMedia:"Instagram", akunSosmed:"", aktifitas:"Live",
+      fokusProduk:"", durasi:"", viewReach:"", klikKeranjang:"", penjualanKomisi:"",
+      jenisFile:"Foto", jumlahFile:"", jenisKonten:"Review Produk", insightCatatan:"" }, false);
   }
-  updateDurasiVisibility();
+  updateFieldVisibility();
   $("modal").classList.add("open");
   $("fAkun").focus();
 }
 function closeModal(){ $("modal").classList.remove("open"); state.editingId = null; }
 function saveItem(){
+  var akt = $("fAktifitas").value;
+  var isLive = akt === "Live", isEditing = akt === "Editing", isKonten = akt === "Konten", isTesting = akt === "Testing Produk";
   var akun = $("fAkun").value.trim();
-  if(!akun){ $("errAkun").style.display = "block"; return; }
-  $("errAkun").style.display = "none";
+  var catatan = $("fCatatan").value.trim();
+  var hasErr = false;
+
+  if((isLive || isEditing) && !akun){ $("errAkun").style.display = "block"; hasErr = true; }
+  else { $("errAkun").style.display = "none"; }
+
+  if(isTesting && !catatan){ $("errCatatan").style.display = "block"; hasErr = true; }
+  else { $("errCatatan").style.display = "none"; }
+
+  if(hasErr) return;
+
   var payload = {
-    tanggal: $("fTanggal").value, pic: $("fPic").value, marketplace: $("fMarketplace").value,
-    akun: akun, aktifitas: $("fAktifitas").value, fokusProduk: $("fFokusProduk").value.trim(),
-    durasi: Number($("fDurasi").value)||0, viewReach: Number($("fView").value)||0,
-    klikKeranjang: Number($("fKlik").value)||0, penjualanKomisi: Number($("fPenjualan").value)||0,
-    insightCatatan: $("fCatatan").value.trim()
+    tanggal: $("fTanggal").value, pic: $("fPic").value,
+    marketplace: (isLive || isEditing) ? $("fMarketplace").value : "",
+    akun: (isLive || isEditing) ? akun : "",
+    sosialMedia: isEditing ? $("fSosmed").value : "",
+    akunSosmed: isEditing ? $("fAkunSosmed").value.trim() : "",
+    aktifitas: akt,
+    fokusProduk: $("fFokusProduk").value.trim(),
+    durasi: isLive ? (Number($("fDurasi").value)||0) : 0,
+    viewReach: isLive ? (Number($("fView").value)||0) : 0,
+    klikKeranjang: isLive ? (Number($("fKlik").value)||0) : 0,
+    penjualanKomisi: isLive ? (Number($("fPenjualan").value)||0) : 0,
+    jenisFile: (isEditing || isKonten) ? $("fJenisFile").value : "",
+    jumlahFile: (isEditing || isKonten) ? (Number($("fJumlahFile").value)||0) : 0,
+    jenisKonten: isKonten ? $("fJenisKonten").value : "",
+    insightCatatan: catatan
   };
   var isEdit = !!state.editingId;
   if(isEdit) payload.id = state.editingId;
@@ -613,6 +684,11 @@ function deleteItem(id){
     state.items = state.items.filter(function(e){ return e.id!==id; });
     showToast("✓ Aktivitas dihapus"); setLoading(false); renderAll();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+function duplicateItem(id){
+  var it = state.items.find(function(e){ return e.id===id; });
+  if(!it) return;
+  openModal(null, it);
 }
 
 // ── PERIOD CONTROLS ──
@@ -648,6 +724,9 @@ $("filterPic").addEventListener("change", function(e){ state.filterPic = e.targe
 $("filterMarketplace").addEventListener("change", function(e){ state.filterMarketplace = e.target.value; renderTable(); });
 $("filterAktifitas").addEventListener("change", function(e){ state.filterAktifitas = e.target.value; renderTable(); });
 document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeModal(); });
+
+// ── INIT ──
+loadActivities();
 </script>
 </body>
 </html>
