@@ -19,6 +19,7 @@
   --red:#DC2626;--red-lt:#FEE2E2;
   --purple:#8B5CF6;--purple-lt:#F3F0FF;
   --indigo:#6366F1;--indigo-lt:#EEF0FE;
+  --teal:#0D9488;--teal-lt:#F0FDFA;
 }
 body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
 
@@ -105,6 +106,7 @@ tbody tr:hover{background:var(--gray-50)}
 .badge.editing{background:var(--blue-lt);color:#3d5de8}.badge.editing .badge-dot{background:var(--blue)}
 .badge.konten{background:var(--purple-lt);color:#6D28D9}.badge.konten .badge-dot{background:var(--purple)}
 .badge.testing-produk{background:var(--indigo-lt);color:#4338CA}.badge.testing-produk .badge-dot{background:var(--indigo)}
+.badge.pembaruan-etalase{background:var(--teal-lt);color:#0F766E}.badge.pembaruan-etalase .badge-dot{background:var(--teal)}
 .badge.tiktok{background:var(--slate-lt);color:var(--gray-800)}.badge.tiktok .badge-dot{background:var(--navy)}
 .badge.shopee{background:var(--amber-lt);color:#92400E}.badge.shopee .badge-dot{background:var(--amber)}
 .badge.lazada{background:var(--indigo-lt);color:#4338CA}.badge.lazada .badge-dot{background:var(--indigo)}
@@ -203,7 +205,7 @@ tbody tr:hover{background:var(--gray-50)}
         <input type="text" id="search" placeholder="Cari akun / produk / catatan…"/>
         <select id="filterPic"><option value="">Semua PIC</option><option>Dewi</option><option>Nazwa</option></select>
         <select id="filterMarketplace"><option value="">Semua Marketplace</option><option>Tiktok</option><option>Shopee</option><option>Lazada</option><option>Tokopedia</option></select>
-        <select id="filterAktifitas"><option value="">Semua Aktifitas</option><option>Live</option><option>Editing</option><option>Konten</option><option>Testing Produk</option></select>
+        <select id="filterAktifitas"><option value="">Semua Aktifitas</option><option>Live</option><option>Editing</option><option>Konten</option><option>Testing Produk</option><option>Pembaruan Etalase</option></select>
         <button class="btn btn-primary" id="addBtn">+ Tambah Aktivitas</button>
       </div>
       <div class="table-card">
@@ -238,6 +240,7 @@ tbody tr:hover{background:var(--gray-50)}
         <option value="Editing">Editing</option>
         <option value="Konten">Konten</option>
         <option value="Testing Produk">Testing Produk</option>
+        <option value="Pembaruan Etalase">Pembaruan Etalase</option>
       </select>
     </div>
     <div class="field-hint" id="aktifitasHint"></div>
@@ -278,6 +281,11 @@ tbody tr:hover{background:var(--gray-50)}
         <select id="fJenisFile"><option>Foto</option><option>Video</option></select>
       </div>
       <div class="field"><label>Jumlah</label><input type="number" id="fJumlahFile" placeholder="mis. 5"/></div>
+    </div>
+
+    <div class="field-row" id="etalaseFields">
+      <div class="field"><label>Jumlah Foto Diperbarui</label><input type="number" id="fEtalaseFoto" placeholder="mis. 8"/></div>
+      <div class="field"><label>Jumlah Video Diperbarui</label><input type="number" id="fEtalaseVideo" placeholder="mis. 2"/></div>
     </div>
 
     <div id="metricsFields">
@@ -536,6 +544,12 @@ function detailCell(it){
     if(it.aktifitas === "Editing" && it.sosialMedia) parts.push(escapeHtml(it.sosialMedia) + (it.akunSosmed ? " ("+escapeHtml(it.akunSosmed)+")" : ""));
     return parts.length ? parts.join(" · ") : "—";
   }
+  if(it.aktifitas === "Pembaruan Etalase"){
+    var eParts = [];
+    if(it.etalaseFoto) eParts.push("Foto × "+fmtNum(it.etalaseFoto));
+    if(it.etalaseVideo) eParts.push("Video × "+fmtNum(it.etalaseVideo));
+    return eParts.length ? eParts.join(" · ") : "—";
+  }
   return "—";
 }
 
@@ -563,14 +577,16 @@ function updateFieldVisibility(){
   var isEditing = akt === "Editing";
   var isKonten = akt === "Konten";
   var isTesting = akt === "Testing Produk";
+  var isEtalase = akt === "Pembaruan Etalase";
 
   $("durasiField").style.display = isLive ? "block" : "none";
   $("metricsFields").style.display = isLive ? "block" : "none";
-  $("marketAkunRow").style.display = (isLive || isEditing) ? "flex" : "none";
+  $("marketAkunRow").style.display = (isLive || isEditing || isEtalase) ? "flex" : "none";
   $("sosmedRow").style.display = isEditing ? "flex" : "none";
   $("fileFields").style.display = (isEditing || isKonten) ? "flex" : "none";
+  $("etalaseFields").style.display = isEtalase ? "flex" : "none";
   $("jenisKontenField").style.display = isKonten ? "block" : "none";
-  $("fokusProdukField").style.display = "block";
+  $("fokusProdukField").style.display = isEtalase ? "none" : "block";
   $("lblFokusProduk").textContent = isTesting ? "Produk yang Diuji" : "Fokus Produk / Pinned Produk";
 
   $("lblCatatan").textContent = isTesting ? "Insight Produk (wajib diisi)" : "Insight Produk / Catatan";
@@ -588,6 +604,9 @@ function updateFieldVisibility(){
   } else if(isTesting){
     hint.style.display = "block";
     hint.textContent = "💡 Testing Produk hanya menghasilkan insight — isi kolom catatan di bawah dengan hasil pengujian.";
+  } else if(isEtalase){
+    hint.style.display = "block";
+    hint.textContent = "💡 Pembaruan Etalase = memperbarui tampilan etalase toko di marketplace (foto/video produk, banner, dll).";
   } else {
     hint.style.display = "none";
   }
@@ -611,6 +630,8 @@ function fillForm(it, clearChannelFields){
   $("fJenisFile").value = it.jenisFile||"Foto";
   $("fJumlahFile").value = it.jumlahFile||"";
   $("fJenisKonten").value = it.jenisKonten||"Review Produk";
+  $("fEtalaseFoto").value = it.etalaseFoto||"";
+  $("fEtalaseVideo").value = it.etalaseVideo||"";
   $("fCatatan").value = clearChannelFields ? "" : (it.insightCatatan||"");
 }
 function openModal(id, duplicateFrom){
@@ -629,7 +650,7 @@ function openModal(id, duplicateFrom){
     var today = new Date(); var iso = today.toISOString().slice(0,10);
     fillForm({ tanggal: iso, pic:"Dewi", marketplace:"Tiktok", akun:"", sosialMedia:"Instagram", akunSosmed:"", aktifitas:"Live",
       fokusProduk:"", durasi:"", viewReach:"", klikKeranjang:"", penjualanKomisi:"",
-      jenisFile:"Foto", jumlahFile:"", jenisKonten:"Review Produk", insightCatatan:"" }, false);
+      jenisFile:"Foto", jumlahFile:"", jenisKonten:"Review Produk", etalaseFoto:"", etalaseVideo:"", insightCatatan:"" }, false);
   }
   updateFieldVisibility();
   $("modal").classList.add("open");
@@ -638,12 +659,12 @@ function openModal(id, duplicateFrom){
 function closeModal(){ $("modal").classList.remove("open"); state.editingId = null; }
 function saveItem(){
   var akt = $("fAktifitas").value;
-  var isLive = akt === "Live", isEditing = akt === "Editing", isKonten = akt === "Konten", isTesting = akt === "Testing Produk";
+  var isLive = akt === "Live", isEditing = akt === "Editing", isKonten = akt === "Konten", isTesting = akt === "Testing Produk", isEtalase = akt === "Pembaruan Etalase";
   var akun = $("fAkun").value.trim();
   var catatan = $("fCatatan").value.trim();
   var hasErr = false;
 
-  if((isLive || isEditing) && !akun){ $("errAkun").style.display = "block"; hasErr = true; }
+  if((isLive || isEditing || isEtalase) && !akun){ $("errAkun").style.display = "block"; hasErr = true; }
   else { $("errAkun").style.display = "none"; }
 
   if(isTesting && !catatan){ $("errCatatan").style.display = "block"; hasErr = true; }
@@ -653,12 +674,12 @@ function saveItem(){
 
   var payload = {
     tanggal: $("fTanggal").value, pic: $("fPic").value,
-    marketplace: (isLive || isEditing) ? $("fMarketplace").value : "",
-    akun: (isLive || isEditing) ? akun : "",
+    marketplace: (isLive || isEditing || isEtalase) ? $("fMarketplace").value : "",
+    akun: (isLive || isEditing || isEtalase) ? akun : "",
     sosialMedia: isEditing ? $("fSosmed").value : "",
     akunSosmed: isEditing ? $("fAkunSosmed").value.trim() : "",
     aktifitas: akt,
-    fokusProduk: $("fFokusProduk").value.trim(),
+    fokusProduk: isEtalase ? "" : $("fFokusProduk").value.trim(),
     durasi: isLive ? (Number($("fDurasi").value)||0) : 0,
     viewReach: isLive ? (Number($("fView").value)||0) : 0,
     klikKeranjang: isLive ? (Number($("fKlik").value)||0) : 0,
@@ -666,6 +687,8 @@ function saveItem(){
     jenisFile: (isEditing || isKonten) ? $("fJenisFile").value : "",
     jumlahFile: (isEditing || isKonten) ? (Number($("fJumlahFile").value)||0) : 0,
     jenisKonten: isKonten ? $("fJenisKonten").value : "",
+    etalaseFoto: isEtalase ? (Number($("fEtalaseFoto").value)||0) : 0,
+    etalaseVideo: isEtalase ? (Number($("fEtalaseVideo").value)||0) : 0,
     insightCatatan: catatan
   };
   var isEdit = !!state.editingId;
