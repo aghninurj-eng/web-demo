@@ -63,6 +63,18 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .meta-row input{padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;width:200px;outline:none}
 .meta-row input:focus{border-color:var(--blue)}
 
+/* Periode bar */
+.periode-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+.periode-bar label{font-size:12.5px;font-weight:600;color:var(--gray-600)}
+.periode-bar select{padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;background:#fff;outline:none}
+.periode-bar select:focus{border-color:var(--blue)}
+.periode-range{font-size:12px;color:var(--gray-400)}
+.trend{font-size:11px;font-weight:600;margin-left:4px}
+.trend.bad{color:var(--red)}
+.trend.good{color:var(--green)}
+.trend.flat{color:var(--gray-400)}
+.mismatch-flag{cursor:help;margin-left:4px}
+
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px}
 .kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
 .kpi-label{font-size:11.5px;color:var(--gray-600);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
@@ -182,6 +194,15 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
       <button class="tab-btn" data-tab="eval">Evaluasi</button>
     </div>
 
+    <div class="periode-bar">
+      <label>Minggu Laporan</label>
+      <select id="periodeSelect"></select>
+      <span class="periode-range" id="periodeRange"></span>
+      <div class="spacer"></div>
+      <button class="btn btn-outline btn-sm" id="newPeriodeBtn">+ Minggu Baru</button>
+      <button class="btn btn-outline btn-sm" id="duplicatePeriodeBtn">⧉ Duplikat ke Minggu Baru</button>
+    </div>
+
     <!-- TAB: RINGKASAN -->
     <div class="tab-panel active" id="panel-ringkasan">
       <div class="meta-row">
@@ -213,12 +234,13 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
           <option value="Tingkatkan">Tingkatkan</option>
           <option value="Netral">Netral</option>
         </select>
+        <select id="produkChannelFilter"></select>
         <button class="btn btn-primary" id="addProdukBtn">+ Tambah Produk</button>
       </div>
       <div class="table-card">
         <table>
           <thead><tr>
-            <th>Produk</th><th>Kategori</th><th>Margin %</th><th>ACOS</th><th>Est. Profit</th><th>Status</th><th></th>
+            <th>Produk</th><th>Kategori</th><th>Margin %</th><th>ACOS</th><th>Est. Profit</th><th>Status</th><th>Rekomendasi</th><th></th>
           </tr></thead>
           <tbody id="produkBody"></tbody>
         </table>
@@ -272,8 +294,8 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
       <div class="field-error" id="pErrName">Nama wajib diisi</div>
     </div>
     <div class="field">
-      <label>Channel Iklan</label>
-      <input type="text" id="pChannel" placeholder="mis. SHOPEE KYX"/>
+      <label>Channel Iklan / Akun</label>
+      <select id="pChannel"></select>
     </div>
     <div class="field-row">
       <div class="field"><label>Harga Jual</label><input type="number" id="pHarga"/></div>
@@ -328,7 +350,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
       <datalist id="produkNameList"></datalist>
       <div class="field-error" id="kErrProduk">Produk wajib diisi</div>
     </div>
-    <div class="field"><label>Channel Iklan</label><input type="text" id="kChannel" placeholder="mis. SHOPEE KYX"/></div>
+    <div class="field"><label>Channel Iklan / Akun</label><select id="kChannel"></select></div>
     <div class="field"><label>Masalah Listing</label><input type="text" id="kMasalah" placeholder="mis. Foto kurang jelas"/></div>
     <div class="field"><label>Dampak</label><input type="text" id="kDampak" placeholder="mis. Klik rendah / konversi rendah"/></div>
     <div class="field"><label>Perbaikan yang diperlukan</label><input type="text" id="kPerbaikan" placeholder="mis. Foto ulang, tambah video"/></div>
@@ -361,7 +383,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
     </div>
     <div class="field-row">
       <div class="field"><label>Produk</label><input type="text" id="eProduk" list="produkNameList2" placeholder="Nama produk"/><datalist id="produkNameList2"></datalist></div>
-      <div class="field"><label>Channel</label><input type="text" id="eChannel"/></div>
+      <div class="field"><label>Channel / Akun</label><select id="eChannel"></select></div>
     </div>
     <div class="field"><label>Tindakan</label><input type="text" id="eTindakan" placeholder="mis. Naikan budget bertahap"/></div>
     <div class="field-row">
@@ -401,20 +423,43 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
 <script>
 // ── GANTI dengan URL Web App Apps Script khusus laporan advertiser (harus berakhiran /exec) ──
 var GAS_URL = "https://script.google.com/macros/s/AKfycbzWHuiICPSimh0J60AxTIjvkQvQL1zs7CluKOKOnOeVqkHcqSlYi-Eyvqf93Nv3EnVOAQ/exec";
+// PENTING: nilai ini dipakai DUA kali — (1) sebagai password gate di bawah,
+// dan (2) sebagai token otorisasi yang dikirim ke Apps Script. Backend akan
+// menolak semua request kalau token tidak cocok dengan Script Property
+// "APP_TOKEN" di project Code_Advertiser.gs. Ganti nilai default ini, lalu
+// set Script Property dengan nilai yang SAMA PERSIS sebelum halaman dibuka publik.
 var GATE_PASSWORD = "admin1";
 
+// Daftar channel/akun iklan yang dikelola. Dipakai untuk dropdown di form
+// Produk/Konten/Eval dan filter channel di tab Produk — mencegah typo/variasi
+// penulisan nama akun (mis. "Shopee KYX" vs "SHOPEE KYX").
+var CHANNELS = ["Shopee KYX", "Shopee Grosir Trail", "Shopee Pusat Jok", "TikTok KYX"];
+
 function $(id){ return document.getElementById(id); }
+
+// ── Isi dropdown channel/akun dari daftar CHANNELS ──
+function buildChannelSelects(){
+  var optsPlain = CHANNELS.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join("");
+  $("pChannel").innerHTML = '<option value="">-</option>' + optsPlain;
+  $("kChannel").innerHTML = '<option value="">-</option>' + optsPlain;
+  $("eChannel").innerHTML = '<option value="">-</option>' + optsPlain;
+  $("produkChannelFilter").innerHTML = '<option value="">Semua Channel</option>' + optsPlain;
+}
+buildChannelSelects();
 
 // ── APPS SCRIPT BRIDGE ──
 function callGS(fn, arg){
   return new Promise(function(resolve, reject){
     if(fn === "getReport"){
-      fetch(GAS_URL + "?action=getReport")
+      fetch(GAS_URL + "?action=getReport&token=" + encodeURIComponent(GATE_PASSWORD))
         .then(function(res){ return res.json(); })
-        .then(resolve).catch(reject);
+        .then(function(result){
+          if(result && result.success === false){ reject(result.error || "Gagal"); return; }
+          resolve(result);
+        }).catch(reject);
       return;
     }
-    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg }) })
+    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg, token: GATE_PASSWORD }) })
       .then(function(res){ return res.json(); })
       .then(function(result){
         if(result && result.success === false){ reject(result.error || "Gagal"); return; }
@@ -447,7 +492,49 @@ function unlockApp(){
 }
 
 // ── STATE ──
-var state = { meta:{}, products:[], content:[], evals:[], editingProductId:null, editingContentId:null, editingEvalId:null };
+var state = { meta:{}, products:[], content:[], evals:[], periode:null, periodeList:[],
+  editingProductId:null, editingProductPeriode:null, editingContentId:null,
+  editingEvalId:null, editingEvalPeriode:null };
+
+// ── PERIODE HELPERS (minggu = Senin s/d Minggu) ──
+function mondayOf(d){
+  var x = new Date(d); var day = x.getDay(); var diff = (day === 0 ? -6 : 1 - day);
+  x.setDate(x.getDate() + diff); x.setHours(0,0,0,0); return x;
+}
+function isoDate(d){ var y=d.getFullYear(), m=("0"+(d.getMonth()+1)).slice(-2), dd=("0"+d.getDate()).slice(-2); return y+"-"+m+"-"+dd; }
+function currentPeriode(){ return isoDate(mondayOf(new Date())); }
+function addDaysIso(iso, days){ var d = new Date(iso+"T00:00:00"); d.setDate(d.getDate()+days); return isoDate(d); }
+function fmtPeriode(iso){
+  if(!iso) return "—";
+  var start = new Date(iso+"T00:00:00"); var end = new Date(addDaysIso(iso,6)+"T00:00:00");
+  var opt = {day:"2-digit", month:"short"};
+  return start.toLocaleDateString("id-ID",opt) + " – " + end.toLocaleDateString("id-ID",opt) + " " + end.getFullYear();
+}
+function buildPeriodeList(){
+  var set = {};
+  state.products.forEach(function(p){ if(p.periode) set[p.periode] = true; });
+  state.evals.forEach(function(e){ if(e.periode) set[e.periode] = true; });
+  set[currentPeriode()] = true;
+  return Object.keys(set).sort().reverse(); // terbaru dulu
+}
+function previousPeriode(){
+  var idx = state.periodeList.indexOf(state.periode);
+  return (idx > -1 && idx + 1 < state.periodeList.length) ? state.periodeList[idx + 1] : null;
+}
+function currentPeriodProducts(){ return state.products.filter(function(p){ return p.periode === state.periode; }); }
+function currentPeriodEvals(){ return state.evals.filter(function(e){ return e.periode === state.periode; }); }
+function renderPeriodeSelect(){
+  var sel = $("periodeSelect");
+  sel.innerHTML = state.periodeList.map(function(p){
+    return '<option value="'+p+'">'+fmtPeriode(p)+'</option>';
+  }).join("");
+  sel.value = state.periode;
+  $("periodeRange").textContent = "Senin–Minggu";
+}
+function refreshForPeriode(){
+  $("omsetMarketplaceInput").value = state.meta["totalOmsetMarketplace:" + state.periode] || "";
+  renderAll();
+}
 
 // ── DATA LOAD ──
 function loadReport(){
@@ -457,9 +544,13 @@ function loadReport(){
     state.products = data.products || [];
     state.content = data.content || [];
     state.evals = data.evals || [];
-    $("omsetMarketplaceInput").value = state.meta.totalOmsetMarketplace || "";
+    state.periodeList = buildPeriodeList();
+    if(!state.periode || state.periodeList.indexOf(state.periode) === -1){
+      state.periode = state.periodeList[0];
+    }
+    renderPeriodeSelect();
     setLoading(false);
-    renderAll();
+    refreshForPeriode();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
 }
 
@@ -495,37 +586,62 @@ function computeProductMetrics(p){
     marginBersih:marginBersih, marginPct:marginPct, acos:acos, profit:profit, profitPct:profitPct,
     kategori:kategori, status:status };
 }
-function computeSummary(){
-  var totalOmsetIklan=0, totalBiayaIklan=0, totalMarginBersih=0, totalProfit=0, marginSum=0;
+// productsArr: daftar produk milik SATU periode. metaTotalOmset: nilai meta
+// "totalOmsetMarketplace" untuk periode yang sama (periode-scoped, lihat state.meta).
+function computeSummaryFor(productsArr, metaTotalOmset){
+  var totalOmsetIklan=0, totalBiayaIklan=0, totalMarginBersih=0, totalProfit=0;
+  var marginSum=0, weightedMarginSum=0, weightSum=0;
   var naikHarga=[], stopIklan=[];
-  state.products.forEach(function(p){
+  productsArr.forEach(function(p){
     var m = computeProductMetrics(p);
     totalOmsetIklan += m.omsetIklan; totalBiayaIklan += m.biayaIklan;
-    totalMarginBersih += m.marginBersih; totalProfit += m.profit; marginSum += m.marginPct;
+    // Dikalikan qty supaya basisnya sama dengan "profit" (total Rupiah, bukan margin per-unit).
+    totalMarginBersih += m.marginBersih * m.qty;
+    totalProfit += m.profit; marginSum += m.marginPct;
+    // Rata-rata margin % di-bobot berdasarkan omset iklan, bukan rata-rata polos antar
+    // produk — supaya produk kecil bermargin tinggi tidak menyeret rata-rata secara tidak proporsional.
+    weightedMarginSum += m.marginPct * m.omsetIklan; weightSum += m.omsetIklan;
     if(p.rekomendasi === "Naik Harga") naikHarga.push(p.name);
     if(p.rekomendasi === "Stop Iklan") stopIklan.push(p.name);
   });
   var acosRata = totalOmsetIklan ? totalBiayaIklan/totalOmsetIklan : 0;
-  var avgMarginPct = state.products.length ? marginSum/state.products.length : 0;
-  return { totalOmsetMarketplace: Number(state.meta.totalOmsetMarketplace)||0, totalOmsetIklan:totalOmsetIklan,
+  var avgMarginPct = weightSum ? weightedMarginSum/weightSum : (productsArr.length ? marginSum/productsArr.length : 0);
+  return { totalOmsetMarketplace: Number(metaTotalOmset)||0, totalOmsetIklan:totalOmsetIklan,
     totalBiayaIklan:totalBiayaIklan, acosRata:acosRata, totalMarginBersih:totalMarginBersih, avgMarginPct:avgMarginPct,
-    totalProfit:totalProfit, jumlahProduk:state.products.length, naikHarga:naikHarga, stopIklan:stopIklan };
+    totalProfit:totalProfit, jumlahProduk:productsArr.length, naikHarga:naikHarga, stopIklan:stopIklan };
+}
+function computeSummary(){
+  return computeSummaryFor(currentPeriodProducts(), state.meta["totalOmsetMarketplace:" + state.periode]);
+}
+function trendHtml(curr, prev, higherIsBad){
+  if(prev === null || prev === undefined) return "";
+  var diff = curr - prev;
+  if(Math.abs(diff) < 1e-9) return '<span class="trend flat">= vs minggu lalu</span>';
+  var bad = higherIsBad ? diff > 0 : diff < 0;
+  var arrow = diff > 0 ? "▲" : "▼";
+  return '<span class="trend '+(bad?"bad":"good")+'">'+arrow+' vs minggu lalu</span>';
 }
 
 // ── RENDER: RINGKASAN ──
 function renderRingkasan(){
   var s = computeSummary();
+  var prevP = previousPeriode();
+  var prev = prevP ? computeSummaryFor(state.products.filter(function(p){ return p.periode === prevP; }),
+    state.meta["totalOmsetMarketplace:" + prevP]) : null;
+
   var acosBadge = s.acosRata <= 0.10 ? '<span class="kpi-badge aman">● Aman</span>' : '<span class="kpi-badge bahaya">● Bahaya</span>';
   var marginBadge = s.avgMarginPct >= 0.30 ? '<span class="kpi-badge baik">● Baik</span>' : '<span class="kpi-badge kurang">● Kurang</span>';
   var profitBadge = s.totalProfit >= 0 ? '<span class="kpi-badge profit">● Profit</span>' : '<span class="kpi-badge rugi">● Rugi</span>';
+  var acosTrend = prev ? trendHtml(s.acosRata, prev.acosRata, true) : "";
+  var profitTrend = prev ? trendHtml(s.totalProfit, prev.totalProfit, false) : "";
 
   $("kpiGrid").innerHTML = [
     kpiCard("Total Omset Marketplace", fmtRp(s.totalOmsetMarketplace), ""),
     kpiCard("Total Omset dari Iklan", fmtRp(s.totalOmsetIklan), ""),
     kpiCard("Total Biaya Iklan", fmtRp(s.totalBiayaIklan), ""),
-    kpiCard("ACOS Rata-rata", fmtPct(s.acosRata), acosBadge + ' <span style="font-size:11px;color:var(--gray-400)">target maks 10%</span>'),
+    kpiCard("ACOS Rata-rata", fmtPct(s.acosRata), acosBadge + ' <span style="font-size:11px;color:var(--gray-400)">target maks 10%</span>' + acosTrend),
     kpiCard("Est. Margin Bersih Total", fmtRp(s.totalMarginBersih), marginBadge),
-    kpiCard("Est. Profit setelah Iklan", fmtRp(s.totalProfit), profitBadge),
+    kpiCard("Est. Profit setelah Iklan", fmtRp(s.totalProfit), profitBadge + profitTrend),
     kpiCard("Jumlah Produk Diiklankan", s.jumlahProduk, "")
   ].join("");
 
@@ -536,7 +652,8 @@ function renderRingkasan(){
     ? s.stopIklan.map(function(n){ return '<span class="chip warn">'+escapeHtml(n)+'</span>'; }).join("")
     : '<span class="chip-empty">Tidak ada produk minggu ini.</span>';
 
-  $("topbarSub").textContent = s.jumlahProduk + " produk · " + state.content.length + " catatan konten · " + state.evals.length + " evaluasi";
+  $("topbarSub").textContent = fmtPeriode(state.periode) + " · " + s.jumlahProduk + " produk · " +
+    currentPeriodEvals().length + " evaluasi · " + state.content.length + " catatan konten";
 }
 function kpiCard(label, value, extra){
   return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>';
@@ -554,11 +671,13 @@ function kategoriBadgeHtml(kategori){
 function renderProduk(){
   var q = ($("produkSearch").value||"").trim().toLowerCase();
   var statusF = $("produkStatusFilter").value;
-  var rows = state.products.map(function(p){ return { p:p, m: computeProductMetrics(p) }; })
+  var channelF = $("produkChannelFilter").value;
+  var rows = currentPeriodProducts().map(function(p){ return { p:p, m: computeProductMetrics(p) }; })
     .filter(function(r){
       var matchQ = !q || (r.p.name||"").toLowerCase().indexOf(q) > -1;
       var matchS = !statusF || r.m.status === statusF;
-      return matchQ && matchS;
+      var matchC = !channelF || r.p.channel === channelF;
+      return matchQ && matchS && matchC;
     });
 
   var tbody = $("produkBody"); tbody.innerHTML = "";
@@ -566,6 +685,15 @@ function renderProduk(){
 
   rows.forEach(function(r){
     var p = r.p, m = r.m;
+    // Status (hasil rumus ACOS/margin) dan Rekomendasi (keputusan manual advertiser) sengaja
+    // ditampilkan berdampingan, bukan digabung — supaya rumus tetap jadi referensi tapi
+    // keputusan akhir tetap di tangan advertiser. Tanda ⚠️ muncul kalau rumus bilang "Waspada"
+    // tapi belum ada keputusan "Stop Iklan", sebagai pengingat saja, bukan pemaksaan.
+    var mismatch = (m.status === "Waspada" && p.rekomendasi !== "Stop Iklan")
+      ? '<span class="mismatch-flag" title="Status rumus: Waspada — belum ada keputusan Stop Iklan">⚠️</span>' : "";
+    var rekomenCell = p.rekomendasi
+      ? '<span class="badge netral"><span class="badge-dot"></span>'+escapeHtml(p.rekomendasi)+'</span>'
+      : '<span class="cell-sub">—</span>';
     var tr = document.createElement("tr");
     tr.innerHTML =
       '<td><div class="cell-name">'+escapeHtml(p.name||"(Tanpa nama)")+'</div><div class="cell-sub">'+escapeHtml(p.channel||"")+'</div></td>'+
@@ -574,14 +702,19 @@ function renderProduk(){
       '<td>'+fmtPct(m.acos)+'</td>'+
       '<td>'+fmtRp(m.profit)+'</td>'+
       '<td>'+statusBadgeHtml(m.status)+'</td>'+
+      '<td>'+rekomenCell+mismatch+'</td>'+
       '<td><div class="row-actions"><button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openProdukModal(b.dataset.id); }); });
   tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteProduk(b.dataset.id); }); });
 
+  // Datalist nama produk dedupe lintas periode, supaya nama produk lama tetap bisa dipilih ulang.
   var list = $("produkNameList"); list.innerHTML = ""; var list2 = $("produkNameList2"); list2.innerHTML = "";
+  var seenNames = {};
   state.products.forEach(function(p){
+    if(!p.name || seenNames[p.name]) return;
+    seenNames[p.name] = true;
     var opt = document.createElement("option"); opt.value = p.name;
     list.appendChild(opt.cloneNode(true)); list2.appendChild(opt);
   });
@@ -615,8 +748,9 @@ function berhasilBadgeHtml(v){
 }
 function renderEval(){
   var tbody = $("evalBody"); tbody.innerHTML = "";
-  $("evalEmpty").style.display = state.evals.length ? "none" : "block";
-  state.evals.forEach(function(ev){
+  var rows = currentPeriodEvals();
+  $("evalEmpty").style.display = rows.length ? "none" : "block";
+  rows.forEach(function(ev){
     var tr = document.createElement("tr");
     tr.innerHTML =
       '<td>'+escapeHtml(ev.kategoriTindakan||"")+'</td>'+
@@ -642,17 +776,52 @@ document.querySelectorAll(".tab-btn").forEach(function(btn){
     document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.remove("active"); });
     btn.classList.add("active");
     $("panel-"+btn.dataset.tab).classList.add("active");
+    // Konten adalah backlog perbaikan listing yang berjalan terus, bukan snapshot mingguan —
+    // jadi selector periode disembunyikan supaya tidak menyiratkan Konten ikut terfilter per minggu.
+    document.querySelector(".periode-bar").style.display = (btn.dataset.tab === "konten") ? "none" : "flex";
   });
 });
 
-// ── META (Total Omset Marketplace) ──
+// ── META (Total Omset Marketplace, per periode) ──
 $("saveMetaBtn").addEventListener("click", function(){
   var val = Number($("omsetMarketplaceInput").value)||0;
+  var key = "totalOmsetMarketplace:" + state.periode;
   setLoading(true, "Menyimpan…");
-  callGS("setMeta", { key:"totalOmsetMarketplace", value: val }).then(function(){
-    state.meta.totalOmsetMarketplace = val;
+  callGS("setMeta", { key:key, value: val }).then(function(){
+    state.meta[key] = val;
     setLoading(false); showToast("✓ Tersimpan"); renderRingkasan();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+});
+
+// ── PERIODE BAR ──
+$("periodeSelect").addEventListener("change", function(){
+  state.periode = this.value;
+  refreshForPeriode();
+});
+$("newPeriodeBtn").addEventListener("click", function(){
+  var newest = state.periodeList[0];
+  var candidate = addDaysIso(newest, 7);
+  while(state.periodeList.indexOf(candidate) > -1){ candidate = addDaysIso(candidate, 7); }
+  state.periodeList.unshift(candidate);
+  state.periode = candidate;
+  renderPeriodeSelect();
+  refreshForPeriode();
+  showToast("✓ Minggu baru: " + fmtPeriode(candidate));
+});
+$("duplicatePeriodeBtn").addEventListener("click", function(){
+  var fromPeriode = state.periode;
+  if(!currentPeriodProducts().length){ showToast("Tidak ada produk di minggu ini untuk diduplikasi"); return; }
+  var toPeriode = addDaysIso(fromPeriode, 7);
+  while(state.products.some(function(p){ return p.periode === toPeriode; })){
+    toPeriode = addDaysIso(toPeriode, 7);
+  }
+  if(!confirm("Duplikat "+currentPeriodProducts().length+" produk ke minggu "+fmtPeriode(toPeriode)+"?")) return;
+  setLoading(true, "Menduplikasi produk ke minggu baru…");
+  callGS("duplicateProdukPeriode", { fromPeriode: fromPeriode, toPeriode: toPeriode }).then(function(res){
+    showToast("✓ "+(res.count||0)+" produk diduplikasi ke minggu "+fmtPeriode(toPeriode));
+    state.periode = toPeriode;
+    loadReport(); // reload penuh supaya id baru dari server ikut ter-sinkron
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menduplikasi"); });
 });
 
 // ── PRODUK MODAL ──
@@ -676,6 +845,7 @@ function openProdukModal(id){
   $("pErrName").style.display = "none";
   if(id){
     var p = state.products.find(function(e){ return e.id===id; });
+    state.editingProductPeriode = p.periode || state.periode;
     $("produkModalTitle").textContent = "Edit Produk";
     $("pName").value = p.name||""; $("pChannel").value = p.channel||"";
     $("pHarga").value = p.hargaJual||""; $("pBpp").value = p.bpp||"";
@@ -683,6 +853,7 @@ function openProdukModal(id){
     $("pBiaya").value = p.biayaIklan||""; $("pIsTest").checked = !!p.isTest;
     $("pRekomendasi").value = p.rekomendasi||"";
   } else {
+    state.editingProductPeriode = null;
     $("produkModalTitle").textContent = "Tambah Produk";
     ["pName","pChannel","pHarga","pBpp","pQty","pOmset","pBiaya"].forEach(function(id){ $(id).value=""; });
     $("pIsTest").checked = false; $("pRekomendasi").value = "";
@@ -698,6 +869,7 @@ function saveProduk(){
   $("pErrName").style.display = "none";
   var payload = {
     name:name, channel:$("pChannel").value.trim(),
+    periode: state.editingProductPeriode || state.periode,
     hargaJual:Number($("pHarga").value)||0, bpp:Number($("pBpp").value)||0,
     qty:Number($("pQty").value)||0, omsetIklan:Number($("pOmset").value)||0,
     biayaIklan:Number($("pBiaya").value)||0, isTest:$("pIsTest").checked,
@@ -768,11 +940,13 @@ function openEvalModal(id){
   state.editingEvalId = id || null;
   if(id){
     var ev = state.evals.find(function(e){ return e.id===id; });
+    state.editingEvalPeriode = ev.periode || state.periode;
     $("evalModalTitle").textContent = "Edit Evaluasi";
     $("eKategori").value=ev.kategoriTindakan||""; $("eProduk").value=ev.produk||""; $("eChannel").value=ev.channel||"";
     $("eTindakan").value=ev.tindakan||""; $("eTarget").value=ev.target||""; $("eHasil").value=ev.hasil||"";
     $("eBerhasil").value=ev.berhasil||"Belum dievaluasi"; $("eTindakLanjut").value=ev.tindakLanjut||""; $("eAlasan").value=ev.alasan||"";
   } else {
+    state.editingEvalPeriode = null;
     $("evalModalTitle").textContent = "Tambah Evaluasi";
     $("eKategori").value = "Scale produk margin tinggi";
     ["eProduk","eChannel","eTindakan","eTarget","eHasil","eAlasan"].forEach(function(id){ $(id).value=""; });
@@ -783,6 +957,7 @@ function openEvalModal(id){
 function closeEvalModal(){ $("evalModal").classList.remove("open"); state.editingEvalId = null; }
 function saveEval(){
   var payload = { kategoriTindakan:$("eKategori").value, produk:$("eProduk").value.trim(), channel:$("eChannel").value.trim(),
+    periode: state.editingEvalPeriode || state.periode,
     tindakan:$("eTindakan").value.trim(), target:$("eTarget").value.trim(), hasil:$("eHasil").value.trim(),
     berhasil:$("eBerhasil").value, tindakLanjut:$("eTindakLanjut").value, alasan:$("eAlasan").value.trim() };
   var isEdit = !!state.editingEvalId;
@@ -810,6 +985,7 @@ $("produkSaveBtn").addEventListener("click", saveProduk);
 $("produkModal").addEventListener("click", function(e){ if(e.target===$("produkModal")) closeProdukModal(); });
 $("produkSearch").addEventListener("input", renderProduk);
 $("produkStatusFilter").addEventListener("change", renderProduk);
+$("produkChannelFilter").addEventListener("change", renderProduk);
 
 $("addKontenBtn").addEventListener("click", function(){ openKontenModal(); });
 $("kontenCancelBtn").addEventListener("click", closeKontenModal);
