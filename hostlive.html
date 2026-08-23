@@ -159,6 +159,7 @@ tbody tr:hover{background:var(--gray-50)}
     <div class="tabs">
       <button class="tab-btn active" data-tab="ringkasan">Ringkasan</button>
       <button class="tab-btn" data-tab="aktivitas">Activity Tracker</button>
+      <button class="tab-btn" data-tab="konten" id="kontenTabBtn">Update Konten</button>
     </div>
 
     <!-- TAB: RINGKASAN -->
@@ -217,6 +218,22 @@ tbody tr:hover{background:var(--gray-50)}
           <tbody id="tableBody"></tbody>
         </table>
         <div class="empty-state" id="emptyState" style="display:none"><div class="icon">🎥</div><p>Belum ada aktivitas. Klik "+ Tambah Aktivitas".</p></div>
+      </div>
+    </div>
+    <!-- TAB: UPDATE KONTEN (data dari halaman Advertiser — sumbernya tetap 1: sheet Advertiser) -->
+    <div class="tab-panel" id="panel-konten">
+      <div class="controls">
+        <input type="text" id="kontenSearch" placeholder="Cari produk / channel…"/>
+        <button class="btn btn-outline btn-sm" id="refreshKontenBtn">↻ Muat Ulang</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Produk</th><th>Channel</th><th>Masalah Listing</th><th>Dampak</th><th>Perbaikan Diperlukan</th><th>Deadline</th><th>PIC Terakhir</th><th></th>
+          </tr></thead>
+          <tbody id="kontenBody"></tbody>
+        </table>
+        <div class="empty-state" id="kontenEmpty" style="display:none"><div class="icon">✅</div><p>Tidak ada konten yang perlu diupdate saat ini.</p></div>
       </div>
     </div>
   </div>
@@ -306,12 +323,40 @@ tbody tr:hover{background:var(--gray-50)}
   </div>
 </div>
 
+<!-- ── MODAL: TANDAI KONTEN SELESAI ── -->
+<div class="modal-overlay" id="kontenDoneModal">
+  <div class="modal" style="max-width:380px">
+    <h2>Tandai Konten Selesai</h2>
+    <div class="field">
+      <label>Produk</label>
+      <div style="font-size:13.5px;font-weight:600;margin-bottom:2px" id="kdProdukLabel"></div>
+      <div style="font-size:12px;color:var(--gray-600)" id="kdMasalahLabel"></div>
+    </div>
+    <div class="field">
+      <label>PIC yang Mengerjakan Update Ini</label>
+      <select id="kdPic"><option>Dewi</option><option>Nazwa</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="kdCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="kdConfirmBtn">Tandai Selesai</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <div id="loading"><span id="loadingText">Memuat…</span></div>
 
 <script>
 // ── GANTI dengan URL Web App Apps Script khusus hostlive (harus berakhiran /exec) ──
 var GAS_URL = "https://script.google.com/macros/s/AKfycbzHoeXxQ9bl69rR1DLpP-U8b2Ho8LFiOC3OmIhAh0gjpz4Q2Y2HhhY39rI98V9Qmflk/exec";
+
+// ── Koneksi ke halaman Advertiser (project Apps Script TERPISAH) ──
+// Tab "Update Konten" membaca & menulis LANGSUNG ke sheet Advertiser (sumber
+// datanya tetap satu, tidak disalin ke sini). GANTI dengan URL Web App project
+// Advertiser, dan ADV_APP_TOKEN harus SAMA PERSIS dengan variabel APP_TOKEN di
+// advertiser.html / Script Property APP_TOKEN pada project Advertiser tersebut.
+var ADV_GAS_URL = "https://script.google.com/macros/s/AKfycbzWHuiICPSimh0J60AxTIjvkQvQL1zs7CluKOKOnOeVqkHcqSlYi-Eyvqf93Nv3EnVOAQ/exec";
+var ADV_APP_TOKEN = "admin1";
 
 function $(id){ return document.getElementById(id); }
 
@@ -336,6 +381,7 @@ function callGS(fn, arg){
 // ── STATE ──
 var state = { items: [], search:"", filterPic:"", filterMarketplace:"", filterAktifitas:"", editingId:null,
   periodMode:"minggu", periodAnchor:new Date() };
+var kontenState = { items: [], doneTargetId: null };
 
 // ── TARGET KPI TIM (dari deskripsi tugas mingguan) ──
 var KPI_TARGETS = [
@@ -391,6 +437,18 @@ function loadActivities(){
     setLoading(false);
     renderAll();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
+}
+
+// ── DATA LOAD: KONTEN DARI ADVERTISER ──
+function loadKontenAdvertiser(){
+  fetch(ADV_GAS_URL + "?action=getReport&token=" + encodeURIComponent(ADV_APP_TOKEN))
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if(data && data.success === false){ throw new Error(data.error || "Gagal memuat konten"); }
+      kontenState.items = (data.content || []).filter(function(c){ return !c.selesai; });
+      renderKonten();
+    })
+    .catch(function(err){ console.error(err); showToast("Gagal memuat data konten dari Advertiser"); });
 }
 
 // ── HELPERS ──
@@ -551,6 +609,63 @@ function detailCell(it){
     return eParts.length ? eParts.join(" · ") : "—";
   }
   return "—";
+}
+
+// ── RENDER: UPDATE KONTEN (dari Advertiser) ──
+function renderKonten(){
+  var q = ($("kontenSearch").value||"").trim().toLowerCase();
+  var rows = kontenState.items.filter(function(c){
+    return !q || (c.produk||"").toLowerCase().indexOf(q)>-1 || (c.channel||"").toLowerCase().indexOf(q)>-1;
+  });
+  var tbody = $("kontenBody"); tbody.innerHTML = "";
+  $("kontenEmpty").style.display = rows.length ? "none" : "block";
+  rows.forEach(function(c){
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="cell-wrap">'+escapeHtml(c.produk||"—")+'</td>'+
+      '<td>'+escapeHtml(c.channel||"—")+'</td>'+
+      '<td class="cell-wrap">'+escapeHtml(c.masalahListing||"—")+'</td>'+
+      '<td class="cell-wrap">'+escapeHtml(c.dampak||"—")+'</td>'+
+      '<td class="cell-wrap">'+escapeHtml(c.perbaikan||"—")+'</td>'+
+      '<td>'+(c.deadline ? fmtDate(c.deadline) : "—")+'</td>'+
+      '<td>'+escapeHtml(c.pic||"—")+'</td>'+
+      '<td><div class="row-actions"><button class="done-btn" data-id="'+c.id+'">Tandai Selesai</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".done-btn").forEach(function(b){ b.addEventListener("click", function(){ openKontenDoneModal(b.dataset.id); }); });
+  $("kontenTabBtn").textContent = "Update Konten" + (rows.length ? " (" + rows.length + ")" : "");
+}
+function openKontenDoneModal(id){
+  var c = kontenState.items.find(function(e){ return e.id===id; });
+  if(!c) return;
+  kontenState.doneTargetId = id;
+  $("kdProdukLabel").textContent = c.produk || "(Tanpa nama produk)";
+  $("kdMasalahLabel").textContent = c.masalahListing || "";
+  $("kdPic").value = (c.pic === "Nazwa") ? "Nazwa" : "Dewi";
+  $("kontenDoneModal").classList.add("open");
+}
+function closeKontenDoneModal(){ $("kontenDoneModal").classList.remove("open"); kontenState.doneTargetId = null; }
+function confirmKontenDone(){
+  var id = kontenState.doneTargetId;
+  var c = kontenState.items.find(function(e){ return e.id===id; });
+  if(!c) return;
+  // Kirim SELURUH field yang sudah ada, bukan cuma yang berubah — backend
+  // updateContent Advertiser menimpa field yang tidak dikirim jadi kosong.
+  var payload = { id:c.id, produk:c.produk, channel:c.channel, masalahListing:c.masalahListing,
+    dampak:c.dampak, perbaikan:c.perbaikan, deadline:c.deadline,
+    pic: $("kdPic").value, selesai: true };
+  setLoading(true, "Menyimpan…");
+  fetch(ADV_GAS_URL, { method:"POST", body: JSON.stringify({ action:"updateContent", payload:payload, token:ADV_APP_TOKEN }) })
+    .then(function(res){ return res.json(); })
+    .then(function(result){
+      setLoading(false);
+      if(result && result.success === false){ showToast("Gagal: "+(result.error||"")); return; }
+      kontenState.items = kontenState.items.filter(function(e){ return e.id!==id; });
+      closeKontenDoneModal();
+      renderKonten();
+      showToast("✓ Konten ditandai selesai");
+    })
+    .catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
 }
 
 function renderAll(){ renderRingkasan(); renderTable(); }
@@ -746,10 +861,17 @@ $("search").addEventListener("input", function(e){ state.search = e.target.value
 $("filterPic").addEventListener("change", function(e){ state.filterPic = e.target.value; renderTable(); });
 $("filterMarketplace").addEventListener("change", function(e){ state.filterMarketplace = e.target.value; renderTable(); });
 $("filterAktifitas").addEventListener("change", function(e){ state.filterAktifitas = e.target.value; renderTable(); });
-document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeModal(); });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ closeModal(); closeKontenDoneModal(); } });
+
+$("kontenSearch").addEventListener("input", renderKonten);
+$("refreshKontenBtn").addEventListener("click", loadKontenAdvertiser);
+$("kdCancelBtn").addEventListener("click", closeKontenDoneModal);
+$("kdConfirmBtn").addEventListener("click", confirmKontenDone);
+$("kontenDoneModal").addEventListener("click", function(e){ if(e.target===$("kontenDoneModal")) closeKontenDoneModal(); });
 
 // ── INIT ──
 loadActivities();
+loadKontenAdvertiser();
 </script>
 </body>
 </html>
