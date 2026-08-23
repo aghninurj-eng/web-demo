@@ -21,22 +21,8 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
 
-/* ── PASSWORD GATE ── */
-#authGate{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:100}
-.auth-card{background:var(--white);border-radius:14px;padding:36px 32px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
-.auth-icon{width:48px;height:48px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;margin:0 auto 16px}
-.auth-card h1{font-size:17px;font-weight:700;margin-bottom:4px}
-.auth-card p{font-size:12.5px;color:var(--gray-600);margin-bottom:20px}
-.auth-card input{width:100%;padding:11px 14px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;margin-bottom:10px;outline:none;transition:border-color .15s}
-.auth-card input:focus{border-color:var(--blue)}
-.auth-card button{width:100%;padding:11px 14px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s}
-.auth-card button:hover{background:#3d5de8}
-.auth-error{font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px}
-.shake{animation:shake .35s}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-
 /* ── APP ── */
-#appRoot{display:none;min-height:100vh}
+#appRoot{display:block;min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 60px}
 .topbar{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
 .topbar-title{font-size:20px;font-weight:700}
@@ -162,18 +148,6 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
 </style>
 </head>
 <body>
-
-<!-- ── PASSWORD GATE ── -->
-<div id="authGate">
-  <div class="auth-card" id="authCard">
-    <div class="auth-icon">🔒</div>
-    <h1>Advertiser Panel</h1>
-    <p>Masukkan password untuk melanjutkan</p>
-    <div class="auth-error" id="authError"></div>
-    <input type="password" id="authInput" placeholder="Password" autocomplete="off"/>
-    <button id="authBtn">Masuk</button>
-  </div>
-</div>
 
 <!-- ── APP ── -->
 <div id="appRoot">
@@ -423,12 +397,12 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
 <script>
 // ── GANTI dengan URL Web App Apps Script khusus laporan advertiser (harus berakhiran /exec) ──
 var GAS_URL = "https://script.google.com/macros/s/AKfycbzWHuiICPSimh0J60AxTIjvkQvQL1zs7CluKOKOnOeVqkHcqSlYi-Eyvqf93Nv3EnVOAQ/exec";
-// PENTING: nilai ini dipakai DUA kali — (1) sebagai password gate di bawah,
-// dan (2) sebagai token otorisasi yang dikirim ke Apps Script. Backend akan
-// menolak semua request kalau token tidak cocok dengan Script Property
-// "APP_TOKEN" di project Code_Advertiser.gs. Ganti nilai default ini, lalu
-// set Script Property dengan nilai yang SAMA PERSIS sebelum halaman dibuka publik.
-var GATE_PASSWORD = "admin1";
+// Token otorisasi yang dikirim otomatis ke Apps Script di setiap request (tidak ada
+// layar login — tim langsung masuk ke laporan). Backend akan menolak request kalau
+// nilai ini tidak cocok dengan Script Property "APP_TOKEN" di Code_Advertiser.gs.
+// Ini BUKAN pengaman kuat (nilainya terlihat di "View Source"), hanya mencegah URL
+// Apps Script dipanggil langsung oleh orang yang tidak pernah membuka halaman ini.
+var APP_TOKEN = "admin1";
 
 // Daftar channel/akun iklan yang dikelola. Dipakai untuk dropdown di form
 // Produk/Konten/Eval dan filter channel di tab Produk — mencegah typo/variasi
@@ -451,7 +425,7 @@ buildChannelSelects();
 function callGS(fn, arg){
   return new Promise(function(resolve, reject){
     if(fn === "getReport"){
-      fetch(GAS_URL + "?action=getReport&token=" + encodeURIComponent(GATE_PASSWORD))
+      fetch(GAS_URL + "?action=getReport&token=" + encodeURIComponent(APP_TOKEN))
         .then(function(res){ return res.json(); })
         .then(function(result){
           if(result && result.success === false){ reject(result.error || "Gagal"); return; }
@@ -459,7 +433,7 @@ function callGS(fn, arg){
         }).catch(reject);
       return;
     }
-    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg, token: GATE_PASSWORD }) })
+    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg, token: APP_TOKEN }) })
       .then(function(res){ return res.json(); })
       .then(function(result){
         if(result && result.success === false){ reject(result.error || "Gagal"); return; }
@@ -468,28 +442,8 @@ function callGS(fn, arg){
   });
 }
 
-// ── AUTH GATE ──
-(function(){
-  if(sessionStorage.getItem("adv_authed") === "1"){ unlockApp(); return; }
-  $("authBtn").addEventListener("click", tryUnlock);
-  $("authInput").addEventListener("keydown", function(e){ if(e.key==="Enter") tryUnlock(); });
-  $("authInput").focus();
-  function tryUnlock(){
-    if($("authInput").value === GATE_PASSWORD){
-      sessionStorage.setItem("adv_authed","1");
-      unlockApp();
-    } else {
-      $("authError").textContent = "Password salah, coba lagi.";
-      $("authCard").classList.remove("shake"); void $("authCard").offsetWidth; $("authCard").classList.add("shake");
-      $("authInput").value = ""; $("authInput").focus();
-    }
-  }
-})();
-function unlockApp(){
-  $("authGate").style.display = "none";
-  $("appRoot").style.display = "block";
-  loadReport();
-}
+// ── AUTO-LOAD (tanpa layar login — token API tetap dikirim otomatis di latar belakang) ──
+loadReport();
 
 // ── STATE ──
 var state = { meta:{}, products:[], content:[], evals:[], periode:null, periodeList:[],
