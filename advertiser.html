@@ -100,6 +100,7 @@ tbody tr:hover{background:var(--gray-50)}
 .badge.profit{background:var(--green-lt);color:#047857}.badge.profit .badge-dot{background:var(--green)}
 .badge.traffic{background:var(--blue-lt);color:#3d5de8}.badge.traffic .badge-dot{background:var(--blue)}
 .badge.test{background:var(--slate-lt);color:var(--gray-600)}.badge.test .badge-dot{background:var(--slate)}
+.badge.otomatis{background:var(--blue-lt);color:#3d5de8}.badge.otomatis .badge-dot{background:var(--blue)}
 .badge.prioritas{background:var(--green-lt);color:#047857}.badge.prioritas .badge-dot{background:var(--green)}
 .badge.waspada{background:var(--amber-lt);color:#92400E}.badge.waspada .badge-dot{background:var(--amber)}
 .badge.tingkatkan{background:var(--purple-lt);color:#6D28D9}.badge.tingkatkan .badge-dot{background:var(--purple)}
@@ -112,6 +113,8 @@ tbody tr:hover{background:var(--gray-50)}
 .row-actions button:hover{background:var(--gray-100)}
 .row-actions .del-btn{color:var(--red);border-color:#FCA5A5}
 .row-actions .del-btn:hover{background:var(--red-lt)}
+.row-actions .stop-btn{color:#92400E;border-color:#FCD34D}
+.row-actions .stop-btn:hover{background:var(--amber-lt)}
 .empty-state{text-align:center;padding:50px 20px;color:var(--gray-400)}
 .empty-state .icon{font-size:30px;margin-bottom:8px}
 .empty-state p{font-size:13px}
@@ -132,6 +135,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
 .field-check label{font-size:12.5px;font-weight:500;color:var(--gray-800)}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .field-error{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+.field-hint{font-size:11.5px;color:var(--gray-400);margin-top:4px;line-height:1.4}
 
 .preview-box{background:var(--gray-50);border:1px dashed var(--gray-200);border-radius:8px;padding:12px 14px;margin:14px 0;font-size:12px}
 .preview-box .pv-title{font-weight:700;font-size:11.5px;color:var(--gray-600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
@@ -263,26 +267,40 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
   <div class="modal">
     <h2 id="produkModalTitle">Tambah Produk</h2>
     <div class="field">
-      <label>Nama Produk</label>
+      <label>Tipe Iklan</label>
+      <select id="pTipeIklan">
+        <option value="Manual">Manual (produk spesifik)</option>
+        <option value="Otomatis">Otomatis (Iklan Otomatis Shopee — produk berganti tiap hari)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="pNameLabel">Nama Produk</label>
       <input type="text" id="pName" placeholder="Nama produk"/>
       <div class="field-error" id="pErrName">Nama wajib diisi</div>
+      <div class="field-hint" id="pNameHint" style="display:none">Untuk Iklan Otomatis, isi nama akun/kampanyenya saja (mis. "Iklan Otomatis - Shopee KYX"), bukan nama produk spesifik — karena SKU-nya berganti tiap hari oleh algoritma Shopee dan tidak perlu/bisa dicatat satu-satu.</div>
     </div>
     <div class="field">
       <label>Channel Iklan / Akun</label>
       <select id="pChannel"></select>
     </div>
-    <div class="field-row">
-      <div class="field"><label>Harga Jual</label><input type="number" id="pHarga"/></div>
-      <div class="field"><label>BPP (harga pokok)</label><input type="number" id="pBpp"/></div>
-    </div>
-    <div class="field-row">
+    <div id="pUnitFields">
+      <div class="field-row">
+        <div class="field"><label>Harga Jual</label><input type="number" id="pHarga"/></div>
+        <div class="field"><label>BPP (harga pokok)</label><input type="number" id="pBpp"/></div>
+      </div>
       <div class="field"><label>Qty Penjualan</label><input type="number" id="pQty"/></div>
-      <div class="field"><label>Omset dari Iklan</label><input type="number" id="pOmset"/></div>
     </div>
-    <div class="field"><label>Biaya Iklan</label><input type="number" id="pBiaya"/></div>
-    <div class="field-check">
+    <div class="field-row">
+      <div class="field"><label id="pOmsetLabel">Omset dari Iklan</label><input type="number" id="pOmset"/></div>
+      <div class="field"><label>Biaya Iklan</label><input type="number" id="pBiaya"/></div>
+    </div>
+    <div class="field-check" id="pIsTestField">
       <input type="checkbox" id="pIsTest"/>
       <label for="pIsTest">Produk baru / masih tahap test</label>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Tanggal Mulai</label><input type="date" id="pTanggalMulai"/></div>
+      <div class="field"><label>Tanggal Stop <span style="font-weight:400;color:var(--gray-400)">(kosongkan kalau masih jalan)</span></label><input type="date" id="pTanggalStop"/></div>
     </div>
     <div class="field">
       <label>Rekomendasi (opsional)</label>
@@ -518,11 +536,22 @@ function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str
 
 // ── CALCULATION ENGINE (mirror rumus Excel) ──
 function computeProductMetrics(p){
-  var hargaJual = Number(p.hargaJual)||0, bpp = Number(p.bpp)||0, qty = Number(p.qty)||0;
   var omsetIklan = Number(p.omsetIklan)||0, biayaIklan = Number(p.biayaIklan)||0;
+  var acos = omsetIklan ? biayaIklan/omsetIklan : 0;
+
+  if(p.tipeIklan === "Otomatis"){
+    // Iklan Otomatis Shopee: satu baris = satu akun/kampanye, bukan satu SKU (produknya
+    // berganti tiap hari oleh algoritma). Margin/profit per-unit TIDAK bisa dihitung
+    // (tidak ada harga jual/HPP per produk tunggal) — status ditentukan murni dari ACOS.
+    var statusO = acos <= 0.10 ? "Prioritas" : (acos > 0.20 ? "Waspada" : "Netral");
+    return { hargaJual:0, bpp:0, qty:0, omsetIklan:omsetIklan, biayaIklan:biayaIklan,
+      marginBersih:null, marginPct:null, acos:acos, profit:null, profitPct:null,
+      kategori:"Otomatis", status:statusO, isOtomatis:true };
+  }
+
+  var hargaJual = Number(p.hargaJual)||0, bpp = Number(p.bpp)||0, qty = Number(p.qty)||0;
   var marginBersih = hargaJual - bpp;
   var marginPct = hargaJual ? marginBersih/hargaJual : 0;
-  var acos = omsetIklan ? biayaIklan/omsetIklan : 0;
   var profit = omsetIklan - biayaIklan - (bpp*qty);
   var profitPct = omsetIklan ? profit/omsetIklan : 0;
   var kategori;
@@ -538,28 +567,33 @@ function computeProductMetrics(p){
   else status = "Netral";
   return { hargaJual:hargaJual, bpp:bpp, qty:qty, omsetIklan:omsetIklan, biayaIklan:biayaIklan,
     marginBersih:marginBersih, marginPct:marginPct, acos:acos, profit:profit, profitPct:profitPct,
-    kategori:kategori, status:status };
+    kategori:kategori, status:status, isOtomatis:false };
 }
 // productsArr: daftar produk milik SATU periode. metaTotalOmset: nilai meta
 // "totalOmsetMarketplace" untuk periode yang sama (periode-scoped, lihat state.meta).
 function computeSummaryFor(productsArr, metaTotalOmset){
   var totalOmsetIklan=0, totalBiayaIklan=0, totalMarginBersih=0, totalProfit=0;
-  var marginSum=0, weightedMarginSum=0, weightSum=0;
+  var marginSum=0, weightedMarginSum=0, weightSum=0, marginCount=0;
   var naikHarga=[], stopIklan=[];
   productsArr.forEach(function(p){
     var m = computeProductMetrics(p);
     totalOmsetIklan += m.omsetIklan; totalBiayaIklan += m.biayaIklan;
-    // Dikalikan qty supaya basisnya sama dengan "profit" (total Rupiah, bukan margin per-unit).
-    totalMarginBersih += m.marginBersih * m.qty;
-    totalProfit += m.profit; marginSum += m.marginPct;
-    // Rata-rata margin % di-bobot berdasarkan omset iklan, bukan rata-rata polos antar
-    // produk — supaya produk kecil bermargin tinggi tidak menyeret rata-rata secara tidak proporsional.
-    weightedMarginSum += m.marginPct * m.omsetIklan; weightSum += m.omsetIklan;
+    // Baris "Iklan Otomatis" tidak punya data margin/profit per-unit (bukan 1 SKU),
+    // jadi sengaja TIDAK ikut dihitung di sini — tapi omset & biaya iklannya tetap
+    // masuk ke total di atas karena itu angka riil, bukan turunan margin.
+    if(!m.isOtomatis){
+      // Dikalikan qty supaya basisnya sama dengan "profit" (total Rupiah, bukan margin per-unit).
+      totalMarginBersih += m.marginBersih * m.qty;
+      totalProfit += m.profit; marginSum += m.marginPct; marginCount++;
+      // Rata-rata margin % di-bobot berdasarkan omset iklan, bukan rata-rata polos antar
+      // produk — supaya produk kecil bermargin tinggi tidak menyeret rata-rata secara tidak proporsional.
+      weightedMarginSum += m.marginPct * m.omsetIklan; weightSum += m.omsetIklan;
+    }
     if(p.rekomendasi === "Naik Harga") naikHarga.push(p.name);
     if(p.rekomendasi === "Stop Iklan") stopIklan.push(p.name);
   });
   var acosRata = totalOmsetIklan ? totalBiayaIklan/totalOmsetIklan : 0;
-  var avgMarginPct = weightSum ? weightedMarginSum/weightSum : (productsArr.length ? marginSum/productsArr.length : 0);
+  var avgMarginPct = weightSum ? weightedMarginSum/weightSum : (marginCount ? marginSum/marginCount : 0);
   return { totalOmsetMarketplace: Number(metaTotalOmset)||0, totalOmsetIklan:totalOmsetIklan,
     totalBiayaIklan:totalBiayaIklan, acosRata:acosRata, totalMarginBersih:totalMarginBersih, avgMarginPct:avgMarginPct,
     totalProfit:totalProfit, jumlahProduk:productsArr.length, naikHarga:naikHarga, stopIklan:stopIklan };
@@ -622,6 +656,20 @@ function kategoriBadgeHtml(kategori){
   var cls = kategori.toLowerCase();
   return '<span class="badge '+cls+'"><span class="badge-dot"></span>'+kategori+'</span>';
 }
+// ── Durasi iklan berjalan (independen dari periode/minggu laporan) ──
+function hitungDurasiHari(mulai, stop){
+  if(!mulai) return null;
+  var start = new Date(mulai+"T00:00:00");
+  var end = stop ? new Date(stop+"T00:00:00") : new Date();
+  if(isNaN(start)) return null;
+  var days = Math.floor((end - start) / 86400000) + 1;
+  return days > 0 ? days : 1;
+}
+function durasiLabel(p){
+  var days = hitungDurasiHari(p.tanggalMulai, p.tanggalStop);
+  if(days === null) return "";
+  return days + " hari" + (p.tanggalStop ? " (distop " + fmtDate(p.tanggalStop) + ")" : " (berjalan)");
+}
 function renderProduk(){
   var q = ($("produkSearch").value||"").trim().toLowerCase();
   var statusF = $("produkStatusFilter").value;
@@ -648,20 +696,25 @@ function renderProduk(){
     var rekomenCell = p.rekomendasi
       ? '<span class="badge netral"><span class="badge-dot"></span>'+escapeHtml(p.rekomendasi)+'</span>'
       : '<span class="cell-sub">—</span>';
+    var subLine = [p.channel, durasiLabel(p)].filter(Boolean).join(" · ");
+    // Tombol aksi cepat: stop hari ini tanpa buka form lengkap. Disembunyikan kalau
+    // sudah ada tanggal stop (sudah diputuskan berhenti sebelumnya).
+    var stopBtn = p.tanggalStop ? "" : '<button class="stop-btn" data-id="'+p.id+'" title="Tandai berhenti hari ini juga, tanpa perlu buka form">Stop Sekarang</button>';
     var tr = document.createElement("tr");
     tr.innerHTML =
-      '<td><div class="cell-name">'+escapeHtml(p.name||"(Tanpa nama)")+'</div><div class="cell-sub">'+escapeHtml(p.channel||"")+'</div></td>'+
+      '<td><div class="cell-name">'+escapeHtml(p.name||"(Tanpa nama)")+'</div><div class="cell-sub">'+escapeHtml(subLine)+'</div></td>'+
       '<td>'+kategoriBadgeHtml(m.kategori)+'</td>'+
-      '<td>'+fmtPct(m.marginPct)+'</td>'+
+      '<td>'+(m.marginPct===null ? '<span class="cell-sub">—</span>' : fmtPct(m.marginPct))+'</td>'+
       '<td>'+fmtPct(m.acos)+'</td>'+
-      '<td>'+fmtRp(m.profit)+'</td>'+
+      '<td>'+(m.profit===null ? '<span class="cell-sub">—</span>' : fmtRp(m.profit))+'</td>'+
       '<td>'+statusBadgeHtml(m.status)+'</td>'+
       '<td>'+rekomenCell+mismatch+'</td>'+
-      '<td><div class="row-actions"><button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
+      '<td><div class="row-actions">'+stopBtn+'<button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openProdukModal(b.dataset.id); }); });
   tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteProduk(b.dataset.id); }); });
+  tbody.querySelectorAll(".stop-btn").forEach(function(b){ b.addEventListener("click", function(){ stopProdukSekarang(b.dataset.id); }); });
 
   // Datalist nama produk dedupe lintas periode, supaya nama produk lama tetap bisa dipilih ulang.
   var list = $("produkNameList"); list.innerHTML = ""; var list2 = $("produkNameList2"); list2.innerHTML = "";
@@ -772,24 +825,36 @@ $("duplicatePeriodeBtn").addEventListener("click", function(){
   if(!confirm("Duplikat "+currentPeriodProducts().length+" produk ke minggu "+fmtPeriode(toPeriode)+"?")) return;
   setLoading(true, "Menduplikasi produk ke minggu baru…");
   callGS("duplicateProdukPeriode", { fromPeriode: fromPeriode, toPeriode: toPeriode }).then(function(res){
-    showToast("✓ "+(res.count||0)+" produk diduplikasi ke minggu "+fmtPeriode(toPeriode));
+    var msg = "✓ "+(res.count||0)+" produk diduplikasi ke minggu "+fmtPeriode(toPeriode);
+    if(res.skipped) msg += " (" + res.skipped + " produk berstatus Stop Iklan tidak diikutkan)";
+    showToast(msg);
     state.periode = toPeriode;
     loadReport(); // reload penuh supaya id baru dari server ikut ter-sinkron
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menduplikasi"); });
 });
 
 // ── PRODUK MODAL ──
+function updateProdukFormMode(){
+  var isOto = $("pTipeIklan").value === "Otomatis";
+  $("pUnitFields").style.display = isOto ? "none" : "block";
+  $("pIsTestField").style.display = isOto ? "none" : "flex";
+  $("pNameLabel").textContent = isOto ? "Nama Akun / Kampanye Iklan Otomatis" : "Nama Produk";
+  $("pName").placeholder = isOto ? "mis. Iklan Otomatis - Shopee KYX" : "Nama produk";
+  $("pNameHint").style.display = isOto ? "block" : "none";
+  $("pOmsetLabel").textContent = isOto ? "Omset dari Iklan (total gabungan semua produk)" : "Omset dari Iklan";
+}
 function updateProdukPreview(){
-  var fake = { hargaJual: $("pHarga").value, bpp: $("pBpp").value, qty: $("pQty").value,
+  var fake = { tipeIklan: $("pTipeIklan").value, hargaJual: $("pHarga").value, bpp: $("pBpp").value, qty: $("pQty").value,
     omsetIklan: $("pOmset").value, biayaIklan: $("pBiaya").value, isTest: $("pIsTest").checked };
   var m = computeProductMetrics(fake);
-  $("pvMargin").textContent = fmtRp(m.marginBersih);
-  $("pvMarginPct").textContent = fmtPct(m.marginPct);
+  $("pvMargin").textContent = m.marginBersih===null ? "—" : fmtRp(m.marginBersih);
+  $("pvMarginPct").textContent = m.marginPct===null ? "—" : fmtPct(m.marginPct);
   $("pvAcos").textContent = fmtPct(m.acos);
-  $("pvProfit").textContent = fmtRp(m.profit);
+  $("pvProfit").textContent = m.profit===null ? "—" : fmtRp(m.profit);
   $("pvKategori").textContent = m.kategori;
   $("pvStatus").textContent = m.status;
 }
+$("pTipeIklan").addEventListener("change", function(){ updateProdukFormMode(); updateProdukPreview(); });
 ["pHarga","pBpp","pQty","pOmset","pBiaya","pIsTest"].forEach(function(id){
   $(id).addEventListener("input", updateProdukPreview);
   $(id).addEventListener("change", updateProdukPreview);
@@ -801,17 +866,24 @@ function openProdukModal(id){
     var p = state.products.find(function(e){ return e.id===id; });
     state.editingProductPeriode = p.periode || state.periode;
     $("produkModalTitle").textContent = "Edit Produk";
+    $("pTipeIklan").value = p.tipeIklan === "Otomatis" ? "Otomatis" : "Manual";
     $("pName").value = p.name||""; $("pChannel").value = p.channel||"";
     $("pHarga").value = p.hargaJual||""; $("pBpp").value = p.bpp||"";
     $("pQty").value = p.qty||""; $("pOmset").value = p.omsetIklan||"";
     $("pBiaya").value = p.biayaIklan||""; $("pIsTest").checked = !!p.isTest;
+    $("pTanggalMulai").value = p.tanggalMulai||""; $("pTanggalStop").value = p.tanggalStop||"";
     $("pRekomendasi").value = p.rekomendasi||"";
   } else {
     state.editingProductPeriode = null;
     $("produkModalTitle").textContent = "Tambah Produk";
+    $("pTipeIklan").value = "Manual";
     ["pName","pChannel","pHarga","pBpp","pQty","pOmset","pBiaya"].forEach(function(id){ $(id).value=""; });
     $("pIsTest").checked = false; $("pRekomendasi").value = "";
+    // Default tanggal mulai = hari ini, bukan Senin minggu berjalan — karena iklan
+    // bisa mulai kapan saja, tidak harus di awal minggu.
+    $("pTanggalMulai").value = isoDate(new Date()); $("pTanggalStop").value = "";
   }
+  updateProdukFormMode();
   updateProdukPreview();
   $("produkModal").classList.add("open");
   $("pName").focus();
@@ -821,12 +893,22 @@ function saveProduk(){
   var name = $("pName").value.trim();
   if(!name){ $("pErrName").style.display = "block"; return; }
   $("pErrName").style.display = "none";
+  var isOto = $("pTipeIklan").value === "Otomatis";
   var payload = {
     name:name, channel:$("pChannel").value.trim(),
     periode: state.editingProductPeriode || state.periode,
-    hargaJual:Number($("pHarga").value)||0, bpp:Number($("pBpp").value)||0,
-    qty:Number($("pQty").value)||0, omsetIklan:Number($("pOmset").value)||0,
-    biayaIklan:Number($("pBiaya").value)||0, isTest:$("pIsTest").checked,
+    tipeIklan: $("pTipeIklan").value,
+    // Field per-unit (harga jual/HPP/qty) tidak relevan untuk Iklan Otomatis
+    // (bukan satu SKU tunggal) — dipaksa 0 supaya tidak menyimpan angka lama yang
+    // menyesatkan kalau sebelumnya sempat diisi saat tipe masih "Manual".
+    hargaJual: isOto ? 0 : (Number($("pHarga").value)||0),
+    bpp: isOto ? 0 : (Number($("pBpp").value)||0),
+    qty: isOto ? 0 : (Number($("pQty").value)||0),
+    omsetIklan:Number($("pOmset").value)||0,
+    biayaIklan:Number($("pBiaya").value)||0,
+    isTest: isOto ? false : $("pIsTest").checked,
+    tanggalMulai: $("pTanggalMulai").value || "",
+    tanggalStop: $("pTanggalStop").value || "",
     rekomendasi:$("pRekomendasi").value
   };
   var isEdit = !!state.editingProductId;
@@ -845,6 +927,30 @@ function deleteProduk(id){
     state.products = state.products.filter(function(e){ return e.id!==id; });
     showToast("✓ Produk dihapus"); setLoading(false); renderAll();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+// Aksi cepat: tandai berhenti HARI INI juga, tanpa buka form lengkap — untuk kasus
+// keputusan stop di tengah minggu (mis. hari ke-3) yang tidak perlu nunggu review
+// mingguan. Mengirim ulang SELURUH field produk (bukan cuma yang berubah) karena
+// backend updateProduct menimpa field yang tidak dikirim jadi kosong.
+function stopProdukSekarang(id){
+  var p = state.products.find(function(e){ return e.id===id; });
+  if(!p) return;
+  if(!confirm('Tandai "'+(p.name||"produk ini")+'" berhenti diiklankan hari ini?')) return;
+  var payload = {
+    id: p.id, periode: p.periode, name: p.name, channel: p.channel,
+    hargaJual: p.hargaJual, bpp: p.bpp, qty: p.qty, omsetIklan: p.omsetIklan, biayaIklan: p.biayaIklan,
+    isTest: p.isTest, tipeIklan: p.tipeIklan || "Manual", tanggalMulai: p.tanggalMulai,
+    tanggalStop: isoDate(new Date()),
+    rekomendasi: "Stop Iklan"
+  };
+  setLoading(true, "Menyimpan…");
+  callGS("updateProduct", payload).then(function(){
+    var idx = state.products.findIndex(function(e){ return e.id===id; });
+    if(idx>-1) state.products[idx] = payload;
+    setLoading(false);
+    showToast("✓ Ditandai berhenti hari ini");
+    renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
 }
 
 // ── KONTEN MODAL ──
