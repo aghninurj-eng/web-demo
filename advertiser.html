@@ -127,8 +127,9 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
 .modal h2{font-size:16px;font-weight:700;margin-bottom:16px}
 .field{margin-bottom:13px}
 .field label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px}
-.field input, .field select{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
-.field input:focus, .field select:focus{border-color:var(--blue)}
+.field input, .field select, .field textarea{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:56px;line-height:1.4}
 .field-row{display:flex;gap:10px}
 .field-row .field{flex:1}
 .field-check{display:flex;align-items:center;gap:8px;margin-bottom:13px}
@@ -312,6 +313,10 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
         <option value="Scale Up">Scale Up</option>
       </select>
     </div>
+    <div class="field">
+      <label>Catatan / Alasan Keputusan (opsional)</label>
+      <textarea id="pCatatan" placeholder="mis. Dihentikan hari ke-3 karena kunjungan &amp; klik tidak naik sementara biaya iklan terus membengkak. / Dilanjutkan karena ACOS masih efisien dan konversi stabil."></textarea>
+    </div>
 
     <div class="preview-box">
       <div class="pv-title">Perhitungan otomatis</div>
@@ -328,6 +333,25 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
     <div class="modal-actions">
       <button class="btn btn-outline" id="produkCancelBtn">Batal</button>
       <button class="btn btn-primary" id="produkSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: STOP IKLAN SEKARANG ── -->
+<div class="modal-overlay" id="stopNowModal">
+  <div class="modal" style="max-width:380px">
+    <h2>Stop Iklan Sekarang</h2>
+    <div class="field">
+      <label>Produk</label>
+      <div style="font-size:13.5px;font-weight:600" id="snProdukLabel"></div>
+    </div>
+    <div class="field">
+      <label>Alasan Dihentikan (opsional)</label>
+      <textarea id="snCatatan" placeholder="mis. Kunjungan &amp; klik tidak naik dalam 3 hari, biaya iklan terus membengkak."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="snCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="snConfirmBtn">Tandai Stop</button>
     </div>
   </div>
 </div>
@@ -466,7 +490,7 @@ loadReport();
 // ── STATE ──
 var state = { meta:{}, products:[], content:[], evals:[], periode:null, periodeList:[],
   editingProductId:null, editingProductPeriode:null, editingContentId:null,
-  editingEvalId:null, editingEvalPeriode:null };
+  editingEvalId:null, editingEvalPeriode:null, stopTargetId:null };
 
 // ── PERIODE HELPERS (minggu = Senin s/d Minggu) ──
 function mondayOf(d){
@@ -533,6 +557,10 @@ function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString
 function fmtPct(n){ return (Number(n)*100).toFixed(1) + "%"; }
 function fmtDate(iso){ if(!iso) return "—"; var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}); }
 function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str||""; return d.innerHTML; }
+// escapeHtml tidak meng-encode tanda kutip ganda (aman untuk teks isi elemen,
+// tapi TIDAK aman dipakai di dalam atribut seperti title="..."). Dipakai khusus
+// untuk nilai yang disisipkan ke dalam atribut HTML, mis. catatan bebas dari user.
+function escapeAttr(str){ return escapeHtml(str).replace(/"/g, "&quot;"); }
 
 // ── CALCULATION ENGINE (mirror rumus Excel) ──
 function computeProductMetrics(p){
@@ -696,6 +724,8 @@ function renderProduk(){
     var rekomenCell = p.rekomendasi
       ? '<span class="badge netral"><span class="badge-dot"></span>'+escapeHtml(p.rekomendasi)+'</span>'
       : '<span class="cell-sub">—</span>';
+    var catatanFlag = p.catatan
+      ? '<span class="mismatch-flag" title="'+escapeAttr(p.catatan)+'">📝</span>' : "";
     var subLine = [p.channel, durasiLabel(p)].filter(Boolean).join(" · ");
     // Tombol aksi cepat: stop hari ini tanpa buka form lengkap. Disembunyikan kalau
     // sudah ada tanggal stop (sudah diputuskan berhenti sebelumnya).
@@ -708,7 +738,7 @@ function renderProduk(){
       '<td>'+fmtPct(m.acos)+'</td>'+
       '<td>'+(m.profit===null ? '<span class="cell-sub">—</span>' : fmtRp(m.profit))+'</td>'+
       '<td>'+statusBadgeHtml(m.status)+'</td>'+
-      '<td>'+rekomenCell+mismatch+'</td>'+
+      '<td>'+rekomenCell+mismatch+catatanFlag+'</td>'+
       '<td><div class="row-actions">'+stopBtn+'<button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
     tbody.appendChild(tr);
   });
@@ -873,12 +903,13 @@ function openProdukModal(id){
     $("pBiaya").value = p.biayaIklan||""; $("pIsTest").checked = !!p.isTest;
     $("pTanggalMulai").value = p.tanggalMulai||""; $("pTanggalStop").value = p.tanggalStop||"";
     $("pRekomendasi").value = p.rekomendasi||"";
+    $("pCatatan").value = p.catatan||"";
   } else {
     state.editingProductPeriode = null;
     $("produkModalTitle").textContent = "Tambah Produk";
     $("pTipeIklan").value = "Manual";
     ["pName","pChannel","pHarga","pBpp","pQty","pOmset","pBiaya"].forEach(function(id){ $(id).value=""; });
-    $("pIsTest").checked = false; $("pRekomendasi").value = "";
+    $("pIsTest").checked = false; $("pRekomendasi").value = ""; $("pCatatan").value = "";
     // Default tanggal mulai = hari ini, bukan Senin minggu berjalan — karena iklan
     // bisa mulai kapan saja, tidak harus di awal minggu.
     $("pTanggalMulai").value = isoDate(new Date()); $("pTanggalStop").value = "";
@@ -909,7 +940,8 @@ function saveProduk(){
     isTest: isOto ? false : $("pIsTest").checked,
     tanggalMulai: $("pTanggalMulai").value || "",
     tanggalStop: $("pTanggalStop").value || "",
-    rekomendasi:$("pRekomendasi").value
+    rekomendasi:$("pRekomendasi").value,
+    catatan: $("pCatatan").value.trim()
   };
   var isEdit = !!state.editingProductId;
   if(isEdit) payload.id = state.editingProductId;
@@ -932,21 +964,37 @@ function deleteProduk(id){
 // keputusan stop di tengah minggu (mis. hari ke-3) yang tidak perlu nunggu review
 // mingguan. Mengirim ulang SELURUH field produk (bukan cuma yang berubah) karena
 // backend updateProduct menimpa field yang tidak dikirim jadi kosong.
+// Aksi cepat: tandai berhenti HARI INI juga, tanpa buka form lengkap — untuk kasus
+// keputusan stop di tengah minggu (mis. hari ke-3) yang tidak perlu nunggu review
+// mingguan. Tetap menawarkan kolom alasan singkat supaya keputusan mendadak ini
+// tidak kehilangan konteks "kenapa"-nya.
 function stopProdukSekarang(id){
   var p = state.products.find(function(e){ return e.id===id; });
   if(!p) return;
-  if(!confirm('Tandai "'+(p.name||"produk ini")+'" berhenti diiklankan hari ini?')) return;
+  state.stopTargetId = id;
+  $("snProdukLabel").textContent = p.name || "(Tanpa nama)";
+  $("snCatatan").value = "";
+  $("stopNowModal").classList.add("open");
+}
+function closeStopNowModal(){ $("stopNowModal").classList.remove("open"); state.stopTargetId = null; }
+function confirmStopSekarang(){
+  var id = state.stopTargetId;
+  var p = state.products.find(function(e){ return e.id===id; });
+  if(!p) return;
+  // Mengirim ulang SELURUH field produk (bukan cuma yang berubah) karena backend
+  // updateProduct menimpa field yang tidak dikirim jadi kosong.
   var payload = {
     id: p.id, periode: p.periode, name: p.name, channel: p.channel,
     hargaJual: p.hargaJual, bpp: p.bpp, qty: p.qty, omsetIklan: p.omsetIklan, biayaIklan: p.biayaIklan,
     isTest: p.isTest, tipeIklan: p.tipeIklan || "Manual", tanggalMulai: p.tanggalMulai,
-    tanggalStop: isoDate(new Date()),
-    rekomendasi: "Stop Iklan"
+    tanggalStop: isoDate(new Date()), rekomendasi: "Stop Iklan",
+    catatan: $("snCatatan").value.trim() || p.catatan || ""
   };
   setLoading(true, "Menyimpan…");
   callGS("updateProduct", payload).then(function(){
     var idx = state.products.findIndex(function(e){ return e.id===id; });
     if(idx>-1) state.products[idx] = payload;
+    closeStopNowModal();
     setLoading(false);
     showToast("✓ Ditandai berhenti hari ini");
     renderAll();
@@ -1043,6 +1091,9 @@ $("addProdukBtn").addEventListener("click", function(){ openProdukModal(); });
 $("produkCancelBtn").addEventListener("click", closeProdukModal);
 $("produkSaveBtn").addEventListener("click", saveProduk);
 $("produkModal").addEventListener("click", function(e){ if(e.target===$("produkModal")) closeProdukModal(); });
+$("snCancelBtn").addEventListener("click", closeStopNowModal);
+$("snConfirmBtn").addEventListener("click", confirmStopSekarang);
+$("stopNowModal").addEventListener("click", function(e){ if(e.target===$("stopNowModal")) closeStopNowModal(); });
 $("produkSearch").addEventListener("input", renderProduk);
 $("produkStatusFilter").addEventListener("change", renderProduk);
 $("produkChannelFilter").addEventListener("change", renderProduk);
