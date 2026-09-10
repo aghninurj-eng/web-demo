@@ -54,6 +54,8 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .periode-bar label{font-size:12.5px;font-weight:600;color:var(--gray-600)}
 .periode-bar select{padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;background:#fff;outline:none}
 .periode-bar select:focus{border-color:var(--blue)}
+.periode-bar input[type="date"]{padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;background:#fff;outline:none}
+.periode-bar input[type="date"]:focus{border-color:var(--blue)}
 .periode-range{font-size:12px;color:var(--gray-400)}
 .trend{font-size:11px;font-weight:600;margin-left:4px}
 .trend.bad{color:var(--red)}
@@ -178,6 +180,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer}
       <select id="periodeSelect"></select>
       <span class="periode-range" id="periodeRange"></span>
       <div class="spacer"></div>
+      <input type="date" id="newPeriodeDateInput" title="Pilih tanggal apa saja di minggu yang ingin ditambahkan — termasuk minggu yang sudah lewat"/>
       <button class="btn btn-outline btn-sm" id="newPeriodeBtn">+ Minggu Baru</button>
       <button class="btn btn-outline btn-sm" id="duplicatePeriodeBtn">⧉ Duplikat ke Minggu Baru</button>
     </div>
@@ -836,14 +839,29 @@ $("periodeSelect").addEventListener("change", function(){
   refreshForPeriode();
 });
 $("newPeriodeBtn").addEventListener("click", function(){
-  var newest = state.periodeList[0];
-  var candidate = addDaysIso(newest, 7);
-  while(state.periodeList.indexOf(candidate) > -1){ candidate = addDaysIso(candidate, 7); }
-  state.periodeList.unshift(candidate);
-  state.periode = candidate;
+  // Kalau tanggal tidak diisi, default-nya tetap minggu setelah yang terbaru
+  // (perilaku lama) — tapi kalau diisi tanggal lain (termasuk yang sudah lewat),
+  // langsung pindah/tambah ke minggu yang mengandung tanggal itu. Ini menjawab
+  // kasus minggu yang terlewat/ketinggalan input, termasuk yang "terjepit" di
+  // antara dua minggu yang sudah ada datanya.
+  var val = $("newPeriodeDateInput").value;
+  var target;
+  if(val){
+    target = isoDate(mondayOf(new Date(val+"T00:00:00")));
+  } else {
+    var newest = state.periodeList[0];
+    target = addDaysIso(newest, 7);
+    while(state.periodeList.indexOf(target) > -1){ target = addDaysIso(target, 7); }
+  }
+  if(state.periodeList.indexOf(target) === -1){
+    state.periodeList.push(target);
+    state.periodeList.sort().reverse();
+  }
+  state.periode = target;
+  $("newPeriodeDateInput").value = "";
   renderPeriodeSelect();
   refreshForPeriode();
-  showToast("✓ Minggu baru: " + fmtPeriode(candidate));
+  showToast("✓ Pindah ke minggu " + fmtPeriode(target));
 });
 $("duplicatePeriodeBtn").addEventListener("click", function(){
   var fromPeriode = state.periode;
