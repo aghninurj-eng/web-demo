@@ -329,7 +329,18 @@ function toYMD(date){
 }
 function parseDate(s){
   if(!s) return null;
-  var datePart = String(s).split("T")[0];
+  s = String(s);
+  // Jika string berupa timestamp lengkap (ada jam & menit, biasanya hasil serialisasi
+  // objek Date dari Google Apps Script/Sheets dalam UTC, cth: "2026-01-14T17:00:00.000Z"),
+  // JANGAN dipotong mentah-mentah. Biarkan JS Date mengonversi ke waktu lokal browser dulu,
+  // baru ambil tanggalnya — supaya tidak mundur 1 hari akibat selisih UTC vs WIB.
+  if(/T\d{2}:\d{2}/.test(s)){
+    var dt = new Date(s);
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  }
+  // Jika hanya "YYYY-MM-DD" polos (tanpa info jam/zona waktu), pakai langsung sebagai
+  // tanggal kalender lokal tanpa konversi timezone sama sekali.
+  var datePart = s.split("T")[0];
   var p = datePart.split("-").map(Number);
   return new Date(p[0], p[1]-1, p[2]);
 }
@@ -823,7 +834,13 @@ document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeSide
 function loadReports(){
   setLoading(true, "Memuat laporan…");
   callGS("getDailyReports").then(function(data){
-    state.reports = data||[];
+    state.reports = (data||[]).map(function(r){
+      // Normalisasi tanggal ke "YYYY-MM-DD" lokal yang konsisten, apa pun format
+      // yang dikirim backend (string polos atau timestamp UTC lengkap dari Sheets).
+      var d = parseDate(r.date);
+      if(d) r.date = toYMD(d);
+      return r;
+    });
     setLoading(false);
     setActiveDate(state.activeDate);
   }).catch(function(err){
