@@ -117,6 +117,8 @@ tbody tr:hover{background:var(--gray-50)}
 .row-actions .del-btn:hover{background:var(--red-lt)}
 .row-actions .stop-btn{color:#92400E;border-color:#FCD34D}
 .row-actions .stop-btn:hover{background:var(--amber-lt)}
+.row-actions .dup-btn{color:#3d5de8;border-color:#C7D2FE}
+.row-actions .dup-btn:hover{background:var(--blue-lt)}
 .empty-state{text-align:center;padding:50px 20px;color:var(--gray-400)}
 .empty-state .icon{font-size:30px;margin-bottom:8px}
 .empty-state p{font-size:13px}
@@ -742,12 +744,13 @@ function renderProduk(){
       '<td>'+(m.profit===null ? '<span class="cell-sub">—</span>' : fmtRp(m.profit))+'</td>'+
       '<td>'+statusBadgeHtml(m.status)+'</td>'+
       '<td>'+rekomenCell+mismatch+catatanFlag+'</td>'+
-      '<td><div class="row-actions">'+stopBtn+'<button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
+      '<td><div class="row-actions">'+stopBtn+'<button class="dup-btn" data-id="'+p.id+'" title="Salin data produk ini untuk varian lain (mis. beda warna)">Duplikat</button><button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openProdukModal(b.dataset.id); }); });
   tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteProduk(b.dataset.id); }); });
   tbody.querySelectorAll(".stop-btn").forEach(function(b){ b.addEventListener("click", function(){ stopProdukSekarang(b.dataset.id); }); });
+  tbody.querySelectorAll(".dup-btn").forEach(function(b){ b.addEventListener("click", function(){ duplikatProduk(b.dataset.id); }); });
 
   // Datalist nama produk dedupe lintas periode, supaya nama produk lama tetap bisa dipilih ulang.
   var list = $("produkNameList"); list.innerHTML = ""; var list2 = $("produkNameList2"); list2.innerHTML = "";
@@ -978,10 +981,34 @@ function deleteProduk(id){
     showToast("✓ Produk dihapus"); setLoading(false); renderAll();
   }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
 }
-// Aksi cepat: tandai berhenti HARI INI juga, tanpa buka form lengkap — untuk kasus
-// keputusan stop di tengah minggu (mis. hari ke-3) yang tidak perlu nunggu review
-// mingguan. Mengirim ulang SELURUH field produk (bukan cuma yang berubah) karena
-// backend updateProduct menimpa field yang tidak dikirim jadi kosong.
+// Duplikat produk: buka form Tambah Produk, terisi otomatis dari data produk asal
+// untuk varian yang secara praktik biasanya sama (channel, harga jual, HPP, tipe
+// iklan) — supaya staff tinggal ganti nama/warnanya, bukan input ulang dari nol.
+// Field performa & keputusan (qty, omset, biaya iklan, rekomendasi, catatan,
+// tanggal stop) SENGAJA tidak dibawa karena itu riwayat milik produk asal, bukan
+// milik varian baru yang belum pernah berjalan.
+function duplikatProduk(id){
+  var p = state.products.find(function(e){ return e.id===id; });
+  if(!p) return;
+  state.editingProductId = null;
+  state.editingProductPeriode = null;
+  $("pErrName").style.display = "none";
+  $("produkModalTitle").textContent = "Duplikat Produk";
+  $("pTipeIklan").value = p.tipeIklan === "Otomatis" ? "Otomatis" : "Manual";
+  $("pName").value = p.name || "";
+  $("pChannel").value = p.channel || "";
+  $("pHarga").value = p.hargaJual || "";
+  $("pBpp").value = p.bpp || "";
+  $("pQty").value = ""; $("pOmset").value = ""; $("pBiaya").value = "";
+  $("pIsTest").checked = !!p.isTest;
+  $("pTanggalMulai").value = isoDate(new Date()); $("pTanggalStop").value = "";
+  $("pRekomendasi").value = ""; $("pCatatan").value = "";
+  updateProdukFormMode();
+  updateProdukPreview();
+  $("produkModal").classList.add("open");
+  // Fokus & pilih (select) nama produk supaya staff tinggal ketik ganti bagian variannya.
+  $("pName").focus(); $("pName").select();
+}
 // Aksi cepat: tandai berhenti HARI INI juga, tanpa buka form lengkap — untuk kasus
 // keputusan stop di tengah minggu (mis. hari ke-3) yang tidak perlu nunggu review
 // mingguan. Tetap menawarkan kolom alasan singkat supaya keputusan mendadak ini
