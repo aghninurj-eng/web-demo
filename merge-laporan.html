@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Merge Laporan Keuangan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A1D2E;--blue:#4F6EF7;--blue-lt:#EEF1FE;
+  --white:#FFFFFF;--gray-50:#F8F9FB;--gray-100:#F1F3F7;
+  --gray-200:#E4E7EF;--gray-400:#9CA3AF;--gray-600:#6B7280;
+  --gray-800:#374151;--text:#1A1D2E;--radius:10px;
+  --shadow:0 2px 12px rgba(26,29,46,.10);
+  --green:#10B981;--green-lt:#ECFDF5;
+  --amber:#F59E0B;--amber-lt:#FFFBEB;
+  --red:#DC2626;--red-lt:#FEE2E2;
+  --purple:#8B5CF6;--purple-lt:#F3F0FF;
+}
+body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
+
+#appRoot{min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px 60px}
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.topbar-title{font-size:20px;font-weight:700}
+.topbar-sub{font-size:12.5px;color:var(--gray-600)}
+.spacer{flex:1}
+.btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#3d5de8}
+.btn-primary:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed}
+.btn-outline{background:#fff;color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{background:#0ea371}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* Stepper */
+.stepper{display:flex;align-items:center;gap:6px;margin:18px 0 24px}
+.step-item{display:flex;align-items:center;gap:8px;color:var(--gray-400);font-size:12.5px;font-weight:600;white-space:nowrap}
+.step-item.active{color:var(--blue)}
+.step-item.done{color:var(--green)}
+.step-circle{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.step-item.active .step-circle{background:var(--blue);color:#fff}
+.step-item.done .step-circle{background:var(--green);color:#fff}
+.step-line{flex:1;height:2px;background:var(--gray-200);min-width:20px}
+.step-line.done{background:var(--green)}
+@media(max-width:640px){ .step-item span.step-label{display:none} }
+
+.step-panel{display:none}
+.step-panel.active{display:block}
+
+/* Upload */
+.periode-field{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.periode-field label{font-size:12.5px;font-weight:600;color:var(--gray-600)}
+.periode-field input{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
+.periode-field input:focus{border-color:var(--blue)}
+
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:760px){.upload-grid{grid-template-columns:1fr}}
+.upload-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.upload-card h3{font-size:14px;margin-bottom:12px}
+.upload-card .field{margin-bottom:12px}
+.upload-card .field label{display:block;font-size:11.5px;font-weight:600;color:var(--gray-600);margin-bottom:5px}
+.upload-card .field input[type=text]{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
+.upload-card .field input[type=text]:focus{border-color:var(--blue)}
+.dropzone{border:2px dashed var(--gray-200);border-radius:10px;padding:26px 14px;text-align:center;cursor:pointer;transition:all .15s}
+.dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--blue-lt)}
+.dropzone .dz-icon{font-size:24px;margin-bottom:6px}
+.dropzone .dz-text{font-size:12.5px;font-weight:600;color:var(--gray-800)}
+.dropzone .dz-sub{font-size:11px;color:var(--gray-400);margin-top:3px}
+input[type=file]{display:none}
+.file-chip{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--blue-lt);color:#3d5de8;padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:500;margin-top:10px}
+.file-chip button{border:none;background:none;color:#3d5de8;cursor:pointer;font-size:14px;opacity:.7}
+.file-chip button:hover{opacity:1}
+.upload-meta{font-size:11px;color:var(--gray-600);margin-top:6px;line-height:1.5}
+.upload-warn{font-size:11px;color:#92400E;background:var(--amber-lt);border-radius:6px;padding:6px 9px;margin-top:6px;line-height:1.4}
+.sheet-select-row select{width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:8px;font-size:12.5px;font-family:'Inter',sans-serif;background:#fff}
+
+.step-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.step-actions.between{justify-content:space-between}
+
+/* Mapping */
+.map-section{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.map-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.map-section-title{font-size:14px;font-weight:700}
+.map-section-counts{font-size:11.5px;color:var(--gray-600)}
+.map-warn{font-size:11.5px;color:#92400E;background:var(--amber-lt);border-radius:8px;padding:8px 12px;margin-bottom:12px;line-height:1.5}
+.map-warn button{border:none;background:none;color:var(--blue);cursor:pointer;font-weight:600;text-decoration:underline;font-size:11.5px;font-family:'Inter',sans-serif}
+.map-table-wrap{overflow-x:auto}
+table.map-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:820px}
+.map-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--gray-600);padding:6px 8px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+.map-table td{padding:6px 8px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.map-table input[type=text]{width:100%;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:12.5px;font-family:'Inter',sans-serif}
+.map-table select{width:100%;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:12px;font-family:'Inter',sans-serif;background:#fff}
+.map-val{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:var(--gray-600);white-space:nowrap}
+.map-val.total{font-weight:700;color:var(--text)}
+.match-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;margin-top:3px}
+.match-tag.exact{background:var(--green-lt);color:#047857}
+.match-tag.fuzzy{background:var(--amber-lt);color:#92400E}
+.match-tag.manual{background:var(--gray-100);color:var(--gray-600)}
+.map-del-btn{border:1px solid #FCA5A5;color:var(--red);background:#fff;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer}
+.map-del-btn:hover{background:var(--red-lt)}
+.map-add-btn{font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-lt);border:none;border-radius:7px;padding:7px 12px;cursor:pointer;margin-top:12px;font-family:'Inter',sans-serif}
+.map-add-btn:hover{background:#e2e8fd}
+.map-empty-row td{text-align:center;color:var(--gray-400);padding:14px}
+
+/* KPI (hasil) */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+.kpi-label{font-size:11.5px;color:var(--gray-600);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.kpi-value{font-size:22px;font-weight:700;margin-bottom:6px}
+.kpi-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.kpi-badge.baik{background:var(--green-lt);color:#047857}
+.kpi-badge.kurang{background:var(--red-lt);color:#B91C1C}
+
+.chip-panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:20px}
+.chip-panel h3{font-size:13px;font-weight:700;margin-bottom:10px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+.stat-row:last-child{border-bottom:none}
+.stat-name{font-weight:600}
+.stat-val{color:var(--gray-600);font-size:12.5px}
+
+/* Report table */
+.table-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto;margin-bottom:20px}
+table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+.report-table thead th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--gray-600);background:var(--gray-50);padding:12px 14px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+.report-table thead th.num{text-align:right}
+.report-table td{padding:8px 14px;border-bottom:1px solid var(--gray-100)}
+.report-table td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.report-table tr.section-header td{font-weight:700;background:var(--gray-50);padding-top:14px;padding-bottom:8px}
+.report-table tr.section-header.sub td{padding-left:26px;font-weight:600;background:transparent;color:var(--gray-800)}
+.report-table tr.item-row td:first-child{padding-left:32px;color:var(--gray-800)}
+.report-table tr.subtotal-row td{font-weight:700;border-top:1.5px solid var(--gray-200)}
+.report-table tr.computed-row td{font-weight:700;background:var(--blue-lt);color:var(--navy)}
+.report-table tr.computed-row.final td{background:var(--green-lt);color:#047857;font-size:14.5px}
+
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+
+/* Toast / loading */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:200;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loading{position:fixed;inset:0;background:rgba(255,255,255,.6);display:none;align-items:center;justify-content:center;z-index:150;font-size:13px;color:var(--gray-600)}
+#loading.show{display:flex}
+
+.no-print{}
+@page { size: portrait; margin: 14mm; }
+@media print {
+  body{background:#fff !important}
+  .no-print{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .table-card{box-shadow:none;border:none}
+}
+</style>
+</head>
+<body>
+
+<div id="appRoot">
+  <div class="wrap">
+    <div class="topbar no-print">
+      <a href="index.html" class="btn btn-outline btn-sm">← Kembali</a>
+      <div>
+        <div class="topbar-title">🧾 Merge Laporan Keuangan</div>
+        <div class="topbar-sub">Gabungkan Laporan Laba Rugi dari 2 unit usaha jadi satu laporan konsolidasi</div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="stepper no-print">
+      <div class="step-item active" data-step="1"><span class="step-circle">1</span><span class="step-label">Upload File</span></div>
+      <div class="step-line" data-idx="1"></div>
+      <div class="step-item" data-step="2"><span class="step-circle">2</span><span class="step-label">Pemetaan Baris</span></div>
+      <div class="step-line" data-idx="2"></div>
+      <div class="step-item" data-step="3"><span class="step-circle">3</span><span class="step-label">Hasil Gabungan</span></div>
+    </div>
+
+    <!-- STEP 1: UPLOAD -->
+    <div class="step-panel active" id="step1Panel">
+      <div class="periode-field">
+        <label>Periode / Judul Laporan (opsional)</label>
+        <input type="text" id="fPeriodeLabel" placeholder="mis. 1 - 12 September 2026"/>
+      </div>
+      <div class="upload-grid" id="uploadGrid">
+        <div class="upload-card">
+          <h3>🏢 Unit Usaha A</h3>
+          <div class="field"><label>Nama Unit</label><input type="text" id="fNameA" placeholder="mis. Supersub"/></div>
+          <div class="dropzone" id="dropzoneA">
+            <div class="dz-icon">📄</div>
+            <div class="dz-text">Klik atau seret file laporan laba rugi ke sini</div>
+            <div class="dz-sub">.xlsx / .xls / .csv</div>
+          </div>
+          <input type="file" id="fileInputA" accept=".xlsx,.xls,.csv"/>
+          <div id="fileChipA"></div>
+          <div id="sheetSelectRowA" class="sheet-select-row"></div>
+        </div>
+        <div class="upload-card">
+          <h3>🏢 Unit Usaha B</h3>
+          <div class="field"><label>Nama Unit</label><input type="text" id="fNameB" placeholder="mis. KYX"/></div>
+          <div class="dropzone" id="dropzoneB">
+            <div class="dz-icon">📄</div>
+            <div class="dz-text">Klik atau seret file laporan laba rugi ke sini</div>
+            <div class="dz-sub">.xlsx / .xls / .csv</div>
+          </div>
+          <input type="file" id="fileInputB" accept=".xlsx,.xls,.csv"/>
+          <div id="fileChipB"></div>
+          <div id="sheetSelectRowB" class="sheet-select-row"></div>
+        </div>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn-primary" id="toStep2Btn" disabled>Lanjut ke Pemetaan →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: PEMETAAN -->
+    <div class="step-panel" id="step2Panel">
+      <div id="mappingContainer"></div>
+      <div class="step-actions between">
+        <button class="btn btn-outline" id="backToStep1Btn">← Kembali</button>
+        <button class="btn btn-primary" id="toStep3Btn">Lihat Hasil Gabungan →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: HASIL -->
+    <div class="step-panel" id="step3Panel">
+      <div class="topbar-sub no-print" style="margin-bottom:14px">
+        <span id="resultUnitNames"></span> · Periode: <span id="resultPeriodLabel"></span>
+      </div>
+      <div class="kpi-grid" id="resultKpiGrid"></div>
+      <div class="chip-panel">
+        <h3>🏢 Kontribusi Laba Bersih per Unit</h3>
+        <div id="resultContribGrid"></div>
+      </div>
+      <div class="result-actions no-print">
+        <button class="btn btn-success" id="exportExcelBtn">⬇️ Unduh Excel (.xlsx)</button>
+        <button class="btn btn-outline" id="printBtn">🖨️ Cetak / PDF</button>
+        <div class="spacer"></div>
+        <button class="btn btn-outline" id="backToStep2Btn">← Kembali ke Pemetaan</button>
+        <button class="btn btn-outline" id="resetBtn">🔄 Mulai Ulang</button>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead id="reportTableHead"></thead>
+          <tbody id="reportTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loading"><span id="loadingText">Memuat…</span></div>
+
+<script>
+function $(id){ return document.getElementById(id); }
+function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str||""; return d.innerHTML; }
+function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString("id-ID"); }
+function showToast(msg, dur){ dur=dur||3000; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
+function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text||"Memuat…"; }
+function makeRid(){ return "m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+// ── STRUKTUR BAKU LAPORAN LABA RUGI (mengikuti template ekspor Accurate) ──
+var SECTION_DEFS = [
+  { key:"pendapatan",   uiTitle:"💰 Pendapatan",                 sectionLabel:"PENDAPATAN",                          subtotalLabel:"Jumlah Pendapatan" },
+  { key:"hpp",          uiTitle:"📦 Beban Pokok Penjualan",       sectionLabel:"BEBAN POKOK PENJUALAN",               subtotalLabel:"Jumlah Beban Pokok Penjualan" },
+  { key:"opex",         uiTitle:"🧾 Beban Operasional",           sectionLabel:"BEBAN OPERASIONAL",                   subtotalLabel:"Jumlah Beban Operasional" },
+  { key:"nonopIncome",  uiTitle:"💵 Pendapatan Non Operasional",  sectionLabel:"Pendapatan Non Operasional",          subtotalLabel:"Jumlah Pendapatan Non Operasional" },
+  { key:"nonopExpense", uiTitle:"💸 Beban Non Operasional",       sectionLabel:"Beban Non Operasional",               subtotalLabel:"Jumlah Beban Non Operasional" }
+];
+
+// ── STATE ──
+function emptyUnit(){ return { ready:false, fileName:"", wb:null, candidates:null, chosenSheet:"", sections:null, rawSubtotals:null, periodLabel:"", unclassifiedCount:0 }; }
+var mergeState = {
+  step: 1,
+  units: { a: emptyUnit(), b: emptyUnit() },
+  mapping: {},
+  finalReport: null
+};
+
+// ── PARSING HELPERS ──
+function parseNumberCell(v){
+  if(v===undefined || v===null || v==="") return null;
+  if(typeof v === "number") return v;
+  var s = String(v).trim();
+  if(!s) return null;
+  var neg = /^\(.*\)$/.test(s);
+  s = s.replace(/[()]/g,"").replace(/[^\d.,\-]/g,"");
+  if(!s) return null;
+  s = s.replace(/,/g,"");
+  var n = parseFloat(s);
+  if(isNaN(n)) return null;
+  return neg ? -n : n;
+}
+function findHeaderInfo(rows){
+  var maxScan = Math.min(rows.length, 10);
+  for(var r=0; r<maxScan; r++){
+    var row = rows[r]||[];
+    for(var c=0; c<row.length; c++){
+      if(String(row[c]||"").trim().toLowerCase()==="deskripsi"){
+        var valueCol = -1;
+        for(var cc=c+1; cc<row.length; cc++){
+          if(String(row[cc]||"").trim()!==""){ valueCol=cc; break; }
+        }
+        if(valueCol===-1) valueCol = c+1;
+        return { headerRowIdx:r, descCol:c, valueCol:valueCol, periodLabel:String(row[valueCol]||"").trim() };
+      }
+    }
+  }
+  return null;
+}
+function parseSheetRows(rows, descCol, valueCol, headerRowIdx){
+  var sections = { pendapatan:[], hpp:[], opex:[], nonopIncome:[], nonopExpense:[], lainnya:[] };
+  var rawSubtotals = {};
+  var current = null;
+  for(var r=headerRowIdx+1; r<rows.length; r++){
+    var row = rows[r]||[];
+    var label = String(row[descCol]!==undefined && row[descCol]!==null ? row[descCol] : "").trim();
+    if(!label) continue;
+    var value = parseNumberCell(row[valueCol]);
+    var upper = label.toUpperCase();
+    if(value === null){
+      if(upper==="PENDAPATAN") current="pendapatan";
+      else if(upper==="BEBAN POKOK PENJUALAN") current="hpp";
+      else if(upper==="BEBAN OPERASIONAL") current="opex";
+      else if(upper==="PENDAPATAN DAN BEBAN NON OPERASIONAL") current=null;
+      else if(upper==="PENDAPATAN NON OPERASIONAL") current="nonopIncome";
+      else if(upper==="BEBAN NON OPERASIONAL") current="nonopExpense";
+      continue;
+    }
+    if(/^jumlah/i.test(label)){
+      if(current) rawSubtotals[current] = value;
+      continue;
+    }
+    if(upper==="LABA KOTOR" || upper==="PENDAPATAN OPERASIONAL" || upper==="LABA BERSIH"){
+      continue;
+    }
+    if(current){ sections[current].push({ label:label, value:value }); }
+    else { sections.lainnya.push({ label:label, value:value }); }
+  }
+  return { sections:sections, rawSubtotals:rawSubtotals };
+}
+function normKey(label){
+  return String(label||"").toLowerCase().replace(/^(beban|biaya)\s+/,"").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
+}
+function tokenSet(label){ return normKey(label).split(" ").filter(Boolean); }
+function jaccard(tokA, tokB){
+  var setB = {}; tokB.forEach(function(t){ setB[t]=true; });
+  var inter=0; tokA.forEach(function(t){ if(setB[t]) inter++; });
+  var uni = {}; tokA.concat(tokB).forEach(function(t){ uni[t]=true; });
+  var union = Object.keys(uni).length;
+  return union ? inter/union : 0;
+}
+function autoMatchSection(itemsA, itemsB){
+  var usedA = itemsA.map(function(){return false;}), usedB = itemsB.map(function(){return false;});
+  var rows = [];
+  itemsA.forEach(function(a,ai){
+    if(usedA[ai]) return;
+    var na = normKey(a.label);
+    for(var bi=0; bi<itemsB.length; bi++){
+      if(usedB[bi]) continue;
+      if(normKey(itemsB[bi].label)===na){ rows.push({_rid:makeRid(),label:a.label,aIdx:ai,bIdx:bi,matchType:"exact"}); usedA[ai]=true; usedB[bi]=true; break; }
+    }
+  });
+  itemsA.forEach(function(a,ai){
+    if(usedA[ai]) return;
+    var ta = tokenSet(a.label), bestBi=-1, bestScore=0;
+    itemsB.forEach(function(b,bi){
+      if(usedB[bi]) return;
+      var sc = jaccard(ta, tokenSet(b.label));
+      if(sc>bestScore){ bestScore=sc; bestBi=bi; }
+    });
+    if(bestBi>-1 && bestScore>=0.5){ rows.push({_rid:makeRid(),label:a.label,aIdx:ai,bIdx:bestBi,matchType:"fuzzy"}); usedA[ai]=true; usedB[bestBi]=true; }
+  });
+  itemsA.forEach(function(a,ai){ if(!usedA[ai]){ rows.push({_rid:makeRid(),label:a.label,aIdx:ai,bIdx:-1,matchType:"a-only"}); usedA[ai]=true; } });
+  itemsB.forEach(function(b,bi){ if(!usedB[bi]){ rows.push({_rid:makeRid(),label:b.label,aIdx:-1,bIdx:bi,matchType:"b-only"}); usedB[bi]=true; } });
+  return rows;
+}
+
+// ── STEP 1: UPLOAD ──
+function handleFile(side, file){
+  if(!file) return;
+  setLoading(true, "Membaca file…");
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var wb = XLSX.read(e.target.result, { type:"array" });
+      var candidates = [];
+      wb.SheetNames.forEach(function(name){
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:"" });
+        var info = findHeaderInfo(rows);
+        if(info) candidates.push({ name:name, info:info, rows:rows });
+      });
+      var unit = mergeState.units[side];
+      unit.wb = wb;
+      unit.fileName = file.name;
+      var fallbackWarn = false;
+      if(candidates.length===0){
+        var rows0 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, raw:true, defval:"" });
+        candidates = [{ name: wb.SheetNames[0], info:{headerRowIdx:0, descCol:1, valueCol:2, periodLabel:""}, rows: rows0 }];
+        fallbackWarn = true;
+      }
+      unit.candidates = candidates;
+      selectSheetForUnit(side, candidates[0].name);
+      unit.fallbackWarn = fallbackWarn;
+      var nameField = $("fName"+side.toUpperCase());
+      if(!nameField.value.trim()){ nameField.value = file.name.replace(/\.(xlsx|xls|csv)$/i,""); }
+      setLoading(false);
+      if(fallbackWarn) showToast("⚠️ Kolom 'Deskripsi' tidak terdeteksi otomatis — memakai kolom B/C sebagai tebakan, cek hasilnya.");
+      renderUploadCard(side);
+      checkUploadsReady();
+    }catch(err){
+      console.error(err);
+      setLoading(false);
+      showToast("Gagal membaca file: "+err.message);
+    }
+  };
+  reader.onerror = function(){ setLoading(false); showToast("Gagal membaca file"); };
+  reader.readAsArrayBuffer(file);
+}
+function selectSheetForUnit(side, sheetName){
+  var unit = mergeState.units[side];
+  var cand = unit.candidates.find(function(c){ return c.name===sheetName; });
+  if(!cand) return;
+  unit.chosenSheet = sheetName;
+  var parsed = parseSheetRows(cand.rows, cand.info.descCol, cand.info.valueCol, cand.info.headerRowIdx);
+  unit.sections = parsed.sections;
+  unit.rawSubtotals = parsed.rawSubtotals;
+  unit.periodLabel = cand.info.periodLabel || "";
+  unit.unclassifiedCount = parsed.sections.lainnya.length;
+  unit.ready = true;
+  if(!$("fPeriodeLabel").value.trim() && unit.periodLabel){ $("fPeriodeLabel").value = unit.periodLabel; }
+}
+function renderUploadCard(side){
+  var unit = mergeState.units[side];
+  var S = side.toUpperCase();
+  var chipEl = $("fileChip"+S), sheetRowEl = $("sheetSelectRow"+S);
+  if(!unit.fileName){ chipEl.innerHTML=""; sheetRowEl.innerHTML=""; return; }
+  var totalRows = 0;
+  if(unit.sections){ Object.keys(unit.sections).forEach(function(k){ if(k!=="lainnya") totalRows += unit.sections[k].length; }); }
+  var warnHtml = "";
+  if(unit.unclassifiedCount>0){
+    warnHtml = '<div class="upload-warn">⚠️ '+unit.unclassifiedCount+' baris tidak terklasifikasi (di luar struktur standar) — tidak ikut dihitung dalam total. Cek file sumbernya kalau perlu.</div>';
+  } else if(unit.fallbackWarn){
+    warnHtml = '<div class="upload-warn">⚠️ Kolom "Deskripsi" tidak ditemukan otomatis — memakai kolom B/C sebagai tebakan.</div>';
+  }
+  chipEl.innerHTML = '<div class="file-chip">📄 '+escapeHtml(unit.fileName)+' <button type="button" class="remove-file-btn" data-side="'+side+'">✕</button></div>'
+    + '<div class="upload-meta">Terdeteksi '+totalRows+' baris akun · Periode: '+escapeHtml(unit.periodLabel||"—")+'</div>'
+    + warnHtml;
+  if(unit.candidates && unit.candidates.length>1){
+    sheetRowEl.innerHTML = '<div class="field sheet-select-row" style="margin-top:8px"><label>Pilih sheet</label>'
+      + '<select class="sheet-select" data-side="'+side+'">'
+      + unit.candidates.map(function(c){ return '<option value="'+escapeHtml(c.name)+'"'+(c.name===unit.chosenSheet?" selected":"")+'>'+escapeHtml(c.name)+'</option>'; }).join("")
+      + '</select></div>';
+  } else {
+    sheetRowEl.innerHTML = "";
+  }
+}
+function checkUploadsReady(){
+  $("toStep2Btn").disabled = !(mergeState.units.a.ready && mergeState.units.b.ready);
+}
+["A","B"].forEach(function(S){
+  var side = S.toLowerCase();
+  $("dropzone"+S).addEventListener("click", function(){ $("fileInput"+S).click(); });
+  $("fileInput"+S).addEventListener("change", function(e){ handleFile(side, e.target.files[0]); });
+  $("dropzone"+S).addEventListener("dragover", function(e){ e.preventDefault(); $("dropzone"+S).classList.add("drag"); });
+  $("dropzone"+S).addEventListener("dragleave", function(){ $("dropzone"+S).classList.remove("drag"); });
+  $("dropzone"+S).addEventListener("drop", function(e){ e.preventDefault(); $("dropzone"+S).classList.remove("drag"); if(e.dataTransfer.files.length) handleFile(side, e.dataTransfer.files[0]); });
+});
+$("uploadGrid").addEventListener("click", function(e){
+  if(e.target.classList.contains("remove-file-btn")){
+    var side = e.target.dataset.side;
+    mergeState.units[side] = emptyUnit();
+    $("fileInput"+side.toUpperCase()).value = "";
+    renderUploadCard(side);
+    checkUploadsReady();
+  }
+});
+$("uploadGrid").addEventListener("change", function(e){
+  if(e.target.classList.contains("sheet-select")){
+    var side = e.target.dataset.side;
+    selectSheetForUnit(side, e.target.value);
+    renderUploadCard(side);
+    checkUploadsReady();
+  }
+});
+
+// ── STEP 2: PEMETAAN ──
+function buildMappingForUnits(){
+  SECTION_DEFS.forEach(function(def){
+    var itemsA = mergeState.units.a.sections[def.key];
+    var itemsB = mergeState.units.b.sections[def.key];
+    mergeState.mapping[def.key] = autoMatchSection(itemsA, itemsB);
+  });
+}
+function renderMappingStep(){
+  var html = "";
+  SECTION_DEFS.forEach(function(def){ html += renderSectionMapping(def); });
+  $("mappingContainer").innerHTML = html;
+}
+function renderSectionMapping(def){
+  var itemsA = mergeState.units.a.sections[def.key];
+  var itemsB = mergeState.units.b.sections[def.key];
+  var rows = mergeState.mapping[def.key];
+  var nameA = $("fNameA").value.trim() || "Unit A";
+  var nameB = $("fNameB").value.trim() || "Unit B";
+  var usedA = {}, usedB = {};
+  rows.forEach(function(r){ if(r.aIdx>-1) usedA[r.aIdx]=r._rid; if(r.bIdx>-1) usedB[r.bIdx]=r._rid; });
+
+  function optsFor(items, used, currentIdx, myRid){
+    var html = '<option value="-1">— Tidak ada —</option>';
+    items.forEach(function(it, idx){
+      var disabled = (used[idx]!==undefined && used[idx]!==myRid);
+      html += '<option value="'+idx+'"'+(idx===currentIdx?" selected":"")+(disabled?" disabled":"")+'>'+escapeHtml(it.label)+" ("+fmtRp(it.value)+")"+(disabled?" — dipakai baris lain":"")+'</option>';
+    });
+    return html;
+  }
+  var rowsHtml = rows.map(function(r){
+    var aVal = r.aIdx>-1 ? itemsA[r.aIdx].value : 0;
+    var bVal = r.bIdx>-1 ? itemsB[r.bIdx].value : 0;
+    var tag = r.matchType==="exact" ? '<span class="match-tag exact">✓ cocok persis</span>'
+      : r.matchType==="fuzzy" ? '<span class="match-tag fuzzy">🤖 mirip — cek</span>'
+      : '<span class="match-tag manual">manual</span>';
+    return '<tr data-rid="'+r._rid+'" data-key="'+def.key+'">'
+      + '<td><input type="text" class="map-label" value="'+escapeHtml(r.label)+'" placeholder="Label gabungan"/>'+tag+'</td>'
+      + '<td><select class="map-a">'+optsFor(itemsA, usedA, r.aIdx, r._rid)+'</select></td>'
+      + '<td class="map-val">'+fmtRp(aVal)+'</td>'
+      + '<td><select class="map-b">'+optsFor(itemsB, usedB, r.bIdx, r._rid)+'</select></td>'
+      + '<td class="map-val">'+fmtRp(bVal)+'</td>'
+      + '<td class="map-val total">'+fmtRp(aVal+bVal)+'</td>'
+      + '<td><button type="button" class="map-del-btn">✕</button></td>'
+      + '</tr>';
+  }).join("");
+  var usedCountA = Object.keys(usedA).length, usedCountB = Object.keys(usedB).length;
+  var leftoverA = itemsA.length - usedCountA, leftoverB = itemsB.length - usedCountB;
+  var warnHtml = "";
+  if(leftoverA>0 || leftoverB>0){
+    warnHtml = '<div class="map-warn">⚠️ Ada baris sumber yang belum dipakai di kategori ini: '
+      + (leftoverA>0 ? escapeHtml(nameA)+" ("+leftoverA+" baris) " : "")
+      + (leftoverB>0 ? escapeHtml(nameB)+" ("+leftoverB+" baris)" : "")
+      + ' — <button type="button" class="map-addleft-btn">tambahkan otomatis sebagai baris terpisah</button></div>';
+  }
+  return '<div class="map-section" data-key="'+def.key+'">'
+    + '<div class="map-section-head"><div class="map-section-title">'+def.uiTitle+'</div>'
+    + '<div class="map-section-counts">'+escapeHtml(nameA)+': '+usedCountA+'/'+itemsA.length+' baris · '+escapeHtml(nameB)+': '+usedCountB+'/'+itemsB.length+' baris</div></div>'
+    + warnHtml
+    + '<div class="map-table-wrap"><table class="map-table"><thead><tr>'
+    + '<th style="min-width:190px">Label Gabungan</th><th style="min-width:170px">Sumber '+escapeHtml(nameA)+'</th><th>Nilai</th>'
+    + '<th style="min-width:170px">Sumber '+escapeHtml(nameB)+'</th><th>Nilai</th><th>Gabungan</th><th></th>'
+    + '</tr></thead><tbody>'
+    + (rowsHtml || '<tr class="map-empty-row"><td colspan="7">Tidak ada baris di kategori ini.</td></tr>')
+    + '</tbody></table></div>'
+    + '<button type="button" class="map-add-btn">+ Tambah Baris</button>'
+    + '</div>';
+}
+function addLeftoverRows(key){
+  var itemsA = mergeState.units.a.sections[key], itemsB = mergeState.units.b.sections[key];
+  var rows = mergeState.mapping[key];
+  var usedA = {}, usedB = {};
+  rows.forEach(function(r){ if(r.aIdx>-1) usedA[r.aIdx]=true; if(r.bIdx>-1) usedB[r.bIdx]=true; });
+  itemsA.forEach(function(it, idx){ if(!usedA[idx]) rows.push({_rid:makeRid(), label:it.label, aIdx:idx, bIdx:-1, matchType:"a-only"}); });
+  itemsB.forEach(function(it, idx){ if(!usedB[idx]) rows.push({_rid:makeRid(), label:it.label, aIdx:-1, bIdx:idx, matchType:"b-only"}); });
+}
+$("mappingContainer").addEventListener("input", function(e){
+  if(e.target.classList.contains("map-label")){
+    var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
+    var row = mergeState.mapping[key].find(function(r){ return r._rid===rid; });
+    if(row) row.label = e.target.value;
+  }
+});
+$("mappingContainer").addEventListener("change", function(e){
+  if(e.target.classList.contains("map-a") || e.target.classList.contains("map-b")){
+    var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
+    var row = mergeState.mapping[key].find(function(r){ return r._rid===rid; });
+    if(!row) return;
+    var val = parseInt(e.target.value,10);
+    if(e.target.classList.contains("map-a")) row.aIdx = val; else row.bIdx = val;
+    row.matchType = "manual";
+    renderMappingStep();
+  }
+});
+$("mappingContainer").addEventListener("click", function(e){
+  if(e.target.classList.contains("map-del-btn")){
+    var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
+    mergeState.mapping[key] = mergeState.mapping[key].filter(function(r){ return r._rid!==rid; });
+    renderMappingStep();
+  } else if(e.target.classList.contains("map-add-btn")){
+    var sec = e.target.closest(".map-section"), key = sec.dataset.key;
+    mergeState.mapping[key].push({_rid:makeRid(), label:"", aIdx:-1, bIdx:-1, matchType:"manual"});
+    renderMappingStep();
+  } else if(e.target.classList.contains("map-addleft-btn")){
+    var sec2 = e.target.closest(".map-section"), key2 = sec2.dataset.key;
+    addLeftoverRows(key2);
+    renderMappingStep();
+  }
+});
+
+// ── STEP 3: HASIL ──
+function computeFinalReport(){
+  var report = { sections:{} };
+  SECTION_DEFS.forEach(function(def){
+    var itemsA = mergeState.units.a.sections[def.key];
+    var itemsB = mergeState.units.b.sections[def.key];
+    var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.aIdx>-1 || r.bIdx>-1; });
+    var rows = mapRows.map(function(r){
+      var aVal = r.aIdx>-1 ? itemsA[r.aIdx].value : 0;
+      var bVal = r.bIdx>-1 ? itemsB[r.bIdx].value : 0;
+      return { label: r.label || (r.aIdx>-1?itemsA[r.aIdx].label:itemsB[r.bIdx].label), aVal:aVal, bVal:bVal, total:aVal+bVal };
+    });
+    var subtotalA = rows.reduce(function(s,r){return s+r.aVal;},0);
+    var subtotalB = rows.reduce(function(s,r){return s+r.bVal;},0);
+    report.sections[def.key] = { rows:rows, subtotalA:subtotalA, subtotalB:subtotalB, subtotalTotal:subtotalA+subtotalB };
+  });
+  var s = report.sections;
+  var labaKotor = { a:s.pendapatan.subtotalA-s.hpp.subtotalA, b:s.pendapatan.subtotalB-s.hpp.subtotalB, total:s.pendapatan.subtotalTotal-s.hpp.subtotalTotal };
+  var pendapatanOperasional = { a:labaKotor.a-s.opex.subtotalA, b:labaKotor.b-s.opex.subtotalB, total:labaKotor.total-s.opex.subtotalTotal };
+  var nonOpNet = { a:s.nonopIncome.subtotalA-s.nonopExpense.subtotalA, b:s.nonopIncome.subtotalB-s.nonopExpense.subtotalB, total:s.nonopIncome.subtotalTotal-s.nonopExpense.subtotalTotal };
+  var labaBersih = { a:pendapatanOperasional.a+nonOpNet.a, b:pendapatanOperasional.b+nonOpNet.b, total:pendapatanOperasional.total+nonOpNet.total };
+  report.computed = { labaKotor:labaKotor, pendapatanOperasional:pendapatanOperasional, nonOpNet:nonOpNet, labaBersih:labaBersih };
+  return report;
+}
+function kpiCardHtml(label, value, extra){ return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(extra||"")+'</div>'; }
+function contribRowHtml(name, val, totalVal){
+  var pct = totalVal ? (val/totalVal*100) : 0;
+  return '<div class="stat-row"><span class="stat-name">'+escapeHtml(name)+'</span><span class="stat-val">'+fmtRp(val)+' ('+pct.toFixed(1)+'%)</span></div>';
+}
+function rowHtml(cls, label, aVal, bVal, total, showVals){
+  if(showVals===false){
+    return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td><td class="num"></td><td class="num"></td><td class="num"></td></tr>';
+  }
+  return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td><td class="num">'+fmtRp(aVal)+'</td><td class="num">'+fmtRp(bVal)+'</td><td class="num">'+fmtRp(total)+'</td></tr>';
+}
+function renderResultStep(){
+  var nameA = $("fNameA").value.trim() || "Unit A";
+  var nameB = $("fNameB").value.trim() || "Unit B";
+  var periode = $("fPeriodeLabel").value.trim();
+  var report = computeFinalReport();
+  report.nameA = nameA; report.nameB = nameB; report.periode = periode;
+  mergeState.finalReport = report;
+
+  $("resultUnitNames").textContent = nameA + " + " + nameB;
+  $("resultPeriodLabel").textContent = periode || "—";
+
+  var s = report.sections, c = report.computed;
+  $("resultKpiGrid").innerHTML = [
+    kpiCardHtml("Pendapatan Gabungan", fmtRp(s.pendapatan.subtotalTotal)),
+    kpiCardHtml("Laba Kotor Gabungan", fmtRp(c.labaKotor.total)),
+    kpiCardHtml("Pendapatan Operasional", fmtRp(c.pendapatanOperasional.total)),
+    kpiCardHtml("Laba Bersih Gabungan", fmtRp(c.labaBersih.total), c.labaBersih.total>=0 ? '<span class="kpi-badge baik">● Untung</span>' : '<span class="kpi-badge kurang">● Rugi</span>')
+  ].join("");
+  $("resultContribGrid").innerHTML = contribRowHtml(nameA, c.labaBersih.a, c.labaBersih.total) + contribRowHtml(nameB, c.labaBersih.b, c.labaBersih.total);
+
+  function itemRows(list){ return list.map(function(r){ return rowHtml("item-row", r.label, r.aVal, r.bVal, r.total); }).join(""); }
+  var rows = "";
+  rows += rowHtml("section-header", "PENDAPATAN", 0,0,0,false);
+  rows += itemRows(s.pendapatan.rows);
+  rows += rowHtml("subtotal-row", "Jumlah Pendapatan", s.pendapatan.subtotalA, s.pendapatan.subtotalB, s.pendapatan.subtotalTotal);
+
+  rows += rowHtml("section-header", "BEBAN POKOK PENJUALAN", 0,0,0,false);
+  rows += itemRows(s.hpp.rows);
+  rows += rowHtml("subtotal-row", "Jumlah Beban Pokok Penjualan", s.hpp.subtotalA, s.hpp.subtotalB, s.hpp.subtotalTotal);
+
+  rows += rowHtml("computed-row", "LABA KOTOR", c.labaKotor.a, c.labaKotor.b, c.labaKotor.total);
+
+  rows += rowHtml("section-header", "BEBAN OPERASIONAL", 0,0,0,false);
+  rows += itemRows(s.opex.rows);
+  rows += rowHtml("subtotal-row", "Jumlah Beban Operasional", s.opex.subtotalA, s.opex.subtotalB, s.opex.subtotalTotal);
+
+  rows += rowHtml("computed-row", "PENDAPATAN OPERASIONAL", c.pendapatanOperasional.a, c.pendapatanOperasional.b, c.pendapatanOperasional.total);
+
+  rows += rowHtml("section-header", "PENDAPATAN DAN BEBAN NON OPERASIONAL", 0,0,0,false);
+  rows += rowHtml("section-header sub", "Pendapatan Non Operasional", 0,0,0,false);
+  rows += itemRows(s.nonopIncome.rows);
+  rows += rowHtml("subtotal-row", "Jumlah Pendapatan Non Operasional", s.nonopIncome.subtotalA, s.nonopIncome.subtotalB, s.nonopIncome.subtotalTotal);
+  rows += rowHtml("section-header sub", "Beban Non Operasional", 0,0,0,false);
+  rows += itemRows(s.nonopExpense.rows);
+  rows += rowHtml("subtotal-row", "Jumlah Beban Non Operasional", s.nonopExpense.subtotalA, s.nonopExpense.subtotalB, s.nonopExpense.subtotalTotal);
+  rows += rowHtml("computed-row", "Jumlah Pendapatan dan Beban Non Operasional", c.nonOpNet.a, c.nonOpNet.b, c.nonOpNet.total);
+
+  rows += rowHtml("computed-row final", "LABA BERSIH", c.labaBersih.a, c.labaBersih.b, c.labaBersih.total);
+
+  $("reportTableHead").innerHTML = '<tr><th>Deskripsi</th><th class="num">'+escapeHtml(nameA)+'</th><th class="num">'+escapeHtml(nameB)+'</th><th class="num">Gabungan</th></tr>';
+  $("reportTableBody").innerHTML = rows;
+}
+
+// ── EXPORT KE EXCEL (dengan formula lintas-sheet, mengikuti format template) ──
+function sanitizeSheetName(name){
+  var s = String(name||"Sheet").replace(/[:\\\/\?\*\[\]]/g,"-").trim();
+  if(!s) s = "Sheet";
+  return s.slice(0,31);
+}
+function refName(name){ return String(name).replace(/'/g,"''"); }
+function repeatSpace(n){ return new Array(n+1).join(" "); }
+function exportExcel(){
+  if(!mergeState.finalReport){ showToast("Proses dulu hasil gabungannya"); return; }
+  var report = mergeState.finalReport;
+  var nameA = sanitizeSheetName(report.nameA || "Unit A");
+  var nameB = sanitizeSheetName(report.nameB || "Unit B");
+  if(nameA===nameB) nameB = (nameB+" (2)").slice(0,31);
+  var periode = report.periode || "";
+  var NUM_FMT = '#,##0;(#,##0)';
+
+  function buildUnitSheet(unitKey){
+    var unit = mergeState.units[unitKey];
+    var aoa = [["","Deskripsi", periode || "Nilai"]];
+    var cellMap = {};
+    SECTION_DEFS.forEach(function(def){
+      aoa.push(["", def.sectionLabel, ""]);
+      cellMap[def.key] = [];
+      var subtotal = 0;
+      unit.sections[def.key].forEach(function(it){
+        aoa.push(["", "    "+it.label, it.value]);
+        cellMap[def.key].push(aoa.length);
+        subtotal += it.value;
+      });
+      aoa.push(["", def.subtotalLabel, subtotal]);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{wch:2},{wch:46},{wch:20}];
+    for(var r=2; r<=aoa.length; r++){
+      var addr = "C"+r;
+      if(ws[addr] && ws[addr].t==="n"){ ws[addr].z = NUM_FMT; }
+    }
+    return { ws:ws, cellMap:cellMap };
+  }
+  var sheetA = buildUnitSheet("a");
+  var sheetB = buildUnitSheet("b");
+
+  var aoa2 = [["","Deskripsi", periode || "Gabungan"]];
+  var formulaCells = [];
+  function pushHeader(label){ aoa2.push(["", label, ""]); }
+  function addSection(def, itemIndent, headerIndent){
+    pushHeader(repeatSpace(headerIndent||0)+def.sectionLabel);
+    var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.aIdx>-1 || r.bIdx>-1; });
+    var itemsA = mergeState.units.a.sections[def.key], itemsB = mergeState.units.b.sections[def.key];
+    var cellMapA = sheetA.cellMap[def.key], cellMapB = sheetB.cellMap[def.key];
+    var startRow = aoa2.length+1;
+    mapRows.forEach(function(r){
+      var parts = []; var val = 0;
+      if(r.aIdx>-1){ parts.push("'"+refName(nameA)+"'!C"+cellMapA[r.aIdx]); val += itemsA[r.aIdx].value; }
+      if(r.bIdx>-1){ parts.push("'"+refName(nameB)+"'!C"+cellMapB[r.bIdx]); val += itemsB[r.bIdx].value; }
+      var label = r.label || (r.aIdx>-1?itemsA[r.aIdx].label:itemsB[r.bIdx].label);
+      aoa2.push(["", repeatSpace(itemIndent)+label, val]);
+      formulaCells.push({ row: aoa2.length, formula: parts.join("+") || "0", value: val });
+    });
+    var endRow = aoa2.length;
+    var subtotalVal = mapRows.reduce(function(s,r){
+      var v=0; if(r.aIdx>-1) v+=itemsA[r.aIdx].value; if(r.bIdx>-1) v+=itemsB[r.bIdx].value; return s+v;
+    },0);
+    aoa2.push(["", def.subtotalLabel, subtotalVal]);
+    var subFormula = endRow>=startRow ? "SUM(C"+startRow+":C"+endRow+")" : "0";
+    formulaCells.push({ row: aoa2.length, formula: subFormula, value: subtotalVal });
+    return { subtotalRow: aoa2.length, subtotalVal: subtotalVal };
+  }
+
+  var refPend = addSection(SECTION_DEFS[0], 4, 0);
+  var refHpp  = addSection(SECTION_DEFS[1], 4, 0);
+  var labaKotorVal = refPend.subtotalVal - refHpp.subtotalVal;
+  aoa2.push(["", "LABA KOTOR", labaKotorVal]);
+  formulaCells.push({ row: aoa2.length, formula: "C"+refPend.subtotalRow+"-C"+refHpp.subtotalRow, value: labaKotorVal });
+  var labaKotorRow = aoa2.length;
+
+  var refOpex = addSection(SECTION_DEFS[2], 4, 0);
+  var pendOpVal = labaKotorVal - refOpex.subtotalVal;
+  aoa2.push(["", "PENDAPATAN OPERASIONAL", pendOpVal]);
+  formulaCells.push({ row: aoa2.length, formula: "C"+labaKotorRow+"-C"+refOpex.subtotalRow, value: pendOpVal });
+  var pendOpRow = aoa2.length;
+
+  pushHeader("PENDAPATAN DAN BEBAN NON OPERASIONAL");
+  var refNonopInc = addSection(SECTION_DEFS[3], 8, 4);
+  var refNonopExp = addSection(SECTION_DEFS[4], 8, 4);
+  var nonopNetVal = refNonopInc.subtotalVal - refNonopExp.subtotalVal;
+  aoa2.push(["", "Jumlah Pendapatan dan Beban Non Operasional", nonopNetVal]);
+  formulaCells.push({ row: aoa2.length, formula: "C"+refNonopInc.subtotalRow+"-C"+refNonopExp.subtotalRow, value: nonopNetVal });
+  var nonopNetRow = aoa2.length;
+
+  var labaBersihVal = pendOpVal + nonopNetVal;
+  aoa2.push(["", "LABA BERSIH", labaBersihVal]);
+  formulaCells.push({ row: aoa2.length, formula: "C"+pendOpRow+"+C"+nonopNetRow, value: labaBersihVal });
+
+  var wsMerged = XLSX.utils.aoa_to_sheet(aoa2);
+  wsMerged["!cols"] = [{wch:2},{wch:48},{wch:20}];
+  formulaCells.forEach(function(fc){
+    wsMerged["C"+fc.row] = { t:"n", v: fc.value, f: fc.formula, z: NUM_FMT };
+  });
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsMerged, "Laba Rugi");
+  XLSX.utils.book_append_sheet(wb, sheetA.ws, nameA);
+  XLSX.utils.book_append_sheet(wb, sheetB.ws, nameB);
+
+  var fileLabel = "Laporan Laba Rugi Gabungan" + (periode ? " - "+periode : "");
+  var safeFileName = fileLabel.replace(/[\\\/:*?"<>|]/g,"-") + ".xlsx";
+  XLSX.writeFile(wb, safeFileName);
+  showToast("✓ File Excel berhasil diunduh");
+}
+
+// ── NAVIGASI STEP ──
+function goToStep(n){
+  if(n===2){
+    if(!mergeState.units.a.ready || !mergeState.units.b.ready){ showToast("Upload kedua file laporan dulu"); return; }
+    buildMappingForUnits();
+  }
+  mergeState.step = n;
+  document.querySelectorAll(".step-panel").forEach(function(p){ p.classList.remove("active"); });
+  $("step"+n+"Panel").classList.add("active");
+  document.querySelectorAll(".step-item").forEach(function(el){
+    var s = parseInt(el.dataset.step,10);
+    el.classList.toggle("active", s===n);
+    el.classList.toggle("done", s<n);
+  });
+  document.querySelectorAll(".step-line").forEach(function(el){
+    var idx = parseInt(el.dataset.idx,10);
+    el.classList.toggle("done", idx<n);
+  });
+  if(n===2) renderMappingStep();
+  if(n===3) renderResultStep();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function resetAll(){
+  mergeState = { step:1, units:{ a:emptyUnit(), b:emptyUnit() }, mapping:{}, finalReport:null };
+  $("fNameA").value=""; $("fNameB").value=""; $("fPeriodeLabel").value="";
+  $("fileInputA").value=""; $("fileInputB").value="";
+  renderUploadCard("a"); renderUploadCard("b");
+  checkUploadsReady();
+  goToStep(1);
+}
+$("toStep2Btn").addEventListener("click", function(){ goToStep(2); });
+$("backToStep1Btn").addEventListener("click", function(){ goToStep(1); });
+$("toStep3Btn").addEventListener("click", function(){ goToStep(3); });
+$("backToStep2Btn").addEventListener("click", function(){ goToStep(2); });
+$("resetBtn").addEventListener("click", function(){ if(confirm("Mulai ulang dari awal? File yang sudah diupload akan hilang.")) resetAll(); });
+$("exportExcelBtn").addEventListener("click", exportExcel);
+$("printBtn").addEventListener("click", function(){ window.print(); });
+
+checkUploadsReady();
+</script>
+</body>
+</html>
