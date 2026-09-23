@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Merge Laporan Keuangan</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -691,6 +691,41 @@ function sanitizeSheetName(name){
 }
 function refName(name){ return String(name).replace(/'/g,"''"); }
 function repeatSpace(n){ return new Array(n+1).join(" "); }
+
+// ── STYLE, meniru persis format file Laporan Laba Rugi yang diupload ──
+var NUM_FMT = '_-* #,##0_-;\\-* #,##0_-;_-* "-"??_-;_-@_-';
+var FONT_BASE  = { name:"Arial", sz:9 };
+var FONT_BOLD  = { name:"Arial", sz:9, bold:true };
+var FONT_TITLE = { name:"Arial", sz:9, bold:true, color:{ rgb:"FF003366" } };
+var BORDER_THIN  = { style:"thin" };
+var BORDER_DOUBLE = { style:"double" };
+
+function ensureCell(ws, addr, isNum){
+  if(!ws[addr]) ws[addr] = isNum ? { t:"n", v:0 } : { t:"s", v:"" };
+  return ws[addr];
+}
+function styleTitleRow(ws){
+  var b = ensureCell(ws,"B1"), c = ensureCell(ws,"C1");
+  b.s = { font: FONT_TITLE, alignment:{ horizontal:"left" }, border:{ bottom: BORDER_THIN } };
+  c.s = { font: FONT_TITLE, alignment:{ horizontal:"right" }, border:{ bottom: BORDER_THIN } };
+}
+function styleHeaderRow(ws, r){
+  ensureCell(ws,"B"+r).s = { font: FONT_BOLD, alignment:{ horizontal:"left" } };
+}
+function styleItemRow(ws, r){
+  ensureCell(ws,"B"+r).s = { font: FONT_BASE, alignment:{ horizontal:"left" } };
+  var c = ws["C"+r];
+  if(c){ c.s = { font: FONT_BASE, alignment:{ horizontal:"right" } }; c.z = NUM_FMT; }
+}
+function styleSubtotalRow(ws, r, doubleBottom){
+  ensureCell(ws,"B"+r).s = { font: FONT_BOLD, alignment:{ horizontal:"left" } };
+  var c = ensureCell(ws,"C"+r,true);
+  var border = { top: BORDER_THIN };
+  if(doubleBottom) border.bottom = BORDER_DOUBLE;
+  c.s = { font: FONT_BOLD, alignment:{ horizontal:"right" }, border: border };
+  c.z = NUM_FMT;
+}
+
 function exportExcel(){
   if(!mergeState.finalReport){ showToast("Proses dulu hasil gabungannya"); return; }
   var report = mergeState.finalReport;
@@ -698,29 +733,32 @@ function exportExcel(){
   var nameB = sanitizeSheetName(report.nameB || "Unit B");
   if(nameA===nameB) nameB = (nameB+" (2)").slice(0,31);
   var periode = report.periode || "";
-  var NUM_FMT = '#,##0;(#,##0)';
 
   function buildUnitSheet(unitKey){
     var unit = mergeState.units[unitKey];
     var aoa = [["","Deskripsi", periode || "Nilai"]];
     var cellMap = {};
+    var headerRows=[], itemRows=[], subtotalRows=[];
     SECTION_DEFS.forEach(function(def){
       aoa.push(["", def.sectionLabel, ""]);
+      headerRows.push(aoa.length);
       cellMap[def.key] = [];
       var subtotal = 0;
       unit.sections[def.key].forEach(function(it){
         aoa.push(["", "    "+it.label, it.value]);
+        itemRows.push(aoa.length);
         cellMap[def.key].push(aoa.length);
         subtotal += it.value;
       });
       aoa.push(["", def.subtotalLabel, subtotal]);
+      subtotalRows.push(aoa.length);
     });
     var ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws["!cols"] = [{wch:2},{wch:46},{wch:20}];
-    for(var r=2; r<=aoa.length; r++){
-      var addr = "C"+r;
-      if(ws[addr] && ws[addr].t==="n"){ ws[addr].z = NUM_FMT; }
-    }
+    ws["!cols"] = [{wch:3},{wch:44},{wch:20}];
+    styleTitleRow(ws);
+    headerRows.forEach(function(r){ styleHeaderRow(ws,r); });
+    itemRows.forEach(function(r){ styleItemRow(ws,r); });
+    subtotalRows.forEach(function(r){ styleSubtotalRow(ws,r); });
     return { ws:ws, cellMap:cellMap };
   }
   var sheetA = buildUnitSheet("a");
@@ -728,7 +766,8 @@ function exportExcel(){
 
   var aoa2 = [["","Deskripsi", periode || "Gabungan"]];
   var formulaCells = [];
-  function pushHeader(label){ aoa2.push(["", label, ""]); }
+  var headerRows2=[], itemRows2=[], subtotalRows2=[];
+  function pushHeader(label){ aoa2.push(["", label, ""]); headerRows2.push(aoa2.length); }
   function addSection(def, itemIndent, headerIndent){
     pushHeader(repeatSpace(headerIndent||0)+def.sectionLabel);
     var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.aIdx>-1 || r.bIdx>-1; });
@@ -741,6 +780,7 @@ function exportExcel(){
       if(r.bIdx>-1){ parts.push("'"+refName(nameB)+"'!C"+cellMapB[r.bIdx]); val += itemsB[r.bIdx].value; }
       var label = r.label || (r.aIdx>-1?itemsA[r.aIdx].label:itemsB[r.bIdx].label);
       aoa2.push(["", repeatSpace(itemIndent)+label, val]);
+      itemRows2.push(aoa2.length);
       formulaCells.push({ row: aoa2.length, formula: parts.join("+") || "0", value: val });
     });
     var endRow = aoa2.length;
@@ -748,6 +788,7 @@ function exportExcel(){
       var v=0; if(r.aIdx>-1) v+=itemsA[r.aIdx].value; if(r.bIdx>-1) v+=itemsB[r.bIdx].value; return s+v;
     },0);
     aoa2.push(["", def.subtotalLabel, subtotalVal]);
+    subtotalRows2.push(aoa2.length);
     var subFormula = endRow>=startRow ? "SUM(C"+startRow+":C"+endRow+")" : "0";
     formulaCells.push({ row: aoa2.length, formula: subFormula, value: subtotalVal });
     return { subtotalRow: aoa2.length, subtotalVal: subtotalVal };
@@ -757,12 +798,14 @@ function exportExcel(){
   var refHpp  = addSection(SECTION_DEFS[1], 4, 0);
   var labaKotorVal = refPend.subtotalVal - refHpp.subtotalVal;
   aoa2.push(["", "LABA KOTOR", labaKotorVal]);
+  subtotalRows2.push(aoa2.length);
   formulaCells.push({ row: aoa2.length, formula: "C"+refPend.subtotalRow+"-C"+refHpp.subtotalRow, value: labaKotorVal });
   var labaKotorRow = aoa2.length;
 
   var refOpex = addSection(SECTION_DEFS[2], 4, 0);
   var pendOpVal = labaKotorVal - refOpex.subtotalVal;
   aoa2.push(["", "PENDAPATAN OPERASIONAL", pendOpVal]);
+  subtotalRows2.push(aoa2.length);
   formulaCells.push({ row: aoa2.length, formula: "C"+labaKotorRow+"-C"+refOpex.subtotalRow, value: pendOpVal });
   var pendOpRow = aoa2.length;
 
@@ -771,18 +814,25 @@ function exportExcel(){
   var refNonopExp = addSection(SECTION_DEFS[4], 8, 4);
   var nonopNetVal = refNonopInc.subtotalVal - refNonopExp.subtotalVal;
   aoa2.push(["", "Jumlah Pendapatan dan Beban Non Operasional", nonopNetVal]);
+  subtotalRows2.push(aoa2.length);
   formulaCells.push({ row: aoa2.length, formula: "C"+refNonopInc.subtotalRow+"-C"+refNonopExp.subtotalRow, value: nonopNetVal });
   var nonopNetRow = aoa2.length;
 
   var labaBersihVal = pendOpVal + nonopNetVal;
   aoa2.push(["", "LABA BERSIH", labaBersihVal]);
-  formulaCells.push({ row: aoa2.length, formula: "C"+pendOpRow+"+C"+nonopNetRow, value: labaBersihVal });
+  var labaBersihRow = aoa2.length;
+  subtotalRows2.push(labaBersihRow);
+  formulaCells.push({ row: labaBersihRow, formula: "C"+pendOpRow+"+C"+nonopNetRow, value: labaBersihVal });
 
   var wsMerged = XLSX.utils.aoa_to_sheet(aoa2);
-  wsMerged["!cols"] = [{wch:2},{wch:48},{wch:20}];
+  wsMerged["!cols"] = [{wch:3},{wch:48},{wch:20}];
   formulaCells.forEach(function(fc){
-    wsMerged["C"+fc.row] = { t:"n", v: fc.value, f: fc.formula, z: NUM_FMT };
+    wsMerged["C"+fc.row] = { t:"n", v: fc.value, f: fc.formula };
   });
+  styleTitleRow(wsMerged);
+  headerRows2.forEach(function(r){ styleHeaderRow(wsMerged,r); });
+  itemRows2.forEach(function(r){ styleItemRow(wsMerged,r); });
+  subtotalRows2.forEach(function(r){ styleSubtotalRow(wsMerged, r, r===labaBersihRow); });
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, wsMerged, "Laba Rugi");
@@ -792,7 +842,7 @@ function exportExcel(){
   var fileLabel = "Laporan Laba Rugi Gabungan" + (periode ? " - "+periode : "");
   var safeFileName = fileLabel.replace(/[\\\/:*?"<>|]/g,"-") + ".xlsx";
   XLSX.writeFile(wb, safeFileName);
-  showToast("✓ File Excel berhasil diunduh");
+  showToast("✓ File Excel berhasil diunduh (format mengikuti file sumber)");
 }
 
 // ── NAVIGASI STEP ──
