@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Perhitungan Produksi</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A1D2E;--blue:#4F6EF7;--blue-lt:#EEF1FE;
+  --white:#FFFFFF;--gray-50:#F8F9FB;--gray-100:#F1F3F7;
+  --gray-200:#E4E7EF;--gray-400:#9CA3AF;--gray-600:#6B7280;
+  --gray-800:#374151;--text:#1A1D2E;--radius:10px;
+  --shadow:0 2px 12px rgba(26,29,46,.10);
+  --green:#10B981;--green-lt:#ECFDF5;
+  --amber:#F59E0B;--amber-lt:#FFFBEB;
+  --slate:#6B7280;--slate-lt:#F1F3F7;
+  --red:#DC2626;--red-lt:#FEE2E2;
+  --purple:#8B5CF6;--purple-lt:#F3F0FF;
+}
+body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);min-height:100vh}
+
+/* ── APP ── */
+#appRoot{min-height:100vh}
+.wrap{max-width:1220px;margin:0 auto;padding:28px 24px 60px}
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.topbar-title{font-size:20px;font-weight:700}
+.topbar-sub{font-size:12.5px;color:var(--gray-600)}
+.spacer{flex:1}
+.btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#3d5de8}
+.btn-outline{background:#fff;color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--gray-200);flex-wrap:wrap}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:600;color:var(--gray-600);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+.kpi-label{font-size:11.5px;color:var(--gray-600);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.kpi-value{font-size:22px;font-weight:700;margin-bottom:6px}
+
+.panel-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:720px){.panel-row{grid-template-columns:1fr}}
+.chip-panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+.chip-panel h3{font-size:13px;font-weight:700;margin-bottom:12px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-100);font-size:13px;gap:10px}
+.stat-row:last-child{border-bottom:none}
+.stat-name{font-weight:600}
+.stat-val{color:var(--gray-600);font-size:12.5px;text-align:right;white-space:nowrap}
+.stat-empty{font-size:12.5px;color:var(--gray-400);padding:6px 0}
+
+/* Controls / table */
+.controls{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.controls input, .controls select{padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;background:#fff;outline:none}
+.controls input[type="text"], .controls input[type="number"]{flex:1;min-width:160px}
+.controls input:focus, .controls select:focus{border-color:var(--blue)}
+
+.table-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+thead th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-600);background:var(--gray-50);padding:12px 14px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+tbody td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--gray-50)}
+.cell-wrap{white-space:normal;max-width:220px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.badge-dot{width:6px;height:6px;border-radius:50%}
+.badge.arnoux{background:var(--amber-lt);color:#92400E}.badge.arnoux .badge-dot{background:var(--amber)}
+.badge.non-brand{background:var(--slate-lt);color:var(--gray-800)}.badge.non-brand .badge-dot{background:var(--slate)}
+.resep-tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--blue-lt);color:#3d5de8;white-space:nowrap}
+.resep-tag.unset{background:var(--red-lt);color:#B91C1C}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.row-actions button{font-size:11.5px;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;border:1px solid var(--gray-200);background:#fff;color:var(--gray-800);transition:all .12s}
+.row-actions button:hover{background:var(--gray-100)}
+.row-actions .del-btn{color:var(--red);border-color:#FCA5A5}
+.row-actions .del-btn:hover{background:var(--red-lt)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray-400);display:none}
+.empty-state .icon{font-size:30px;margin-bottom:8px}
+.empty-state p{font-size:13px}
+.checkbox-cell{width:34px;text-align:center}
+
+/* Bulk assign bar */
+.bulk-bar{display:flex;align-items:center;gap:10px;background:var(--blue-lt);border:1px solid #c7d2fb;border-radius:8px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;font-size:12.5px;font-weight:600;color:#3d5de8}
+.bulk-bar select{padding:7px 10px;border:1px solid var(--gray-200);border-radius:7px;font-size:12.5px;font-family:'Inter',sans-serif}
+
+/* Repeatable rows (resep bahan lines) */
+.repeat-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.repeat-row{display:flex;flex-direction:column;gap:6px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px}
+.rl-row1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rl-row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rl-row1 .rl-nama{flex:1.6;min-width:140px}
+.rl-row1 .rl-harga{flex:0 0 108px}
+.rl-row1 .rl-kuantitas{flex:0 0 78px}
+.rl-row1 .rl-satuan{flex:0 0 96px}
+.rl-row1 .rl-jumlah{flex:0 0 108px}
+.rl-row1 .rl-biaya{flex:0 0 96px;text-align:right;font-weight:700;font-size:12px;color:var(--blue);white-space:nowrap}
+.rl-row2 .rl-ket{flex:1.6;min-width:140px}
+.rl-row2 .rl-qtyunit{flex:0 0 auto;font-size:11px;color:var(--gray-600);white-space:nowrap}
+.repeat-row input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:7px;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;width:100%;background:#fff}
+.repeat-row input:focus{border-color:var(--blue)}
+.repeat-row-remove{width:30px;height:30px;flex:0 0 30px;border-radius:7px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.repeat-row-remove:hover{background:var(--red-lt);color:var(--red);border-color:#FCA5A5}
+.repeat-add-btn{font-size:12.5px;font-weight:600;color:var(--blue);background:var(--blue-lt);border:none;border-radius:7px;padding:8px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:'Inter',sans-serif}
+.repeat-add-btn:hover{background:#e2e8fd}
+.repeat-empty{font-size:12px;color:var(--gray-400);padding:6px 0}
+.repeat-total{font-size:13px;color:var(--gray-600);margin-top:10px;text-align:right}
+.repeat-total b{color:var(--text);font-size:15px}
+
+/* Import card */
+.import-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.import-card h3{font-size:14px;font-weight:700;margin-bottom:6px}
+.import-card p.hint{font-size:12px;color:var(--gray-600);margin-bottom:14px;line-height:1.5}
+.dropzone{border:2px dashed var(--gray-200);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s}
+.dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--blue-lt)}
+.dropzone .dz-icon{font-size:26px;margin-bottom:8px}
+.dropzone .dz-text{font-size:13px;font-weight:600;color:var(--gray-800)}
+.dropzone .dz-sub{font-size:11px;color:var(--gray-400);margin-top:4px}
+#produkFileInput{display:none}
+.file-chip{display:inline-flex;align-items:center;gap:8px;background:var(--blue-lt);color:#3d5de8;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:500;margin-top:10px}
+.file-chip button{border:none;background:none;color:#3d5de8;cursor:pointer;font-size:13px;opacity:.7}
+.mapping-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:14px 0}
+.map-field{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:9px 11px}
+.map-field label{display:block;font-size:11px;font-weight:600;color:var(--gray-600);margin-bottom:5px}
+.map-field select{width:100%;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:12px;font-family:'Inter',sans-serif;background:#fff}
+.map-field.unmapped{border-color:#F0AFC3;background:var(--red-lt)}
+.preview-table-wrap{overflow-x:auto;border:1px solid var(--gray-200);border-radius:8px;margin:12px 0}
+.preview-table{width:100%;border-collapse:collapse;min-width:520px}
+.preview-table th{background:var(--gray-50);font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:8px 9px;text-align:left;white-space:nowrap}
+.preview-table td{padding:7px 9px;font-size:12px;border-top:1px solid var(--gray-100);white-space:nowrap}
+.progress-bar{height:8px;background:var(--gray-100);border-radius:5px;overflow:hidden;margin:10px 0}
+.progress-fill{height:100%;background:var(--blue);width:0%;transition:width .25s}
+.import-status{font-size:12px;color:var(--gray-600)}
+
+/* Field/modal (shared) */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,29,46,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:640px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+.modal.modal-sm{max-width:420px}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px}
+.field input, .field select, .field textarea{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none;resize:vertical}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--blue)}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.field-error{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.section-title{font-size:12.5px;font-weight:700;color:var(--gray-800);margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--gray-100)}
+.section-title:first-of-type{border-top:none;margin-top:0;padding-top:0}
+
+/* ── TOAST / LOADING ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:200}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loading{position:fixed;inset:0;background:rgba(255,255,255,.6);display:none;align-items:center;justify-content:center;z-index:150;font-size:13px;color:var(--gray-600)}
+#loading.show{display:flex}
+</style>
+</head>
+<body>
+
+<!-- ── APP ── -->
+<div id="appRoot">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="index.html" class="btn btn-outline btn-sm">← Kembali</a>
+      <div>
+        <div class="topbar-title">Perhitungan Produksi</div>
+        <div class="topbar-sub" id="topbarSub">Memuat data…</div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="input">Input Produksi</button>
+      <button class="tab-btn" data-tab="riwayat">Riwayat</button>
+      <button class="tab-btn" data-tab="resep">Resep Produk</button>
+      <button class="tab-btn" data-tab="bahan">Bahan Baku</button>
+      <button class="tab-btn" data-tab="produk">Data Produk</button>
+    </div>
+
+    <!-- TAB: INPUT PRODUKSI -->
+    <div class="tab-panel active" id="panel-input">
+      <div class="chip-panel" style="margin-bottom:14px">
+        <div class="field-row">
+          <div class="field" style="margin-bottom:0"><label>Tanggal Produksi</label><input type="date" id="ipTanggal"/></div>
+          <div class="field" style="margin-bottom:0"><label>Catatan (opsional)</label><input type="text" id="ipCatatan" placeholder="mis. Produksi batch pagi"/></div>
+        </div>
+      </div>
+
+      <div class="chip-panel">
+        <h3>➕ Tambah Item Produksi</h3>
+        <div class="controls" style="margin-bottom:0">
+          <input type="text" id="ipNamaProduk" list="produkDatalist" placeholder="Nama produk / SKU (opsional — bantu auto-pilih resep)"/>
+          <datalist id="produkDatalist"></datalist>
+          <select id="ipResep" class="js-resep-select" style="min-width:220px"><option value="">-- Pilih Resep --</option></select>
+          <input type="number" id="ipJumlah" placeholder="Jumlah diproduksi" min="1" style="max-width:170px;flex:none"/>
+          <button class="btn btn-primary" id="ipAddBtn">+ Tambah</button>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-top:14px">
+        <table>
+          <thead><tr><th>Nama Produk</th><th>Resep</th><th>Jumlah</th><th>HPP / Unit</th><th>Subtotal Biaya</th><th>% dari Total</th><th></th></tr></thead>
+          <tbody id="ipItemsBody"></tbody>
+        </table>
+        <div class="empty-state" id="ipEmpty"><div class="icon">🧵</div><p>Belum ada item. Tambahkan produk yang diproduksi hari ini.</p></div>
+      </div>
+
+      <div class="panel-row" style="margin-top:14px">
+        <div class="chip-panel">
+          <h3>📦 Ringkasan Bahan Terpakai</h3>
+          <div id="ipBahanBreakdown"></div>
+        </div>
+        <div class="chip-panel">
+          <h3>💰 Total Produksi Hari Ini</h3>
+          <div class="stat-row"><span class="stat-name">Total Unit Diproduksi</span><span class="stat-val" id="ipTotalUnit">0</span></div>
+          <div class="stat-row"><span class="stat-name" style="font-size:14px">Total Biaya Produksi</span><span class="stat-val" id="ipTotalBiaya" style="font-weight:700;font-size:16px;color:var(--text)">Rp 0</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;text-align:right;display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-outline" id="ipResetBtn">Reset</button>
+        <button class="btn btn-primary" id="ipSaveBtn">💾 Simpan Laporan Produksi</button>
+      </div>
+    </div>
+
+    <!-- TAB: RIWAYAT -->
+    <div class="tab-panel" id="panel-riwayat">
+      <div class="controls">
+        <input type="date" id="rwFrom" title="Dari tanggal"/>
+        <input type="date" id="rwTo" title="Sampai tanggal"/>
+        <input type="text" id="rwSearch" placeholder="Cari catatan…"/>
+        <button class="btn btn-outline btn-sm" id="rwClearBtn">Reset Filter</button>
+      </div>
+      <div class="kpi-grid" id="rwKpiGrid"></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Tanggal</th><th>Catatan</th><th>Jumlah Item</th><th>Total Unit</th><th>Total Biaya</th><th></th></tr></thead>
+          <tbody id="rwBody"></tbody>
+        </table>
+        <div class="empty-state" id="rwEmpty"><div class="icon">📋</div><p>Belum ada laporan produksi tersimpan.</p></div>
+      </div>
+    </div>
+
+    <!-- TAB: RESEP PRODUK -->
+    <div class="tab-panel" id="panel-resep">
+      <div class="controls">
+        <input type="text" id="resepSearch" placeholder="Cari nama resep…"/>
+        <button class="btn btn-outline btn-sm" id="repairResepBtn">🔧 Perbaiki Data Lama</button>
+        <button class="btn btn-outline btn-sm" id="seedResepBtn">🌱 Muat Resep Contoh</button>
+        <button class="btn btn-primary" id="addResepBtn">+ Tambah Resep</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Nama Resep</th><th>Kategori</th><th>Jumlah Bahan</th><th>Total HPP / Unit</th><th></th></tr></thead>
+          <tbody id="resepBody"></tbody>
+        </table>
+        <div class="empty-state" id="resepEmpty"><div class="icon">📖</div><p>Belum ada resep. Klik "🌱 Muat Resep Contoh" (dari data Arnoux &amp; Non Brand) atau "+ Tambah Resep".</p></div>
+      </div>
+    </div>
+
+    <!-- TAB: BAHAN BAKU -->
+    <div class="tab-panel" id="panel-bahan">
+      <div class="controls">
+        <input type="text" id="bahanSearch" placeholder="Cari nama bahan…"/>
+        <button class="btn btn-outline btn-sm" id="seedBahanBtn">🌱 Muat Bahan Baku Contoh</button>
+        <button class="btn btn-primary" id="addBahanBtn">+ Tambah Bahan</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Kategori</th><th>Nama Bahan</th><th>Harga</th><th>Satuan</th><th></th></tr></thead>
+          <tbody id="bahanBody"></tbody>
+        </table>
+        <div class="empty-state" id="bahanEmpty"><div class="icon">🧶</div><p>Belum ada data bahan baku. Klik "🌱 Muat Bahan Baku Contoh" atau "+ Tambah Bahan".</p></div>
+      </div>
+    </div>
+
+    <!-- TAB: DATA PRODUK (SKU) -->
+    <div class="tab-panel" id="panel-produk">
+      <div class="controls">
+        <input type="text" id="produkSearch" placeholder="Cari nama produk / bahan kain…"/>
+        <select id="produkFilterKategori"><option value="">Semua Kategori</option><option>Arnoux</option><option>Non Brand</option></select>
+        <select id="produkFilterResep" class="js-resep-select-filter"><option value="">Semua Resep</option><option value="__unset__">Belum Dipetakan</option></select>
+        <button class="btn btn-outline btn-sm" id="toggleImportBtn">⇪ Import Excel/CSV</button>
+        <button class="btn btn-primary" id="addProdukBtn">+ Tambah Produk</button>
+      </div>
+
+      <div class="bulk-bar" id="bulkBar" style="display:none">
+        <span id="bulkCountLabel">0 produk dipilih</span>
+        <select id="bulkResepSelect" class="js-resep-select"><option value="">-- Pilih Resep --</option></select>
+        <button class="btn btn-primary btn-sm" id="bulkApplyBtn">Terapkan ke Terpilih</button>
+        <button class="btn btn-outline btn-sm" id="bulkClearBtn">Batal Pilih</button>
+      </div>
+
+      <div class="import-card" id="importCard" style="display:none">
+        <h3>📤 Import Daftar Produk (SKU)</h3>
+        <p class="hint">Upload file Excel/CSV berisi daftar produk (mis. sheet "Daftar SKU"). Kolom yang diharapkan: Kategori Barang, Bahan Kain, Nama Barang, Satuan. Resep bisa dipetakan belakangan lewat filter &amp; "Terapkan ke Terpilih" di atas.</p>
+        <div class="dropzone" id="produkDropzone">
+          <div class="dz-icon">📄</div>
+          <div class="dz-text">Klik untuk pilih file, atau seret file ke sini</div>
+          <div class="dz-sub">.xlsx / .xls / .csv</div>
+        </div>
+        <input type="file" id="produkFileInput" accept=".csv,.xlsx,.xls"/>
+        <div id="produkFileChipWrap"></div>
+
+        <div id="produkMappingWrap" style="display:none">
+          <div class="section-title">Pemetaan Kolom</div>
+          <div class="mapping-grid" id="produkMappingGrid"></div>
+          <div class="section-title">Pratinjau (5 baris pertama)</div>
+          <div class="preview-table-wrap"><table class="preview-table" id="produkPreviewTable"></table></div>
+          <div id="produkImportProgressWrap" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="produkProgressFill"></div></div>
+            <div class="import-status" id="produkImportStatus">Mengimpor…</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <button class="btn btn-primary" id="produkImportAllBtn">Import Semua Produk</button>
+            <button class="btn btn-outline" id="produkCancelImportBtn">Batal</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th class="checkbox-cell"><input type="checkbox" id="produkSelectAll"/></th>
+            <th>Kategori</th><th>Bahan Kain</th><th>Nama Produk</th><th>Satuan</th><th>Resep</th><th></th>
+          </tr></thead>
+          <tbody id="produkBody"></tbody>
+        </table>
+        <div class="empty-state" id="produkEmpty"><div class="icon">🏷️</div><p>Belum ada data produk. Import dari Excel/CSV atau tambah manual.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: RESEP ── -->
+<div class="modal-overlay" id="resepModal">
+  <div class="modal">
+    <h2 id="resepModalTitle">Tambah Resep</h2>
+    <div class="field-row">
+      <div class="field"><label>Nama Resep</label><input type="text" id="rNama" placeholder="mis. Jok Arnoux Strip Biasa"/></div>
+      <div class="field"><label>Kategori</label><select id="rKategori"><option>Arnoux</option><option>Non Brand</option><option>Lainnya</option></select></div>
+    </div>
+    <div class="field-error" id="rErrNama">Nama resep wajib diisi</div>
+
+    <div class="section-title">Komposisi Bahan (per 1 unit produk jadi)</div>
+    <p style="font-size:11.5px;color:var(--gray-600);margin:-4px 0 10px;line-height:1.5">Isi harga beli & satuan pembeliannya (mis. beli 14 Kg lem seharga Rp683.500), lalu berapa unit produk yang dihasilkan dari pembelian itu (mis. 745 jok). Biaya & kuantitas per unit produk dihitung otomatis.</p>
+    <datalist id="bahanBakuDatalist"></datalist>
+    <div class="repeat-rows" id="resepLinesWrap"></div>
+    <button class="repeat-add-btn" id="addResepLineBtn" type="button">＋ Tambah Bahan</button>
+    <div class="repeat-total">Total HPP per Unit: <b id="resepTotalLabel">Rp 0</b></div>
+
+    <div class="field" style="margin-top:14px">
+      <label>Catatan (opsional)</label>
+      <textarea id="rCatatan" rows="2" placeholder="Catatan tambahan tentang resep ini"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="resepCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="resepSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: BAHAN BAKU ── -->
+<div class="modal-overlay" id="bahanModal">
+  <div class="modal modal-sm">
+    <h2 id="bahanModalTitle">Tambah Bahan Baku</h2>
+    <div class="field"><label>Kategori</label><input type="text" id="bKategori" list="bahanKategoriList" placeholder="mis. Kain Jok, Kemasan, Jasa"/><datalist id="bahanKategoriList"></datalist></div>
+    <div class="field"><label>Nama Bahan</label><input type="text" id="bNama" placeholder="mis. Kulit Jok Camry"/></div>
+    <div class="field-error" id="bErrNama">Nama bahan wajib diisi</div>
+    <div class="field-row">
+      <div class="field"><label>Harga</label><input type="number" id="bHarga" placeholder="0"/></div>
+      <div class="field"><label>Satuan</label><input type="text" id="bSatuan" placeholder="mis. Meter, Pcs, Kg"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="bahanCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="bahanSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: PRODUK ── -->
+<div class="modal-overlay" id="produkModal">
+  <div class="modal modal-sm">
+    <h2 id="produkModalTitle">Tambah Produk</h2>
+    <div class="field"><label>Kategori</label><select id="pKategori"><option>Arnoux</option><option>Non Brand</option><option>Lainnya</option></select></div>
+    <div class="field"><label>Bahan Kain / Varian</label><input type="text" id="pBahanKain" placeholder="mis. Camry - Printing"/></div>
+    <div class="field"><label>Nama Produk</label><input type="text" id="pNama" placeholder="mis. A BIRU PRISMA"/></div>
+    <div class="field-error" id="pErrNama">Nama produk wajib diisi</div>
+    <div class="field-row">
+      <div class="field"><label>Satuan</label><input type="text" id="pSatuan" placeholder="PCS" value="PCS"/></div>
+      <div class="field"><label>Resep</label><select id="pResep" class="js-resep-select"><option value="">-- Belum Dipetakan --</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="produkCancelBtn">Batal</button>
+      <button class="btn btn-primary" id="produkSaveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: DETAIL RIWAYAT ── -->
+<div class="modal-overlay" id="riwayatDetailModal">
+  <div class="modal">
+    <h2>Detail Laporan Produksi</h2>
+    <div id="rwDetailMeta" style="font-size:12.5px;color:var(--gray-600);margin-bottom:14px"></div>
+    <div class="section-title">Item Produksi</div>
+    <div class="table-card" style="box-shadow:none">
+      <table>
+        <thead><tr><th>Nama Produk</th><th>Resep</th><th>Jumlah</th><th>HPP/Unit</th><th>Subtotal</th><th>% dari Total</th></tr></thead>
+        <tbody id="rwDetailItems"></tbody>
+      </table>
+    </div>
+    <div class="section-title">Bahan Terpakai</div>
+    <div id="rwDetailBahan"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="rwDetailCloseBtn">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loading"><span id="loadingText">Memuat…</span></div>
+
+<script>
+// ── GANTI dengan URL Web App Apps Script khusus Produksi (harus berakhiran /exec) ──
+// Deploy Code_Produksi.gs sebagai Web App baru (Execute as: Me, Who has access: Anyone),
+// lalu tempel URL /exec hasilnya di sini. Sebelum diganti, halaman ini berjalan dalam
+// MODE DEMO (data tersimpan di Local Storage browser ini saja) supaya bisa langsung dicoba.
+var GAS_URL = "GANTI_DENGAN_URL_WEB_APP_PRODUKSI_ANDA";
+
+function $(id){ return document.getElementById(id); }
+
+// ── DATA CONTOH (dari file HPP Arnoux & Non Brand yang diunggah) ──
+var SEED_BAHAN_BAKU = [
+  {kategori:"Kain Jok", nama:"Kulit Jok Biji Kopi", harga:41500, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Camry", harga:75000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Cempaka", harga:32000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Excellent Amplas", harga:44000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Excellent Bigdot", harga:50000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Excellent Carbon", harga:45000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok SBtech Amplas", harga:47000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok SBtech Catur", harga:50000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Viroteq Abstrak", harga:45000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Viroteq Wave", harga:45000, satuan:"Meter"},
+  {kategori:"Kain Jok", nama:"Kulit Jok Accura", harga:98000, satuan:"Meter"},
+  {kategori:"Pelengkap", nama:"Label Arnoux", harga:3600, satuan:"Pcs"},
+  {kategori:"Kemasan", nama:"Plastik Arnoux", harga:1100, satuan:"Pcs"},
+  {kategori:"Kemasan", nama:"Plastik Nonbrand", harga:1000, satuan:"Pcs"},
+  {kategori:"Jasa", nama:"Jasa Jahit Arnoux", harga:20000, satuan:"-"},
+  {kategori:"Jasa", nama:"Jasa Jahit Non Brand", harga:10000, satuan:"-"},
+  {kategori:"Jasa", nama:"Jasa Printing", harga:540000, satuan:"2 Meter"},
+  {kategori:"Pelengkap", nama:"Velcro", harga:5000, satuan:"Meter"},
+  {kategori:"Pelengkap", nama:"Karet Jok", harga:3600, satuan:"Meter"},
+  {kategori:"Finishing", nama:"Sealer", harga:26000, satuan:"Roll (2cm x 25m)"},
+  {kategori:"Finishing", nama:"Busa Ati", harga:60000, satuan:"Lembar (120x120cm)"},
+  {kategori:"Finishing", nama:"Pelapis", harga:400000, satuan:"20 Pack"},
+  {kategori:"Finishing", nama:"Lem Jok", harga:683500, satuan:"14 Kg"}
+];
+var SEED_RESEP = [
+  { nama:"Jok Arnoux Strip Biasa", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Camry", hargaBeli:75000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok, 1 jok = 3 bagian"},
+    {namaBahan:"Strap Kulit Jok", hargaBeli:0, kuantitasPembelian:0, satuan:"-", jumlahDihasilkan:1, keterangan:"Sisa serpihan kulit jok, tanpa biaya tambahan"},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok Arnoux Waterproof", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok SBtech Amplas", hargaBeli:47000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok, 1 jok = 3 bagian"},
+    {namaBahan:"Sealer", hargaBeli:26000, kuantitasPembelian:1, satuan:"Roll", jumlahDihasilkan:44, keterangan:"1 roll (2cm x 25m) ≈ 44 jok"},
+    {namaBahan:"Busa Ati", hargaBeli:60000, kuantitasPembelian:1, satuan:"Lembar", jumlahDihasilkan:169, keterangan:"1 lembar (120x120cm) ≈ 169 jok"},
+    {namaBahan:"Pelapis", hargaBeli:400000, kuantitasPembelian:20, satuan:"Pack", jumlahDihasilkan:880, keterangan:"20 pack ≈ 880 jok"},
+    {namaBahan:"Lem Jok", hargaBeli:683500, kuantitasPembelian:14, satuan:"Kg", jumlahDihasilkan:745, keterangan:"14 kg, 1 botol 130ml ≈ 745 jok"},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok Arnoux Printing", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Camry", hargaBeli:75000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Strap Kulit Jok", hargaBeli:0, kuantitasPembelian:0, satuan:"-", jumlahDihasilkan:1, keterangan:"Sisa serpihan, tanpa biaya tambahan"},
+    {namaBahan:"Jasa Printing", hargaBeli:540000, kuantitasPembelian:2, satuan:"Meter", jumlahDihasilkan:20, keterangan:"2 meter ≈ 20 jok"},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok Arnoux SC", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Camry (2/3 bagian)", hargaBeli:16666.67, kuantitasPembelian:0.667, satuan:"Meter", jumlahDihasilkan:1, keterangan:"Per meter = 3 sarung x 3 bagian, memakai 2 dari 3 bagian"},
+    {namaBahan:"Kulit Jok SBtech Amplas (1/3 bagian)", hargaBeli:5222.22, kuantitasPembelian:0.333, satuan:"Meter", jumlahDihasilkan:1, keterangan:"Memakai 1 dari 3 bagian"},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok Arnoux Crownline SBTech", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok SBtech Amplas (2/3 bagian)", hargaBeli:10444.44, kuantitasPembelian:0.667, satuan:"Meter", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Kulit Jok SBtech Catur (1/3 bagian)", hargaBeli:5555.56, kuantitasPembelian:0.333, satuan:"Meter", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok Arnoux Blackrook SBTech", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok SBtech Catur (2/3 bagian)", hargaBeli:11111.11, kuantitasPembelian:0.667, satuan:"Meter", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Kulit Jok SBtech Amplas (1/3 bagian)", hargaBeli:5222.22, kuantitasPembelian:0.333, satuan:"Meter", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Sealer", hargaBeli:26000, kuantitasPembelian:1, satuan:"Roll", jumlahDihasilkan:44, keterangan:""},
+    {namaBahan:"Busa Ati", hargaBeli:60000, kuantitasPembelian:1, satuan:"Lembar", jumlahDihasilkan:169, keterangan:""},
+    {namaBahan:"Pelapis", hargaBeli:400000, kuantitasPembelian:20, satuan:"Pack", jumlahDihasilkan:880, keterangan:""},
+    {namaBahan:"Lem Jok", hargaBeli:683500, kuantitasPembelian:14, satuan:"Kg", jumlahDihasilkan:745, keterangan:""}
+  ]},
+  { nama:"Jok Arnoux Carbon Chess", kategori:"Arnoux", catatan:"", lines:[
+    {namaBahan:"Kulit Jok SBtech Amplas (2/3 bagian)", hargaBeli:10444.44, kuantitasPembelian:0.667, satuan:"Meter", jumlahDihasilkan:1, keterangan:"Per meter menghasilkan 3 sarung jok"},
+    {namaBahan:"Plastik Arnoux", hargaBeli:1100, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Arnoux", hargaBeli:20000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Label Arnoux", hargaBeli:3600, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok B (Accura)", kategori:"Non Brand", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Accura", hargaBeli:98000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Strap Kulit Jok", hargaBeli:0, kuantitasPembelian:0, satuan:"-", jumlahDihasilkan:1, keterangan:"Sisa serpihan, tanpa biaya tambahan"},
+    {namaBahan:"Plastik Nonbrand", hargaBeli:1000, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Non Brand", hargaBeli:10000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok 2 Layer & 1 Layer (Excellent Amplas)", kategori:"Non Brand", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Excellent Amplas", hargaBeli:44000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Strap Kulit Jok", hargaBeli:0, kuantitasPembelian:0, satuan:"-", jumlahDihasilkan:1, keterangan:"Sisa serpihan, tanpa biaya tambahan"},
+    {namaBahan:"Plastik Nonbrand", hargaBeli:1000, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Non Brand", hargaBeli:10000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok C (Camry)", kategori:"Non Brand", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Camry", hargaBeli:75000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Strap Kulit Jok", hargaBeli:0, kuantitasPembelian:0, satuan:"-", jumlahDihasilkan:1, keterangan:"Sisa serpihan, tanpa biaya tambahan"},
+    {namaBahan:"Plastik Nonbrand", hargaBeli:1000, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Non Brand", hargaBeli:10000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok D (Cempaka)", kategori:"Non Brand", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Cempaka", hargaBeli:32000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Strap Kulit Jok", hargaBeli:0, kuantitasPembelian:0, satuan:"-", jumlahDihasilkan:1, keterangan:"Sisa serpihan, tanpa biaya tambahan"},
+    {namaBahan:"Plastik Nonbrand", hargaBeli:1000, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Jasa Jahit Non Brand", hargaBeli:10000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok V - SBTech", kategori:"Non Brand", catatan:"", lines:[
+    {namaBahan:"Kulit Jok SBtech", hargaBeli:50000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Karet Jok", hargaBeli:3600, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Velcro", hargaBeli:91500, kuantitasPembelian:1, satuan:"Roll", jumlahDihasilkan:18, keterangan:"1 roll ≈ 18 jok, dibagi 3 bagian (depan/tengah/belakang)"},
+    {namaBahan:"Jasa Jahit Non Brand", hargaBeli:10000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Plastik Nonbrand", hargaBeli:1000, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]},
+  { nama:"Jok V - Viroteq", kategori:"Non Brand", catatan:"", lines:[
+    {namaBahan:"Kulit Jok Viroteq", hargaBeli:45000, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:3, keterangan:"1 meter = 3 jok"},
+    {namaBahan:"Karet Jok", hargaBeli:3600, kuantitasPembelian:1, satuan:"Meter", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Velcro", hargaBeli:91500, kuantitasPembelian:1, satuan:"Roll", jumlahDihasilkan:18, keterangan:"1 roll ≈ 18 jok, dibagi 3 bagian (depan/tengah/belakang)"},
+    {namaBahan:"Jasa Jahit Non Brand", hargaBeli:10000, kuantitasPembelian:1, satuan:"-", jumlahDihasilkan:1, keterangan:""},
+    {namaBahan:"Plastik Nonbrand", hargaBeli:1000, kuantitasPembelian:1, satuan:"Pcs", jumlahDihasilkan:1, keterangan:""}
+  ]}
+];
+
+// ── MODE DEMO (Local Storage) — dipakai selama GAS_URL belum diganti ──
+function makeId(prefix){ return prefix+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function getLocalDb(){
+  var raw = localStorage.getItem("produksi_demo_db");
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return { bahanBaku:[], resep:[], produk:[], produksi:[] };
+}
+function saveLocalDb(db){ localStorage.setItem("produksi_demo_db", JSON.stringify(db)); }
+
+function callGS(fn, arg){
+  return new Promise(function(resolve, reject){
+    if(GAS_URL.indexOf("GANTI_DENGAN_") > -1){
+      var db = getLocalDb();
+      setTimeout(function(){
+        try{
+          if(fn === "getData"){ resolve(JSON.parse(JSON.stringify(db))); return; }
+          if(fn === "addBahanBaku"){ arg.id = makeId("bb"); db.bahanBaku.push(arg); saveLocalDb(db); resolve({success:true,id:arg.id}); return; }
+          if(fn === "updateBahanBaku"){ var i=db.bahanBaku.findIndex(function(x){return x.id===arg.id;}); if(i>-1) db.bahanBaku[i]=arg; saveLocalDb(db); resolve({success:true}); return; }
+          if(fn === "deleteBahanBaku"){ db.bahanBaku = db.bahanBaku.filter(function(x){return x.id!==arg;}); saveLocalDb(db); resolve({success:true}); return; }
+          if(fn === "addResep"){ arg.id = makeId("r"); db.resep.push(arg); saveLocalDb(db); resolve({success:true,id:arg.id}); return; }
+          if(fn === "updateResep"){ var i2=db.resep.findIndex(function(x){return x.id===arg.id;}); if(i2>-1) db.resep[i2]=arg; saveLocalDb(db); resolve({success:true}); return; }
+          if(fn === "deleteResep"){ db.resep = db.resep.filter(function(x){return x.id!==arg;}); saveLocalDb(db); resolve({success:true}); return; }
+          if(fn === "addProduk"){ arg.id = makeId("p"); db.produk.push(arg); saveLocalDb(db); resolve({success:true,id:arg.id}); return; }
+          if(fn === "updateProduk"){ var i3=db.produk.findIndex(function(x){return x.id===arg.id;}); if(i3>-1) db.produk[i3]=arg; saveLocalDb(db); resolve({success:true}); return; }
+          if(fn === "deleteProduk"){ db.produk = db.produk.filter(function(x){return x.id!==arg;}); saveLocalDb(db); resolve({success:true}); return; }
+          if(fn === "bulkAddProduk"){ arg.forEach(function(row){ row.id = makeId("p"); db.produk.push(row); }); saveLocalDb(db); resolve({success:true,count:arg.length}); return; }
+          if(fn === "bulkAssignResep"){ db.produk.forEach(function(row){ if(arg.ids.indexOf(row.id)>-1) row.resepId = arg.resepId; }); saveLocalDb(db); resolve({success:true,count:arg.ids.length}); return; }
+          if(fn === "addProduksi"){ arg.id = makeId("prod"); db.produksi.push(arg); saveLocalDb(db); resolve({success:true,id:arg.id}); return; }
+          if(fn === "deleteProduksi"){ db.produksi = db.produksi.filter(function(x){return x.id!==arg;}); saveLocalDb(db); resolve({success:true}); return; }
+          resolve({success:true});
+        }catch(err){ reject(err.message||"Gagal"); }
+      }, 150);
+      return;
+    }
+
+    if(fn === "getData"){
+      fetch(GAS_URL + "?action=getData")
+        .then(function(res){ return res.json(); })
+        .then(resolve).catch(reject);
+      return;
+    }
+    fetch(GAS_URL, { method:"POST", body: JSON.stringify({ action: fn, payload: arg }) })
+      .then(function(res){ return res.json(); })
+      .then(function(result){
+        if(result && result.success === false){ reject(result.error || "Gagal"); return; }
+        resolve(result);
+      }).catch(reject);
+  });
+}
+
+// ── STATE ──
+var state = {
+  bahanBaku: [], resep: [], produk: [], produksi: [],
+  currentItems: [],
+  editingResepId: null, resepLines: [],
+  editingBahanId: null,
+  editingProdukId: null,
+  produkFilterKategori: "", produkFilterResep: "", selectedProdukIds: {},
+  importHeaders: [], importRows: [], importMapping: {}
+};
+
+// ── HELPERS ──
+function toYMDLocal(d){ var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+dd; }
+function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString("id-ID"); }
+function fmtNum(n){ return (Number(n)||0).toLocaleString("id-ID"); }
+function fmtDate(iso){ if(!iso) return "—"; var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; return d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}); }
+function escapeHtml(str){ var d=document.createElement("div"); d.textContent=str||""; return d.innerHTML; }
+function showToast(msg, dur){ dur=dur||2800; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
+function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text || "Memuat…"; }
+function kpiCard(label, value){ return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div></div>'; }
+
+function lineBiaya(l){
+  var jd = Number(l.jumlahDihasilkan);
+  if(!jd || jd<=0) jd = 1;
+  return (Number(l.hargaBeli)||0) / jd;
+}
+function lineQtyPerUnit(l){
+  var jd = Number(l.jumlahDihasilkan);
+  if(!jd || jd<=0) jd = 1;
+  var kb = l.kuantitasPembelian;
+  kb = (kb===""||kb===undefined||kb===null) ? 1 : Number(kb)||0;
+  return kb / jd;
+}
+function fmtQty(n){
+  n = Number(n)||0;
+  var rounded = Math.round(n*100)/100;
+  return rounded.toLocaleString("id-ID", { maximumFractionDigits:2 });
+}
+function resepTotalHPP(resep){
+  return (resep && resep.lines ? resep.lines : []).reduce(function(s,l){ return s+lineBiaya(l); }, 0);
+}
+function findResep(id){ return state.resep.find(function(r){ return r.id===id; }); }
+function findProduk(id){ return state.produk.find(function(p){ return p.id===id; }); }
+
+function computeBahanBreakdown(items){
+  var map = {};
+  items.forEach(function(it){
+    var resep = findResep(it.resepId);
+    if(!resep) return;
+    var jumlah = Number(it.jumlah)||0;
+    (resep.lines||[]).forEach(function(l){
+      var biaya = lineBiaya(l) * jumlah;
+      var qty = lineQtyPerUnit(l) * jumlah;
+      var satuan = (l.satuan||"").trim();
+      var key = (l.namaBahan || "(Tanpa nama)") + "||" + satuan;
+      if(!map[key]) map[key] = { namaBahan:l.namaBahan||"(Tanpa nama)", satuan:satuan, totalBiaya:0, totalQty:0 };
+      map[key].totalBiaya += biaya;
+      map[key].totalQty += qty;
+    });
+  });
+  return Object.keys(map).map(function(k){ return map[k]; })
+    .sort(function(a,b){ return b.totalBiaya-a.totalBiaya; });
+}
+function renderBahanBreakdownInto(elId, breakdown){
+  if(!breakdown.length){ $(elId).innerHTML = '<div class="stat-empty">Belum ada item produksi.</div>'; return; }
+  $(elId).innerHTML = '<table style="width:100%;border-collapse:collapse">'
+    + '<thead><tr>'
+    +   '<th style="text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:6px 4px;border-bottom:1px solid var(--gray-100)">Bahan</th>'
+    +   '<th style="text-align:right;font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:6px 4px;border-bottom:1px solid var(--gray-100)">Kuantitas Terpakai</th>'
+    +   '<th style="text-align:right;font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:6px 4px;border-bottom:1px solid var(--gray-100)">Total Biaya</th>'
+    + '</tr></thead><tbody>'
+    + breakdown.map(function(b){
+        var hasSatuan = b.satuan && b.satuan !== "-";
+        var qtyCell = hasSatuan ? (fmtQty(b.totalQty)+" "+escapeHtml(b.satuan)) : '<span style="color:var(--gray-400)">-</span>';
+        return '<tr>'
+          + '<td style="padding:7px 4px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--gray-100)">'+escapeHtml(b.namaBahan)+'</td>'
+          + '<td style="padding:7px 4px;font-size:12.5px;text-align:right;color:var(--gray-600);border-bottom:1px solid var(--gray-100);white-space:nowrap">'+qtyCell+'</td>'
+          + '<td style="padding:7px 4px;font-size:12.5px;text-align:right;font-weight:600;border-bottom:1px solid var(--gray-100);white-space:nowrap">'+fmtRp(b.totalBiaya)+'</td>'
+          + '</tr>';
+      }).join("")
+    + '</tbody></table>';
+}
+
+// ── DATA LOAD ──
+function loadAll(){
+  setLoading(true, "Memuat data…");
+  callGS("getData").then(function(data){
+    state.bahanBaku = data.bahanBaku || [];
+    state.resep = data.resep || [];
+    state.produk = data.produk || [];
+    state.produksi = data.produksi || [];
+    setLoading(false);
+    renderAll();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memuat data"); });
+}
+function renderAll(){
+  refreshResepDropdowns();
+  refreshProdukDatalist();
+  renderInputTable();
+  renderRiwayat();
+  renderResepTable();
+  renderBahanTable();
+  renderProdukTable();
+  $("topbarSub").textContent = state.bahanBaku.length+" bahan baku · "+state.resep.length+" resep · "+state.produk.length+" produk · "+state.produksi.length+" laporan produksi";
+}
+
+// ── TABS ──
+document.querySelectorAll(".tab-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    $("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ══════════════════ TAB: INPUT PRODUKSI ══════════════════
+$("ipTanggal").value = toYMDLocal(new Date());
+
+function refreshResepDropdowns(){
+  var opts = '<option value="">-- Pilih Resep --</option>' + state.resep.slice().sort(function(a,b){return a.nama.localeCompare(b.nama);}).map(function(r){
+    return '<option value="'+r.id+'">'+escapeHtml(r.nama)+' ('+escapeHtml(r.kategori||"-")+')</option>';
+  }).join("");
+  document.querySelectorAll(".js-resep-select").forEach(function(sel){
+    var cur = sel.value;
+    sel.innerHTML = opts;
+    if(cur) sel.value = cur;
+  });
+  var optsFilter = '<option value="">Semua Resep</option><option value="__unset__">Belum Dipetakan</option>' + state.resep.slice().sort(function(a,b){return a.nama.localeCompare(b.nama);}).map(function(r){
+    return '<option value="'+r.id+'">'+escapeHtml(r.nama)+'</option>';
+  }).join("");
+  document.querySelectorAll(".js-resep-select-filter").forEach(function(sel){
+    var cur = sel.value;
+    sel.innerHTML = optsFilter;
+    if(cur) sel.value = cur;
+  });
+}
+function refreshProdukDatalist(){
+  $("produkDatalist").innerHTML = state.produk.map(function(p){ return '<option value="'+escapeHtml(p.nama)+'">'; }).join("");
+}
+
+$("ipNamaProduk").addEventListener("change", function(){
+  var v = $("ipNamaProduk").value.trim().toLowerCase();
+  var p = state.produk.find(function(x){ return x.nama && x.nama.toLowerCase()===v; });
+  if(p && p.resepId){ $("ipResep").value = p.resepId; }
+});
+$("ipAddBtn").addEventListener("click", function(){
+  var namaProduk = $("ipNamaProduk").value.trim();
+  var resepId = $("ipResep").value;
+  var jumlah = Number($("ipJumlah").value)||0;
+  if(!resepId){ showToast("Pilih resep dulu"); return; }
+  if(jumlah<=0){ showToast("Isi jumlah produksi"); return; }
+  var resep = findResep(resepId);
+  if(!resep){ showToast("Resep tidak ditemukan"); return; }
+  var produkMatch = state.produk.find(function(p){ return p.nama && p.nama.toLowerCase()===namaProduk.toLowerCase(); });
+  var hppUnit = resepTotalHPP(resep);
+  state.currentItems.push({
+    produkId: produkMatch ? produkMatch.id : null,
+    namaProduk: namaProduk || resep.nama,
+    resepId: resep.id, namaResep: resep.nama,
+    jumlah: jumlah, hppUnit: hppUnit, subtotal: hppUnit*jumlah
+  });
+  $("ipNamaProduk").value=""; $("ipJumlah").value=""; $("ipResep").value="";
+  renderInputTable();
+});
+function renderInputTable(){
+  var tbody = $("ipItemsBody"); tbody.innerHTML = "";
+  $("ipEmpty").style.display = state.currentItems.length ? "none" : "block";
+  var totalUnit = state.currentItems.reduce(function(s,it){ return s+(Number(it.jumlah)||0); },0);
+  var totalBiaya = state.currentItems.reduce(function(s,it){ return s+it.subtotal; },0);
+  state.currentItems.forEach(function(it, idx){
+    var pct = totalBiaya>0 ? (it.subtotal/totalBiaya*100) : 0;
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>"+escapeHtml(it.namaProduk||"(Tanpa nama)")+"</td>"
+      +"<td>"+escapeHtml(it.namaResep)+"</td>"
+      +"<td>"+fmtNum(it.jumlah)+"</td>"
+      +"<td>"+fmtRp(it.hppUnit)+"</td>"
+      +"<td>"+fmtRp(it.subtotal)+"</td>"
+      +"<td>"+pct.toFixed(1)+"%</td>"
+      +'<td><div class="row-actions"><button class="del-btn" data-idx="'+idx+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){
+    b.addEventListener("click", function(){ state.currentItems.splice(Number(b.dataset.idx),1); renderInputTable(); });
+  });
+  renderBahanBreakdownInto("ipBahanBreakdown", computeBahanBreakdown(state.currentItems));
+  $("ipTotalUnit").textContent = fmtNum(totalUnit);
+  $("ipTotalBiaya").textContent = fmtRp(totalBiaya);
+}
+$("ipResetBtn").addEventListener("click", function(){
+  if(state.currentItems.length && !confirm("Kosongkan semua item produksi yang belum disimpan?")) return;
+  state.currentItems = []; $("ipCatatan").value=""; renderInputTable();
+});
+$("ipSaveBtn").addEventListener("click", function(){
+  if(!state.currentItems.length){ showToast("Tambahkan minimal 1 item produksi"); return; }
+  var tanggal = $("ipTanggal").value || toYMDLocal(new Date());
+  var breakdown = computeBahanBreakdown(state.currentItems);
+  var totalUnit = state.currentItems.reduce(function(s,it){ return s+(Number(it.jumlah)||0); },0);
+  var totalBiaya = state.currentItems.reduce(function(s,it){ return s+it.subtotal; },0);
+  var payload = { tanggal:tanggal, catatan:$("ipCatatan").value.trim(), items:state.currentItems, bahanTerpakai:breakdown, totalUnit:totalUnit, totalBiaya:totalBiaya };
+  setLoading(true, "Menyimpan laporan produksi…");
+  callGS("addProduksi", payload).then(function(res){
+    payload.id = res.id;
+    state.produksi.push(payload);
+    setLoading(false);
+    showToast("✓ Laporan produksi disimpan");
+    state.currentItems = [];
+    $("ipCatatan").value = "";
+    renderInputTable();
+    renderRiwayat();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+});
+
+// ══════════════════ TAB: RIWAYAT ══════════════════
+function getFilteredProduksi(){
+  var from = $("rwFrom").value, to = $("rwTo").value, q = ($("rwSearch").value||"").trim().toLowerCase();
+  return state.produksi.filter(function(r){
+    if(from && (r.tanggal||"") < from) return false;
+    if(to && (r.tanggal||"") > to) return false;
+    if(q && (r.catatan||"").toLowerCase().indexOf(q)===-1) return false;
+    return true;
+  });
+}
+function renderRiwayat(){
+  var rows = getFilteredProduksi().slice().sort(function(a,b){ return (b.tanggal||"").localeCompare(a.tanggal||""); });
+  var totalBatch = rows.length;
+  var totalUnit = rows.reduce(function(s,r){ return s+(Number(r.totalUnit)||0); },0);
+  var totalBiaya = rows.reduce(function(s,r){ return s+(Number(r.totalBiaya)||0); },0);
+  var avgBiaya = totalUnit ? totalBiaya/totalUnit : 0;
+  $("rwKpiGrid").innerHTML = [
+    kpiCard("Jumlah Batch Produksi", fmtNum(totalBatch)),
+    kpiCard("Total Unit Diproduksi", fmtNum(totalUnit)),
+    kpiCard("Total Biaya Produksi", fmtRp(totalBiaya)),
+    kpiCard("Rata-rata Biaya / Unit", fmtRp(avgBiaya))
+  ].join("");
+  var tbody = $("rwBody"); tbody.innerHTML = "";
+  $("rwEmpty").style.display = rows.length ? "none" : "block";
+  rows.forEach(function(r){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>"+fmtDate(r.tanggal)+"</td>"
+      +'<td class="cell-wrap">'+escapeHtml(r.catatan||"—")+'</td>'
+      +"<td>"+(r.items?r.items.length:0)+"</td>"
+      +"<td>"+fmtNum(r.totalUnit)+"</td>"
+      +"<td>"+fmtRp(r.totalBiaya)+"</td>"
+      +'<td><div class="row-actions"><button class="detail-btn" data-id="'+r.id+'">Detail</button><button class="del-btn" data-id="'+r.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".detail-btn").forEach(function(b){ b.addEventListener("click", function(){ openRiwayatDetail(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteProduksi(b.dataset.id); }); });
+}
+["rwFrom","rwTo","rwSearch"].forEach(function(id){ $(id).addEventListener("input", renderRiwayat); });
+$("rwClearBtn").addEventListener("click", function(){ $("rwFrom").value=""; $("rwTo").value=""; $("rwSearch").value=""; renderRiwayat(); });
+function openRiwayatDetail(id){
+  var r = state.produksi.find(function(x){ return x.id===id; });
+  if(!r) return;
+  $("rwDetailMeta").textContent = fmtDate(r.tanggal) + (r.catatan? " · "+r.catatan : "");
+  var rTotalBiaya = Number(r.totalBiaya)||0;
+  $("rwDetailItems").innerHTML = (r.items||[]).map(function(it){
+    var pct = rTotalBiaya>0 ? (it.subtotal/rTotalBiaya*100) : 0;
+    return "<tr><td>"+escapeHtml(it.namaProduk||"")+"</td><td>"+escapeHtml(it.namaResep||"")+"</td><td>"+fmtNum(it.jumlah)+"</td><td>"+fmtRp(it.hppUnit)+"</td><td>"+fmtRp(it.subtotal)+"</td><td>"+pct.toFixed(1)+"%</td></tr>";
+  }).join("") || '<tr><td colspan="6" style="text-align:center;color:var(--gray-400)">Tidak ada item</td></tr>';
+  renderBahanBreakdownInto("rwDetailBahan", r.bahanTerpakai || []);
+  $("riwayatDetailModal").classList.add("open");
+}
+$("rwDetailCloseBtn").addEventListener("click", function(){ $("riwayatDetailModal").classList.remove("open"); });
+$("riwayatDetailModal").addEventListener("click", function(e){ if(e.target===$("riwayatDetailModal")) $("riwayatDetailModal").classList.remove("open"); });
+function deleteProduksi(id){
+  if(!confirm("Hapus laporan produksi ini?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteProduksi", id).then(function(){
+    state.produksi = state.produksi.filter(function(x){ return x.id!==id; });
+    setLoading(false); showToast("✓ Laporan dihapus"); renderRiwayat();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+
+// ══════════════════ TAB: RESEP PRODUK ══════════════════
+function makeRowId(){ return "rl"+Date.now()+Math.random().toString(36).slice(2,7); }
+function renderResepTable(){
+  var q = ($("resepSearch").value||"").trim().toLowerCase();
+  var rows = state.resep.filter(function(r){ return !q || (r.nama||"").toLowerCase().indexOf(q)>-1; })
+    .slice().sort(function(a,b){ return (a.nama||"").localeCompare(b.nama||""); });
+  var tbody = $("resepBody"); tbody.innerHTML = "";
+  $("resepEmpty").style.display = rows.length ? "none" : "block";
+  rows.forEach(function(r){
+    var cls = (r.kategori||"").toLowerCase()==="arnoux" ? "arnoux" : ((r.kategori||"").toLowerCase()==="non brand" ? "non-brand" : "");
+    var badge = cls ? '<span class="badge '+cls+'"><span class="badge-dot"></span>'+escapeHtml(r.kategori)+'</span>' : escapeHtml(r.kategori||"-");
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td><b>"+escapeHtml(r.nama)+"</b></td>"
+      +"<td>"+badge+"</td>"
+      +"<td>"+(r.lines?r.lines.length:0)+"</td>"
+      +"<td><b>"+fmtRp(resepTotalHPP(r))+"</b></td>"
+      +'<td><div class="row-actions"><button class="dup-btn" data-id="'+r.id+'">Duplikat</button><button class="edit-btn" data-id="'+r.id+'">Edit</button><button class="del-btn" data-id="'+r.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openResepModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".dup-btn").forEach(function(b){ b.addEventListener("click", function(){ openResepModal(null, b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteResep(b.dataset.id); }); });
+}
+$("resepSearch").addEventListener("input", renderResepTable);
+
+function renderResepLines(){
+  var wrap = $("resepLinesWrap");
+  if(!state.resepLines.length){
+    wrap.innerHTML = '<div class="repeat-empty">Belum ada bahan. Klik "+ Tambah Bahan".</div>';
+  } else {
+    wrap.innerHTML = state.resepLines.map(function(l){
+      return '<div class="repeat-row" data-rid="'+l._rid+'">'
+        +'<div class="rl-row1">'
+          +'<input class="rl-nama" list="bahanBakuDatalist" placeholder="Nama bahan" value="'+escapeHtml(l.namaBahan||"")+'"/>'
+          +'<input class="rl-harga" type="number" placeholder="Harga beli (Rp)" value="'+(l.hargaBeli||l.hargaBeli===0?l.hargaBeli:"")+'"/>'
+          +'<input class="rl-kuantitas" type="number" step="any" placeholder="Qty beli" value="'+(l.kuantitasPembelian===0?0:(l.kuantitasPembelian||""))+'"/>'
+          +'<input class="rl-satuan" type="text" placeholder="Satuan" value="'+escapeHtml(l.satuan||"")+'"/>'
+          +'<input class="rl-jumlah" type="number" placeholder="Jml dihasilkan" value="'+(l.jumlahDihasilkan||"")+'"/>'
+          +'<span class="rl-biaya">'+fmtRp(lineBiaya(l))+'/unit</span>'
+          +'<button type="button" class="repeat-row-remove" title="Hapus baris">×</button>'
+        +'</div>'
+        +'<div class="rl-row2">'
+          +'<input class="rl-ket" type="text" placeholder="Keterangan (opsional)" value="'+escapeHtml(l.keterangan||"")+'"/>'
+          +'<span class="rl-qtyunit">≈ '+fmtQty(lineQtyPerUnit(l))+' '+escapeHtml(l.satuan&&l.satuan!=="-"?l.satuan:"")+' / unit</span>'
+        +'</div>'
+        +'</div>';
+    }).join("");
+  }
+  updateResepTotalLabel();
+}
+function updateLinesFromDOM(){
+  document.querySelectorAll("#resepLinesWrap .repeat-row").forEach(function(el){
+    var rid = el.dataset.rid;
+    var line = state.resepLines.find(function(l){ return l._rid===rid; });
+    if(!line) return;
+    line.namaBahan = el.querySelector(".rl-nama").value;
+    line.hargaBeli = Number(el.querySelector(".rl-harga").value)||0;
+    var kbVal = el.querySelector(".rl-kuantitas").value;
+    line.kuantitasPembelian = kbVal==="" ? 1 : (Number(kbVal)||0);
+    line.satuan = el.querySelector(".rl-satuan").value;
+    line.jumlahDihasilkan = Number(el.querySelector(".rl-jumlah").value)||0;
+    line.keterangan = el.querySelector(".rl-ket").value;
+    el.querySelector(".rl-biaya").textContent = fmtRp(lineBiaya(line))+"/unit";
+    el.querySelector(".rl-qtyunit").textContent = "≈ "+fmtQty(lineQtyPerUnit(line))+" "+(line.satuan&&line.satuan!=="-"?line.satuan:"")+" / unit";
+  });
+  updateResepTotalLabel();
+}
+function updateResepTotalLabel(){
+  var total = state.resepLines.reduce(function(s,l){ return s+lineBiaya(l); },0);
+  $("resepTotalLabel").textContent = fmtRp(total);
+}
+$("resepLinesWrap").addEventListener("input", updateLinesFromDOM);
+$("resepLinesWrap").addEventListener("click", function(e){
+  if(e.target.classList.contains("repeat-row-remove")){
+    var rid = e.target.closest(".repeat-row").dataset.rid;
+    updateLinesFromDOM();
+    state.resepLines = state.resepLines.filter(function(l){ return l._rid!==rid; });
+    renderResepLines();
+  }
+});
+$("addResepLineBtn").addEventListener("click", function(){
+  updateLinesFromDOM();
+  state.resepLines.push({ _rid:makeRowId(), namaBahan:"", hargaBeli:0, kuantitasPembelian:1, satuan:"", jumlahDihasilkan:1, keterangan:"" });
+  renderResepLines();
+});
+function normalizeResepLine(l){
+  var line = Object.assign({ _rid:makeRowId() }, l);
+  if(line.kuantitasPembelian===undefined || line.kuantitasPembelian===null || line.kuantitasPembelian===""){
+    line.kuantitasPembelian = 1;
+  }
+  if(!line.satuan){
+    var match = state.bahanBaku.find(function(b){ return b.nama && line.namaBahan && b.nama.trim().toLowerCase()===line.namaBahan.trim().toLowerCase(); });
+    line.satuan = match ? (match.satuan||"") : "";
+  }
+  return line;
+}
+function openResepModal(id, duplicateFromId){
+  state.editingResepId = id || null;
+  $("rErrNama").style.display = "none";
+  refreshBahanDatalist();
+  if(id){
+    var r = state.resep.find(function(x){ return x.id===id; });
+    $("resepModalTitle").textContent = "Edit Resep";
+    $("rNama").value = r.nama||""; $("rKategori").value = r.kategori||"Arnoux"; $("rCatatan").value = r.catatan||"";
+    state.resepLines = (r.lines||[]).map(normalizeResepLine);
+  } else if(duplicateFromId){
+    var src = state.resep.find(function(x){ return x.id===duplicateFromId; });
+    $("resepModalTitle").textContent = "Duplikat Resep";
+    $("rNama").value = (src.nama||"")+" (Copy)"; $("rKategori").value = src.kategori||"Arnoux"; $("rCatatan").value = src.catatan||"";
+    state.resepLines = (src.lines||[]).map(normalizeResepLine);
+  } else {
+    $("resepModalTitle").textContent = "Tambah Resep";
+    $("rNama").value = ""; $("rKategori").value = "Arnoux"; $("rCatatan").value = "";
+    state.resepLines = [];
+  }
+  renderResepLines();
+  $("resepModal").classList.add("open");
+  $("rNama").focus();
+}
+function closeResepModal(){ $("resepModal").classList.remove("open"); state.editingResepId = null; }
+$("addResepBtn").addEventListener("click", function(){ openResepModal(); });
+$("resepCancelBtn").addEventListener("click", closeResepModal);
+$("resepModal").addEventListener("click", function(e){ if(e.target===$("resepModal")) closeResepModal(); });
+$("resepSaveBtn").addEventListener("click", function(){
+  updateLinesFromDOM();
+  var nama = $("rNama").value.trim();
+  if(!nama){ $("rErrNama").style.display = "block"; return; }
+  $("rErrNama").style.display = "none";
+  var lines = state.resepLines.map(function(l){ return { namaBahan:l.namaBahan, hargaBeli:l.hargaBeli, kuantitasPembelian:l.kuantitasPembelian, satuan:l.satuan, jumlahDihasilkan:l.jumlahDihasilkan, keterangan:l.keterangan }; })
+    .filter(function(l){ return l.namaBahan && l.namaBahan.trim(); });
+  var payload = { nama:nama, kategori:$("rKategori").value, catatan:$("rCatatan").value.trim(), lines:lines };
+  var isEdit = !!state.editingResepId;
+  if(isEdit) payload.id = state.editingResepId;
+  setLoading(true, "Menyimpan resep…");
+  callGS(isEdit ? "updateResep" : "addResep", payload).then(function(res){
+    if(isEdit){ var idx = state.resep.findIndex(function(x){ return x.id===payload.id; }); if(idx>-1) state.resep[idx]=payload; showToast("✓ Resep diperbarui"); }
+    else { payload.id = res.id; state.resep.push(payload); showToast("✓ Resep ditambahkan"); }
+    closeResepModal(); setLoading(false); refreshResepDropdowns(); renderResepTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan resep"); });
+});
+function deleteResep(id){
+  if(!confirm("Hapus resep ini? Produk yang sudah dipetakan ke resep ini akan menjadi 'Belum Dipetakan'.")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteResep", id).then(function(){
+    state.resep = state.resep.filter(function(x){ return x.id!==id; });
+    setLoading(false); showToast("✓ Resep dihapus");
+    refreshResepDropdowns(); renderResepTable(); renderProdukTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+$("seedResepBtn").addEventListener("click", function(){
+  if(!confirm("Tambahkan "+SEED_RESEP.length+" resep contoh (Jok Arnoux & Non Brand) dari data yang diunggah? Ini tidak akan menghapus resep yang sudah ada.")) return;
+  setLoading(true, "Menambahkan resep contoh…");
+  var i=0;
+  function next(){
+    if(i>=SEED_RESEP.length){ setLoading(false); showToast("✓ "+SEED_RESEP.length+" resep contoh ditambahkan"); refreshResepDropdowns(); renderResepTable(); return; }
+    var payload = JSON.parse(JSON.stringify(SEED_RESEP[i]));
+    callGS("addResep", payload).then(function(res){ payload.id = res.id; state.resep.push(payload); i++; next(); })
+      .catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menambahkan resep contoh"); });
+  }
+  next();
+});
+$("repairResepBtn").addEventListener("click", function(){
+  var toFix = [];
+  state.resep.forEach(function(r){
+    var changed = false;
+    var newLines = (r.lines||[]).map(function(l){
+      var line = Object.assign({}, l);
+      if(line.kuantitasPembelian===undefined || line.kuantitasPembelian===null || line.kuantitasPembelian===""){
+        line.kuantitasPembelian = 1; changed = true;
+      }
+      if(!line.satuan){
+        var match = state.bahanBaku.find(function(b){ return b.nama && line.namaBahan && b.nama.trim().toLowerCase()===line.namaBahan.trim().toLowerCase(); });
+        if(match && match.satuan){ line.satuan = match.satuan; changed = true; }
+      }
+      return line;
+    });
+    if(changed) toFix.push({ resep:r, lines:newLines });
+  });
+  if(!toFix.length){ showToast("Semua resep sudah lengkap data satuan/kuantitasnya"); return; }
+  if(!confirm("Perbaiki "+toFix.length+" resep yang belum lengkap datanya? Satuan & kuantitas akan diisi otomatis berdasarkan nama bahan yang cocok di Bahan Baku (bahan yang tidak ditemukan cocoknya di Bahan Baku tetap perlu diisi manual).")) return;
+  setLoading(true, "Memperbaiki data resep…");
+  var i=0;
+  function next(){
+    if(i>=toFix.length){ setLoading(false); showToast("✓ "+toFix.length+" resep diperbaiki"); renderResepTable(); renderInputTable(); return; }
+    var item = toFix[i];
+    var payload = { id:item.resep.id, nama:item.resep.nama, kategori:item.resep.kategori, catatan:item.resep.catatan, lines:item.lines };
+    callGS("updateResep", payload).then(function(){
+      item.resep.lines = item.lines;
+      i++; next();
+    }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal memperbaiki resep"); });
+  }
+  next();
+});
+
+// ══════════════════ TAB: BAHAN BAKU ══════════════════
+function refreshBahanDatalist(){
+  $("bahanBakuDatalist").innerHTML = state.bahanBaku.map(function(b){ return '<option value="'+escapeHtml(b.nama)+'">'; }).join("");
+  var kats = {}; state.bahanBaku.forEach(function(b){ if(b.kategori) kats[b.kategori]=true; });
+  $("bahanKategoriList").innerHTML = Object.keys(kats).map(function(k){ return '<option value="'+escapeHtml(k)+'">'; }).join("");
+}
+$("resepLinesWrap").addEventListener("focusin", function(e){
+  if(!e.target.classList.contains("rl-nama")) return;
+  e.target.addEventListener("change", function handler(){
+    var match = state.bahanBaku.find(function(b){ return b.nama.toLowerCase()===e.target.value.trim().toLowerCase(); });
+    if(match){
+      var row = e.target.closest(".repeat-row");
+      var hargaInput = row.querySelector(".rl-harga");
+      var satuanInput = row.querySelector(".rl-satuan");
+      var kuantitasInput = row.querySelector(".rl-kuantitas");
+      if(!hargaInput.value || Number(hargaInput.value)===0){ hargaInput.value = match.harga; }
+      if(!satuanInput.value){ satuanInput.value = match.satuan||""; }
+      if(!kuantitasInput.value){ kuantitasInput.value = 1; }
+      updateLinesFromDOM();
+    }
+    e.target.removeEventListener("change", handler);
+  }, {once:true});
+}, true);
+
+function renderBahanTable(){
+  var q = ($("bahanSearch").value||"").trim().toLowerCase();
+  var rows = state.bahanBaku.filter(function(b){ return !q || (b.nama||"").toLowerCase().indexOf(q)>-1 || (b.kategori||"").toLowerCase().indexOf(q)>-1; })
+    .slice().sort(function(a,b){ return (a.kategori||"").localeCompare(b.kategori||"") || (a.nama||"").localeCompare(b.nama||""); });
+  var tbody = $("bahanBody"); tbody.innerHTML = "";
+  $("bahanEmpty").style.display = rows.length ? "none" : "block";
+  rows.forEach(function(b){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>"+escapeHtml(b.kategori||"-")+"</td>"
+      +"<td><b>"+escapeHtml(b.nama)+"</b></td>"
+      +"<td>"+fmtRp(b.harga)+"</td>"
+      +"<td>"+escapeHtml(b.satuan||"-")+"</td>"
+      +'<td><div class="row-actions"><button class="edit-btn" data-id="'+b.id+'">Edit</button><button class="del-btn" data-id="'+b.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openBahanModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteBahan(b.dataset.id); }); });
+}
+$("bahanSearch").addEventListener("input", renderBahanTable);
+function openBahanModal(id){
+  state.editingBahanId = id || null;
+  $("bErrNama").style.display = "none";
+  refreshBahanDatalist();
+  if(id){
+    var b = state.bahanBaku.find(function(x){ return x.id===id; });
+    $("bahanModalTitle").textContent = "Edit Bahan Baku";
+    $("bKategori").value = b.kategori||""; $("bNama").value = b.nama||""; $("bHarga").value = b.harga||""; $("bSatuan").value = b.satuan||"";
+  } else {
+    $("bahanModalTitle").textContent = "Tambah Bahan Baku";
+    $("bKategori").value=""; $("bNama").value=""; $("bHarga").value=""; $("bSatuan").value="";
+  }
+  $("bahanModal").classList.add("open");
+  $("bNama").focus();
+}
+function closeBahanModal(){ $("bahanModal").classList.remove("open"); state.editingBahanId = null; }
+$("addBahanBtn").addEventListener("click", function(){ openBahanModal(); });
+$("bahanCancelBtn").addEventListener("click", closeBahanModal);
+$("bahanModal").addEventListener("click", function(e){ if(e.target===$("bahanModal")) closeBahanModal(); });
+$("bahanSaveBtn").addEventListener("click", function(){
+  var nama = $("bNama").value.trim();
+  if(!nama){ $("bErrNama").style.display = "block"; return; }
+  $("bErrNama").style.display = "none";
+  var payload = { kategori:$("bKategori").value.trim(), nama:nama, harga:Number($("bHarga").value)||0, satuan:$("bSatuan").value.trim() };
+  var isEdit = !!state.editingBahanId;
+  if(isEdit) payload.id = state.editingBahanId;
+  setLoading(true, "Menyimpan…");
+  callGS(isEdit ? "updateBahanBaku" : "addBahanBaku", payload).then(function(res){
+    if(isEdit){ var idx = state.bahanBaku.findIndex(function(x){ return x.id===payload.id; }); if(idx>-1) state.bahanBaku[idx]=payload; showToast("✓ Bahan diperbarui"); }
+    else { payload.id = res.id; state.bahanBaku.push(payload); showToast("✓ Bahan ditambahkan"); }
+    closeBahanModal(); setLoading(false); renderBahanTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+});
+function deleteBahan(id){
+  if(!confirm("Hapus bahan baku ini dari daftar harga?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteBahanBaku", id).then(function(){
+    state.bahanBaku = state.bahanBaku.filter(function(x){ return x.id!==id; });
+    setLoading(false); showToast("✓ Bahan dihapus"); renderBahanTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+$("seedBahanBtn").addEventListener("click", function(){
+  if(!confirm("Tambahkan "+SEED_BAHAN_BAKU.length+" bahan baku contoh dari data yang diunggah? Ini tidak akan menghapus data yang sudah ada.")) return;
+  setLoading(true, "Menambahkan bahan baku contoh…");
+  var i=0;
+  function next(){
+    if(i>=SEED_BAHAN_BAKU.length){ setLoading(false); showToast("✓ "+SEED_BAHAN_BAKU.length+" bahan baku contoh ditambahkan"); renderBahanTable(); return; }
+    var payload = Object.assign({}, SEED_BAHAN_BAKU[i]);
+    callGS("addBahanBaku", payload).then(function(res){ payload.id = res.id; state.bahanBaku.push(payload); i++; next(); })
+      .catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menambahkan bahan contoh"); });
+  }
+  next();
+});
+
+// ══════════════════ TAB: DATA PRODUK (SKU) ══════════════════
+function getFilteredProduk(){
+  var q = ($("produkSearch").value||"").trim().toLowerCase();
+  var katF = $("produkFilterKategori").value;
+  var resepF = $("produkFilterResep").value;
+  return state.produk.filter(function(p){
+    var matchQ = !q || (p.nama||"").toLowerCase().indexOf(q)>-1 || (p.bahanKain||"").toLowerCase().indexOf(q)>-1;
+    var matchKat = !katF || p.kategori===katF;
+    var matchResep = !resepF || (resepF==="__unset__" ? !p.resepId : p.resepId===resepF);
+    return matchQ && matchKat && matchResep;
+  });
+}
+function renderProdukTable(){
+  var rows = getFilteredProduk().slice().sort(function(a,b){ return (a.nama||"").localeCompare(b.nama||""); });
+  var tbody = $("produkBody"); tbody.innerHTML = "";
+  $("produkEmpty").style.display = rows.length ? "none" : "block";
+  rows.forEach(function(p){
+    var resep = findResep(p.resepId);
+    var resepCell = resep ? '<span class="resep-tag">'+escapeHtml(resep.nama)+'</span>' : '<span class="resep-tag unset">Belum Dipetakan</span>';
+    var checked = state.selectedProdukIds[p.id] ? "checked" : "";
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td class="checkbox-cell"><input type="checkbox" class="produk-check" data-id="'+p.id+'" '+checked+'/></td>'
+      +"<td>"+escapeHtml(p.kategori||"-")+"</td>"
+      +'<td class="cell-wrap">'+escapeHtml(p.bahanKain||"-")+'</td>'
+      +"<td><b>"+escapeHtml(p.nama)+"</b></td>"
+      +"<td>"+escapeHtml(p.satuan||"-")+"</td>"
+      +"<td>"+resepCell+"</td>"
+      +'<td><div class="row-actions"><button class="edit-btn" data-id="'+p.id+'">Edit</button><button class="del-btn" data-id="'+p.id+'">Hapus</button></div></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll(".edit-btn").forEach(function(b){ b.addEventListener("click", function(){ openProdukModal(b.dataset.id); }); });
+  tbody.querySelectorAll(".del-btn").forEach(function(b){ b.addEventListener("click", function(){ deleteProduk(b.dataset.id); }); });
+  tbody.querySelectorAll(".produk-check").forEach(function(cb){
+    cb.addEventListener("change", function(){
+      if(cb.checked) state.selectedProdukIds[cb.dataset.id]=true; else delete state.selectedProdukIds[cb.dataset.id];
+      updateBulkBar();
+    });
+  });
+  updateBulkBar();
+}
+["produkSearch"].forEach(function(id){ $(id).addEventListener("input", renderProdukTable); });
+$("produkFilterKategori").addEventListener("change", renderProdukTable);
+$("produkFilterResep").addEventListener("change", renderProdukTable);
+$("produkSelectAll").addEventListener("change", function(){
+  var rows = getFilteredProduk();
+  if($("produkSelectAll").checked){ rows.forEach(function(p){ state.selectedProdukIds[p.id]=true; }); }
+  else { rows.forEach(function(p){ delete state.selectedProdukIds[p.id]; }); }
+  renderProdukTable();
+});
+function updateBulkBar(){
+  var count = Object.keys(state.selectedProdukIds).length;
+  $("bulkBar").style.display = count ? "flex" : "none";
+  $("bulkCountLabel").textContent = count+" produk dipilih";
+}
+$("bulkClearBtn").addEventListener("click", function(){ state.selectedProdukIds = {}; renderProdukTable(); });
+$("bulkApplyBtn").addEventListener("click", function(){
+  var ids = Object.keys(state.selectedProdukIds);
+  var resepId = $("bulkResepSelect").value;
+  if(!ids.length){ showToast("Pilih produk terlebih dahulu"); return; }
+  if(!resepId){ showToast("Pilih resep tujuan"); return; }
+  setLoading(true, "Menerapkan resep ke "+ids.length+" produk…");
+  callGS("bulkAssignResep", { ids:ids, resepId:resepId }).then(function(){
+    state.produk.forEach(function(p){ if(ids.indexOf(p.id)>-1) p.resepId = resepId; });
+    state.selectedProdukIds = {};
+    setLoading(false); showToast("✓ Resep diterapkan ke "+ids.length+" produk"); renderProdukTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menerapkan resep"); });
+});
+function openProdukModal(id){
+  state.editingProdukId = id || null;
+  $("pErrNama").style.display = "none";
+  if(id){
+    var p = state.produk.find(function(x){ return x.id===id; });
+    $("produkModalTitle").textContent = "Edit Produk";
+    $("pKategori").value = p.kategori||"Arnoux"; $("pBahanKain").value = p.bahanKain||""; $("pNama").value = p.nama||"";
+    $("pSatuan").value = p.satuan||"PCS"; $("pResep").value = p.resepId||"";
+  } else {
+    $("produkModalTitle").textContent = "Tambah Produk";
+    $("pKategori").value = "Arnoux"; $("pBahanKain").value=""; $("pNama").value=""; $("pSatuan").value="PCS"; $("pResep").value="";
+  }
+  $("produkModal").classList.add("open");
+  $("pNama").focus();
+}
+function closeProdukModal(){ $("produkModal").classList.remove("open"); state.editingProdukId = null; }
+$("addProdukBtn").addEventListener("click", function(){ openProdukModal(); });
+$("produkCancelBtn").addEventListener("click", closeProdukModal);
+$("produkModal").addEventListener("click", function(e){ if(e.target===$("produkModal")) closeProdukModal(); });
+$("produkSaveBtn").addEventListener("click", function(){
+  var nama = $("pNama").value.trim();
+  if(!nama){ $("pErrNama").style.display = "block"; return; }
+  $("pErrNama").style.display = "none";
+  var payload = { kategori:$("pKategori").value, bahanKain:$("pBahanKain").value.trim(), nama:nama, satuan:$("pSatuan").value.trim()||"PCS", resepId:$("pResep").value||"" };
+  var isEdit = !!state.editingProdukId;
+  if(isEdit) payload.id = state.editingProdukId;
+  setLoading(true, "Menyimpan…");
+  callGS(isEdit ? "updateProduk" : "addProduk", payload).then(function(res){
+    if(isEdit){ var idx = state.produk.findIndex(function(x){ return x.id===payload.id; }); if(idx>-1) state.produk[idx]=payload; showToast("✓ Produk diperbarui"); }
+    else { payload.id = res.id; state.produk.push(payload); showToast("✓ Produk ditambahkan"); }
+    closeProdukModal(); setLoading(false); refreshProdukDatalist(); renderProdukTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menyimpan"); });
+});
+function deleteProduk(id){
+  if(!confirm("Hapus produk ini?")) return;
+  setLoading(true, "Menghapus…");
+  callGS("deleteProduk", id).then(function(){
+    state.produk = state.produk.filter(function(x){ return x.id!==id; });
+    delete state.selectedProdukIds[id];
+    setLoading(false); showToast("✓ Produk dihapus"); refreshProdukDatalist(); renderProdukTable();
+  }).catch(function(err){ console.error(err); setLoading(false); showToast("Gagal menghapus"); });
+}
+
+// ── IMPORT PRODUK (Excel/CSV) ──
+$("toggleImportBtn").addEventListener("click", function(){
+  var el = $("importCard");
+  el.style.display = el.style.display==="none" ? "block" : "none";
+});
+var PRODUK_FIELDS = [
+  { key:"kategori", label:"Kategori Barang", keywords:["kategoribarang","kategori","category"] },
+  { key:"bahanKain", label:"Bahan Kain / Varian", keywords:["bahankain","bahan","kain","fabric","varian"] },
+  { key:"nama", label:"Nama Produk", keywords:["namabarang","nama","product","produk","itemname"] },
+  { key:"satuan", label:"Satuan", keywords:["satuan","unit"] }
+];
+function normalizeHeader(h){ return String(h||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
+function guessProdukMapping(headers){
+  var mapping = {};
+  PRODUK_FIELDS.forEach(function(f){
+    var found = "";
+    for(var i=0;i<headers.length;i++){
+      var norm = normalizeHeader(headers[i]);
+      if(!norm) continue;
+      var isMatch = f.keywords.some(function(kw){ return norm===kw || norm.indexOf(kw)>-1 || kw.indexOf(norm)>-1; });
+      if(isMatch){ found = headers[i]; break; }
+    }
+    mapping[f.key] = found;
+  });
+  return mapping;
+}
+function handleProdukFile(file){
+  if(!file) return;
+  setLoading(true, "Membaca file…");
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var wb = XLSX.read(e.target.result, { type:"array" });
+      var firstSheet = wb.SheetNames[0];
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { header:1, raw:true, defval:"" });
+      rows = rows.filter(function(r){ return r.some(function(c){ return c!==""; }); });
+      if(rows.length < 2){ setLoading(false); showToast("File kosong atau tidak terbaca"); return; }
+      state.importHeaders = rows[0].map(function(h){ return String(h); });
+      state.importRows = rows.slice(1);
+      state.importMapping = guessProdukMapping(state.importHeaders);
+      setLoading(false);
+      $("produkFileChipWrap").innerHTML = '<div class="file-chip">📄 '+escapeHtml(file.name)+' <button id="removeProdukFileBtn">✕</button></div>';
+      $("removeProdukFileBtn").addEventListener("click", resetProdukImport);
+      renderProdukMappingUI();
+      renderProdukPreview();
+      $("produkMappingWrap").style.display = "block";
+    }catch(err){ console.error(err); setLoading(false); showToast("Gagal membaca file: "+err.message); }
+  };
+  reader.onerror = function(){ setLoading(false); showToast("Gagal membaca file"); };
+  reader.readAsArrayBuffer(file);
+}
+function renderProdukMappingUI(){
+  $("produkMappingGrid").innerHTML = PRODUK_FIELDS.map(function(f){
+    var current = state.importMapping[f.key] || "";
+    var opts = '<option value="">-- pilih kolom --</option>' + state.importHeaders.map(function(h){
+      return '<option value="'+escapeHtml(h)+'"'+(h===current?" selected":"")+'>'+escapeHtml(h)+'</option>';
+    }).join("");
+    return '<div class="map-field'+(current?"":" unmapped")+'" data-field="'+f.key+'"><label>'+f.label+'</label><select data-field="'+f.key+'">'+opts+'</select></div>';
+  }).join("");
+  $("produkMappingGrid").querySelectorAll("select").forEach(function(sel){
+    sel.addEventListener("change", function(){
+      state.importMapping[sel.dataset.field] = sel.value;
+      sel.closest(".map-field").classList.toggle("unmapped", !sel.value);
+      renderProdukPreview();
+    });
+  });
+}
+function renderProdukPreview(){
+  var sample = state.importRows.slice(0,5);
+  var headerRow = "<tr>"+PRODUK_FIELDS.map(function(f){ return "<th>"+f.label+"</th>"; }).join("")+"</tr>";
+  var bodyRows = sample.map(function(row){
+    return "<tr>"+PRODUK_FIELDS.map(function(f){
+      var col = state.importHeaders.indexOf(state.importMapping[f.key]);
+      var val = col>-1 ? row[col] : "";
+      return "<td>"+escapeHtml(val)+"</td>";
+    }).join("")+"</tr>";
+  }).join("");
+  $("produkPreviewTable").innerHTML = headerRow + bodyRows;
+}
+function resetProdukImport(){
+  $("produkFileChipWrap").innerHTML = ""; $("produkMappingWrap").style.display = "none";
+  state.importHeaders=[]; state.importRows=[]; state.importMapping={};
+  $("produkFileInput").value = "";
+}
+function importProdukAll(){
+  var missing = PRODUK_FIELDS.filter(function(f){ return f.key!=="satuan" && !state.importMapping[f.key]; });
+  if(missing.length){ showToast("Lengkapi dulu pemetaan kolom: "+missing.map(function(f){return f.label;}).join(", ")); return; }
+  var mapped = state.importRows.map(function(row){
+    var obj = { resepId:"" };
+    PRODUK_FIELDS.forEach(function(f){
+      var col = state.importHeaders.indexOf(state.importMapping[f.key]);
+      var val = col>-1 ? row[col] : "";
+      obj[f.key] = String(val||"").trim();
+    });
+    if(!obj.satuan) obj.satuan = "PCS";
+    return obj;
+  }).filter(function(o){ return o.nama; });
+
+  var CHUNK = 200, total = mapped.length, sent = 0;
+  $("produkImportProgressWrap").style.display = "block";
+  $("produkImportAllBtn").disabled = true;
+  function sendNext(){
+    if(sent>=total){
+      $("produkImportAllBtn").disabled = false;
+      $("produkImportStatus").textContent = "Selesai! "+total+" produk berhasil diimpor.";
+      showToast("✓ "+total+" produk berhasil diimpor");
+      resetProdukImport();
+      $("importCard").style.display = "none";
+      loadAll();
+      return;
+    }
+    var chunk = mapped.slice(sent, sent+CHUNK);
+    $("produkImportStatus").textContent = "Mengimpor "+sent+" / "+total+" produk…";
+    callGS("bulkAddProduk", chunk).then(function(){
+      sent += chunk.length;
+      $("produkProgressFill").style.width = Math.round((sent/total)*100)+"%";
+      sendNext();
+    }).catch(function(err){ console.error(err); $("produkImportAllBtn").disabled = false; showToast("Gagal mengimpor: "+err); });
+  }
+  sendNext();
+}
+$("produkDropzone").addEventListener("click", function(){ $("produkFileInput").click(); });
+$("produkFileInput").addEventListener("change", function(e){ handleProdukFile(e.target.files[0]); });
+$("produkDropzone").addEventListener("dragover", function(e){ e.preventDefault(); $("produkDropzone").classList.add("drag"); });
+$("produkDropzone").addEventListener("dragleave", function(){ $("produkDropzone").classList.remove("drag"); });
+$("produkDropzone").addEventListener("drop", function(e){
+  e.preventDefault(); $("produkDropzone").classList.remove("drag");
+  if(e.dataTransfer.files.length) handleProdukFile(e.dataTransfer.files[0]);
+});
+$("produkImportAllBtn").addEventListener("click", importProdukAll);
+$("produkCancelImportBtn").addEventListener("click", resetProdukImport);
+
+// ── ESC untuk tutup modal ──
+document.addEventListener("keydown", function(e){
+  if(e.key==="Escape"){
+    closeResepModal(); closeBahanModal(); closeProdukModal();
+    $("riwayatDetailModal").classList.remove("open");
+  }
+});
+
+// ── INIT ──
+loadAll();
+</script>
+</body>
+</html>
