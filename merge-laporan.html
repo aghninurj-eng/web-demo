@@ -58,10 +58,11 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .periode-field input{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
 .periode-field input:focus{border-color:var(--blue)}
 
-.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-@media(max-width:760px){.upload-grid{grid-template-columns:1fr}}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:16px}
 .upload-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-.upload-card h3{font-size:14px;margin-bottom:12px}
+.upload-card h3{font-size:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.remove-unit-btn{font-size:10.5px;font-weight:600;color:var(--red);background:#fff;border:1px solid #FCA5A5;border-radius:6px;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.remove-unit-btn:hover{background:var(--red-lt)}
 .upload-card .field{margin-bottom:12px}
 .upload-card .field label{display:block;font-size:11.5px;font-weight:600;color:var(--gray-600);margin-bottom:5px}
 .upload-card .field input[type=text]{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none}
@@ -182,31 +183,9 @@ table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:
         <label>Periode / Judul Laporan (opsional)</label>
         <input type="text" id="fPeriodeLabel" placeholder="mis. 1 - 12 September 2026"/>
       </div>
-      <div class="upload-grid" id="uploadGrid">
-        <div class="upload-card">
-          <h3>🏢 Unit Usaha A</h3>
-          <div class="field"><label>Nama Unit</label><input type="text" id="fNameA" placeholder="mis. Supersub"/></div>
-          <div class="dropzone" id="dropzoneA">
-            <div class="dz-icon">📄</div>
-            <div class="dz-text">Klik atau seret file laporan laba rugi ke sini</div>
-            <div class="dz-sub">.xlsx / .xls / .csv</div>
-          </div>
-          <input type="file" id="fileInputA" accept=".xlsx,.xls,.csv"/>
-          <div id="fileChipA"></div>
-          <div id="sheetSelectRowA" class="sheet-select-row"></div>
-        </div>
-        <div class="upload-card">
-          <h3>🏢 Unit Usaha B</h3>
-          <div class="field"><label>Nama Unit</label><input type="text" id="fNameB" placeholder="mis. KYX"/></div>
-          <div class="dropzone" id="dropzoneB">
-            <div class="dz-icon">📄</div>
-            <div class="dz-text">Klik atau seret file laporan laba rugi ke sini</div>
-            <div class="dz-sub">.xlsx / .xls / .csv</div>
-          </div>
-          <input type="file" id="fileInputB" accept=".xlsx,.xls,.csv"/>
-          <div id="fileChipB"></div>
-          <div id="sheetSelectRowB" class="sheet-select-row"></div>
-        </div>
+      <div class="upload-grid" id="uploadGrid"></div>
+      <div style="margin-bottom:20px">
+        <button class="btn btn-outline btn-sm" id="addUnitBtn" type="button">+ Tambah Unit Usaha</button>
       </div>
       <div class="step-actions">
         <button class="btn btn-primary" id="toStep2Btn" disabled>Lanjut ke Pemetaan →</button>
@@ -259,6 +238,10 @@ function fmtRp(n){ n = Number(n)||0; return "Rp " + Math.round(n).toLocaleString
 function showToast(msg, dur){ dur=dur||3000; var t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");}, dur); }
 function setLoading(show, text){ $("loading").classList.toggle("show", show); $("loadingText").textContent = text||"Memuat…"; }
 function makeRid(){ return "m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function repeatSpace(n){ return new Array(n+1).join(" "); }
+
+var MAX_UNITS = 6;
+var MIN_UNITS = 2;
 
 // ── STRUKTUR BAKU LAPORAN LABA RUGI (mengikuti template ekspor Accurate) ──
 var SECTION_DEFS = [
@@ -270,10 +253,18 @@ var SECTION_DEFS = [
 ];
 
 // ── STATE ──
-function emptyUnit(){ return { ready:false, fileName:"", wb:null, candidates:null, chosenSheet:"", sections:null, rawSubtotals:null, periodLabel:"", unclassifiedCount:0 }; }
+function emptyUnit(){
+  return { id:"", name:"", ready:false, fileName:"", wb:null, candidates:null, chosenSheet:"",
+    sections:null, rawSubtotals:null, periodLabel:"", unclassifiedCount:0, fallbackWarn:false };
+}
+function makeUnit(){ var u = emptyUnit(); u.id = makeRid(); return u; }
+function makeDefaultUnits(count){ var arr=[]; for(var i=0;i<count;i++) arr.push(makeUnit()); return arr; }
+function getUnit(uid){ return mergeState.units.find(function(u){ return u.id===uid; }); }
+function unitDisplayName(u, idx){ return (u.name||"").trim() || ("Unit "+(idx+1)); }
+
 var mergeState = {
   step: 1,
-  units: { a: emptyUnit(), b: emptyUnit() },
+  units: makeDefaultUnits(3),
   mapping: {},
   finalReport: null
 };
@@ -351,35 +342,53 @@ function jaccard(tokA, tokB){
   var union = Object.keys(uni).length;
   return union ? inter/union : 0;
 }
-function autoMatchSection(itemsA, itemsB){
-  var usedA = itemsA.map(function(){return false;}), usedB = itemsB.map(function(){return false;});
+
+// ── PENCOCOKAN OTOMATIS N-UNIT ──
+// Unit ke-0 jadi baris "benih". Unit berikutnya dicoba dicocokkan (persis, lalu mirip)
+// ke baris yang sudah ada; kalau tidak ada yang cocok, jadi baris baru.
+function autoMatchSectionN(itemsByUnit){
+  var n = itemsByUnit.length;
   var rows = [];
-  itemsA.forEach(function(a,ai){
-    if(usedA[ai]) return;
-    var na = normKey(a.label);
-    for(var bi=0; bi<itemsB.length; bi++){
-      if(usedB[bi]) continue;
-      if(normKey(itemsB[bi].label)===na){ rows.push({_rid:makeRid(),label:a.label,aIdx:ai,bIdx:bi,matchType:"exact"}); usedA[ai]=true; usedB[bi]=true; break; }
-    }
+  itemsByUnit[0].forEach(function(it, idx){
+    var idxByUnit = new Array(n).fill(-1);
+    idxByUnit[0] = idx;
+    rows.push({ _rid:makeRid(), label: it.label, idxByUnit: idxByUnit, matchType:"seed" });
   });
-  itemsA.forEach(function(a,ai){
-    if(usedA[ai]) return;
-    var ta = tokenSet(a.label), bestBi=-1, bestScore=0;
-    itemsB.forEach(function(b,bi){
-      if(usedB[bi]) return;
-      var sc = jaccard(ta, tokenSet(b.label));
-      if(sc>bestScore){ bestScore=sc; bestBi=bi; }
+  for(var u=1; u<n; u++){
+    itemsByUnit[u].forEach(function(it, idx){
+      var na = normKey(it.label);
+      for(var ri=0; ri<rows.length; ri++){
+        if(rows[ri].idxByUnit[u] !== -1) continue;
+        if(normKey(rows[ri].label) === na){
+          rows[ri].idxByUnit[u] = idx;
+          if(rows[ri].matchType==="seed") rows[ri].matchType = "exact";
+          return;
+        }
+      }
+      var ta = tokenSet(it.label), bestRi=-1, bestScore=0;
+      rows.forEach(function(r, ri){
+        if(r.idxByUnit[u]!==-1) return;
+        var sc = jaccard(ta, tokenSet(r.label));
+        if(sc>bestScore){ bestScore=sc; bestRi=ri; }
+      });
+      if(bestRi>-1 && bestScore>=0.5){
+        rows[bestRi].idxByUnit[u] = idx;
+        if(rows[bestRi].matchType!=="exact") rows[bestRi].matchType = "fuzzy";
+        return;
+      }
+      var idxByUnit = new Array(n).fill(-1);
+      idxByUnit[u] = idx;
+      rows.push({ _rid:makeRid(), label: it.label, idxByUnit: idxByUnit, matchType: "u"+u+"-only" });
     });
-    if(bestBi>-1 && bestScore>=0.5){ rows.push({_rid:makeRid(),label:a.label,aIdx:ai,bIdx:bestBi,matchType:"fuzzy"}); usedA[ai]=true; usedB[bestBi]=true; }
-  });
-  itemsA.forEach(function(a,ai){ if(!usedA[ai]){ rows.push({_rid:makeRid(),label:a.label,aIdx:ai,bIdx:-1,matchType:"a-only"}); usedA[ai]=true; } });
-  itemsB.forEach(function(b,bi){ if(!usedB[bi]){ rows.push({_rid:makeRid(),label:b.label,aIdx:-1,bIdx:bi,matchType:"b-only"}); usedB[bi]=true; } });
+  }
   return rows;
 }
 
 // ── STEP 1: UPLOAD ──
-function handleFile(side, file){
+function handleFile(uid, file){
   if(!file) return;
+  var unit = getUnit(uid);
+  if(!unit) return;
   setLoading(true, "Membaca file…");
   var reader = new FileReader();
   reader.onload = function(e){
@@ -391,7 +400,6 @@ function handleFile(side, file){
         var info = findHeaderInfo(rows);
         if(info) candidates.push({ name:name, info:info, rows:rows });
       });
-      var unit = mergeState.units[side];
       unit.wb = wb;
       unit.fileName = file.name;
       var fallbackWarn = false;
@@ -401,13 +409,12 @@ function handleFile(side, file){
         fallbackWarn = true;
       }
       unit.candidates = candidates;
-      selectSheetForUnit(side, candidates[0].name);
+      selectSheetForUnit(uid, candidates[0].name);
       unit.fallbackWarn = fallbackWarn;
-      var nameField = $("fName"+side.toUpperCase());
-      if(!nameField.value.trim()){ nameField.value = file.name.replace(/\.(xlsx|xls|csv)$/i,""); }
+      if(!unit.name.trim()){ unit.name = file.name.replace(/\.(xlsx|xls|csv)$/i,""); }
       setLoading(false);
       if(fallbackWarn) showToast("⚠️ Kolom 'Deskripsi' tidak terdeteksi otomatis — memakai kolom B/C sebagai tebakan, cek hasilnya.");
-      renderUploadCard(side);
+      renderUploadGrid();
       checkUploadsReady();
     }catch(err){
       console.error(err);
@@ -418,8 +425,9 @@ function handleFile(side, file){
   reader.onerror = function(){ setLoading(false); showToast("Gagal membaca file"); };
   reader.readAsArrayBuffer(file);
 }
-function selectSheetForUnit(side, sheetName){
-  var unit = mergeState.units[side];
+function selectSheetForUnit(uid, sheetName){
+  var unit = getUnit(uid);
+  if(!unit) return;
   var cand = unit.candidates.find(function(c){ return c.name===sheetName; });
   if(!cand) return;
   unit.chosenSheet = sheetName;
@@ -431,66 +439,119 @@ function selectSheetForUnit(side, sheetName){
   unit.ready = true;
   if(!$("fPeriodeLabel").value.trim() && unit.periodLabel){ $("fPeriodeLabel").value = unit.periodLabel; }
 }
-function renderUploadCard(side){
-  var unit = mergeState.units[side];
-  var S = side.toUpperCase();
-  var chipEl = $("fileChip"+S), sheetRowEl = $("sheetSelectRow"+S);
-  if(!unit.fileName){ chipEl.innerHTML=""; sheetRowEl.innerHTML=""; return; }
+function uploadCardHtml(u, idx){
   var totalRows = 0;
-  if(unit.sections){ Object.keys(unit.sections).forEach(function(k){ if(k!=="lainnya") totalRows += unit.sections[k].length; }); }
+  if(u.sections){ SECTION_DEFS.forEach(function(d){ totalRows += u.sections[d.key].length; }); }
   var warnHtml = "";
-  if(unit.unclassifiedCount>0){
-    warnHtml = '<div class="upload-warn">⚠️ '+unit.unclassifiedCount+' baris tidak terklasifikasi (di luar struktur standar) — tidak ikut dihitung dalam total. Cek file sumbernya kalau perlu.</div>';
-  } else if(unit.fallbackWarn){
+  if(u.unclassifiedCount>0){
+    warnHtml = '<div class="upload-warn">⚠️ '+u.unclassifiedCount+' baris tidak terklasifikasi (di luar struktur standar) — tidak ikut dihitung dalam total.</div>';
+  } else if(u.fallbackWarn){
     warnHtml = '<div class="upload-warn">⚠️ Kolom "Deskripsi" tidak ditemukan otomatis — memakai kolom B/C sebagai tebakan.</div>';
   }
-  chipEl.innerHTML = '<div class="file-chip">📄 '+escapeHtml(unit.fileName)+' <button type="button" class="remove-file-btn" data-side="'+side+'">✕</button></div>'
-    + '<div class="upload-meta">Terdeteksi '+totalRows+' baris akun · Periode: '+escapeHtml(unit.periodLabel||"—")+'</div>'
-    + warnHtml;
-  if(unit.candidates && unit.candidates.length>1){
-    sheetRowEl.innerHTML = '<div class="field sheet-select-row" style="margin-top:8px"><label>Pilih sheet</label>'
-      + '<select class="sheet-select" data-side="'+side+'">'
-      + unit.candidates.map(function(c){ return '<option value="'+escapeHtml(c.name)+'"'+(c.name===unit.chosenSheet?" selected":"")+'>'+escapeHtml(c.name)+'</option>'; }).join("")
+  var chip = u.fileName ? (
+      '<div class="file-chip">📄 '+escapeHtml(u.fileName)+' <button type="button" class="remove-file-btn" data-uid="'+u.id+'">✕</button></div>'
+    + '<div class="upload-meta">Terdeteksi '+totalRows+' baris akun · Periode: '+escapeHtml(u.periodLabel||"—")+'</div>'
+    + warnHtml
+  ) : "";
+  var sheetSelect = "";
+  if(u.candidates && u.candidates.length>1){
+    sheetSelect = '<div class="field sheet-select-row" style="margin-top:8px"><label>Pilih sheet</label>'
+      + '<select class="sheet-select" data-uid="'+u.id+'">'
+      + u.candidates.map(function(c){ return '<option value="'+escapeHtml(c.name)+'"'+(c.name===u.chosenSheet?" selected":"")+'>'+escapeHtml(c.name)+'</option>'; }).join("")
       + '</select></div>';
-  } else {
-    sheetRowEl.innerHTML = "";
   }
+  var removeBtn = mergeState.units.length > MIN_UNITS
+    ? '<button type="button" class="remove-unit-btn" data-uid="'+u.id+'">✕ Hapus</button>' : "";
+  return '<div class="upload-card" data-uid="'+u.id+'">'
+    + '<h3><span>🏢 Unit Usaha '+(idx+1)+'</span>'+removeBtn+'</h3>'
+    + '<div class="field"><label>Nama Unit</label><input type="text" class="unit-name-input" data-uid="'+u.id+'" value="'+escapeHtml(u.name)+'" placeholder="mis. Supersub"/></div>'
+    + '<div class="dropzone" data-uid="'+u.id+'">'
+    +   '<div class="dz-icon">📄</div><div class="dz-text">Klik atau seret file laporan laba rugi ke sini</div><div class="dz-sub">.xlsx / .xls / .csv</div>'
+    + '</div>'
+    + '<input type="file" class="unit-file-input" data-uid="'+u.id+'" accept=".xlsx,.xls,.csv" style="display:none"/>'
+    + '<div class="unit-file-chip">'+chip+'</div>'
+    + sheetSelect
+    + '</div>';
+}
+function renderUploadGrid(){
+  $("uploadGrid").innerHTML = mergeState.units.map(uploadCardHtml).join("");
+  $("addUnitBtn").disabled = mergeState.units.length >= MAX_UNITS;
 }
 function checkUploadsReady(){
-  $("toStep2Btn").disabled = !(mergeState.units.a.ready && mergeState.units.b.ready);
+  var ok = mergeState.units.length >= MIN_UNITS && mergeState.units.every(function(u){ return u.ready; });
+  $("toStep2Btn").disabled = !ok;
 }
-["A","B"].forEach(function(S){
-  var side = S.toLowerCase();
-  $("dropzone"+S).addEventListener("click", function(){ $("fileInput"+S).click(); });
-  $("fileInput"+S).addEventListener("change", function(e){ handleFile(side, e.target.files[0]); });
-  $("dropzone"+S).addEventListener("dragover", function(e){ e.preventDefault(); $("dropzone"+S).classList.add("drag"); });
-  $("dropzone"+S).addEventListener("dragleave", function(){ $("dropzone"+S).classList.remove("drag"); });
-  $("dropzone"+S).addEventListener("drop", function(e){ e.preventDefault(); $("dropzone"+S).classList.remove("drag"); if(e.dataTransfer.files.length) handleFile(side, e.dataTransfer.files[0]); });
-});
 $("uploadGrid").addEventListener("click", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){
+    var card = dz.closest(".upload-card");
+    var fi = card.querySelector(".unit-file-input");
+    if(fi) fi.click();
+    return;
+  }
   if(e.target.classList.contains("remove-file-btn")){
-    var side = e.target.dataset.side;
-    mergeState.units[side] = emptyUnit();
-    $("fileInput"+side.toUpperCase()).value = "";
-    renderUploadCard(side);
+    var unit = getUnit(e.target.dataset.uid);
+    if(unit){
+      var keepId = unit.id, keepName = unit.name;
+      var fresh = emptyUnit();
+      Object.keys(fresh).forEach(function(k){ unit[k] = fresh[k]; });
+      unit.id = keepId; unit.name = keepName;
+    }
+    renderUploadGrid();
     checkUploadsReady();
+    return;
+  }
+  if(e.target.classList.contains("remove-unit-btn")){
+    if(mergeState.units.length<=MIN_UNITS){ showToast("Minimal "+MIN_UNITS+" unit usaha diperlukan"); return; }
+    var uid = e.target.dataset.uid;
+    mergeState.units = mergeState.units.filter(function(u){ return u.id!==uid; });
+    renderUploadGrid();
+    checkUploadsReady();
+    return;
   }
 });
 $("uploadGrid").addEventListener("change", function(e){
-  if(e.target.classList.contains("sheet-select")){
-    var side = e.target.dataset.side;
-    selectSheetForUnit(side, e.target.value);
-    renderUploadCard(side);
+  if(e.target.classList.contains("unit-file-input")){
+    handleFile(e.target.dataset.uid, e.target.files[0]);
+  } else if(e.target.classList.contains("sheet-select")){
+    selectSheetForUnit(e.target.dataset.uid, e.target.value);
+    renderUploadGrid();
     checkUploadsReady();
   }
+});
+$("uploadGrid").addEventListener("input", function(e){
+  if(e.target.classList.contains("unit-name-input")){
+    var unit = getUnit(e.target.dataset.uid);
+    if(unit) unit.name = e.target.value;
+  }
+});
+$("uploadGrid").addEventListener("dragover", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){ e.preventDefault(); dz.classList.add("drag"); }
+});
+$("uploadGrid").addEventListener("dragleave", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){ dz.classList.remove("drag"); }
+});
+$("uploadGrid").addEventListener("drop", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){
+    e.preventDefault(); dz.classList.remove("drag");
+    if(e.dataTransfer.files.length) handleFile(dz.dataset.uid, e.dataTransfer.files[0]);
+  }
+});
+$("addUnitBtn").addEventListener("click", function(){
+  if(mergeState.units.length >= MAX_UNITS){ showToast("Maksimal "+MAX_UNITS+" unit usaha"); return; }
+  mergeState.units.push(makeUnit());
+  renderUploadGrid();
+  checkUploadsReady();
 });
 
 // ── STEP 2: PEMETAAN ──
 function buildMappingForUnits(){
   SECTION_DEFS.forEach(function(def){
-    var itemsA = mergeState.units.a.sections[def.key];
-    var itemsB = mergeState.units.b.sections[def.key];
-    mergeState.mapping[def.key] = autoMatchSection(itemsA, itemsB);
+    var itemsByUnit = mergeState.units.map(function(u){ return u.sections[def.key]; });
+    mergeState.mapping[def.key] = autoMatchSectionN(itemsByUnit);
   });
 }
 function renderMappingStep(){
@@ -499,15 +560,15 @@ function renderMappingStep(){
   $("mappingContainer").innerHTML = html;
 }
 function renderSectionMapping(def){
-  var itemsA = mergeState.units.a.sections[def.key];
-  var itemsB = mergeState.units.b.sections[def.key];
+  var n = mergeState.units.length;
+  var itemsByUnit = mergeState.units.map(function(u){ return u.sections[def.key]; });
+  var names = mergeState.units.map(unitDisplayName);
   var rows = mergeState.mapping[def.key];
-  var nameA = $("fNameA").value.trim() || "Unit A";
-  var nameB = $("fNameB").value.trim() || "Unit B";
-  var usedA = {}, usedB = {};
-  rows.forEach(function(r){ if(r.aIdx>-1) usedA[r.aIdx]=r._rid; if(r.bIdx>-1) usedB[r.bIdx]=r._rid; });
+  var usedByUnit = itemsByUnit.map(function(){ return {}; });
+  rows.forEach(function(r){ r.idxByUnit.forEach(function(idx,u){ if(idx>-1) usedByUnit[u][idx]=r._rid; }); });
 
-  function optsFor(items, used, currentIdx, myRid){
+  function optsFor(u, items, currentIdx, myRid){
+    var used = usedByUnit[u];
     var html = '<option value="-1">— Tidak ada —</option>';
     items.forEach(function(it, idx){
       var disabled = (used[idx]!==undefined && used[idx]!==myRid);
@@ -516,50 +577,65 @@ function renderSectionMapping(def){
     return html;
   }
   var rowsHtml = rows.map(function(r){
-    var aVal = r.aIdx>-1 ? itemsA[r.aIdx].value : 0;
-    var bVal = r.bIdx>-1 ? itemsB[r.bIdx].value : 0;
+    var vals = r.idxByUnit.map(function(idx,u){ return idx>-1 ? itemsByUnit[u][idx].value : 0; });
+    var total = vals.reduce(function(s,v){ return s+v; },0);
     var tag = r.matchType==="exact" ? '<span class="match-tag exact">✓ cocok persis</span>'
       : r.matchType==="fuzzy" ? '<span class="match-tag fuzzy">🤖 mirip — cek</span>'
       : '<span class="match-tag manual">manual</span>';
+    var unitCells = "";
+    for(var u=0; u<n; u++){
+      unitCells += '<td><select class="map-u" data-u="'+u+'">'+optsFor(u, itemsByUnit[u], r.idxByUnit[u], r._rid)+'</select></td>'
+        + '<td class="map-val">'+fmtRp(vals[u])+'</td>';
+    }
     return '<tr data-rid="'+r._rid+'" data-key="'+def.key+'">'
       + '<td><input type="text" class="map-label" value="'+escapeHtml(r.label)+'" placeholder="Label gabungan"/>'+tag+'</td>'
-      + '<td><select class="map-a">'+optsFor(itemsA, usedA, r.aIdx, r._rid)+'</select></td>'
-      + '<td class="map-val">'+fmtRp(aVal)+'</td>'
-      + '<td><select class="map-b">'+optsFor(itemsB, usedB, r.bIdx, r._rid)+'</select></td>'
-      + '<td class="map-val">'+fmtRp(bVal)+'</td>'
-      + '<td class="map-val total">'+fmtRp(aVal+bVal)+'</td>'
+      + unitCells
+      + '<td class="map-val total">'+fmtRp(total)+'</td>'
       + '<td><button type="button" class="map-del-btn">✕</button></td>'
       + '</tr>';
   }).join("");
-  var usedCountA = Object.keys(usedA).length, usedCountB = Object.keys(usedB).length;
-  var leftoverA = itemsA.length - usedCountA, leftoverB = itemsB.length - usedCountB;
-  var warnHtml = "";
-  if(leftoverA>0 || leftoverB>0){
-    warnHtml = '<div class="map-warn">⚠️ Ada baris sumber yang belum dipakai di kategori ini: '
-      + (leftoverA>0 ? escapeHtml(nameA)+" ("+leftoverA+" baris) " : "")
-      + (leftoverB>0 ? escapeHtml(nameB)+" ("+leftoverB+" baris)" : "")
-      + ' — <button type="button" class="map-addleft-btn">tambahkan otomatis sebagai baris terpisah</button></div>';
-  }
+
+  var countsHtml = names.map(function(nm,u){ return escapeHtml(nm)+": "+Object.keys(usedByUnit[u]).length+"/"+itemsByUnit[u].length; }).join(" · ");
+  var warnParts = [];
+  names.forEach(function(nm,u){
+    var leftover = itemsByUnit[u].length - Object.keys(usedByUnit[u]).length;
+    if(leftover>0) warnParts.push(escapeHtml(nm)+" ("+leftover+" baris)");
+  });
+  var warnHtml = warnParts.length
+    ? '<div class="map-warn">⚠️ Ada baris sumber yang belum dipakai: '+warnParts.join(", ")+' — <button type="button" class="map-addleft-btn">tambahkan otomatis sebagai baris terpisah</button></div>'
+    : "";
+
+  var theadUnitCols = "";
+  for(var u2=0; u2<n; u2++){ theadUnitCols += '<th style="min-width:160px">Sumber '+escapeHtml(names[u2])+'</th><th>Nilai</th>'; }
+  var colspanEmpty = 2*n+3;
+
   return '<div class="map-section" data-key="'+def.key+'">'
     + '<div class="map-section-head"><div class="map-section-title">'+def.uiTitle+'</div>'
-    + '<div class="map-section-counts">'+escapeHtml(nameA)+': '+usedCountA+'/'+itemsA.length+' baris · '+escapeHtml(nameB)+': '+usedCountB+'/'+itemsB.length+' baris</div></div>'
+    + '<div class="map-section-counts">'+countsHtml+'</div></div>'
     + warnHtml
     + '<div class="map-table-wrap"><table class="map-table"><thead><tr>'
-    + '<th style="min-width:190px">Label Gabungan</th><th style="min-width:170px">Sumber '+escapeHtml(nameA)+'</th><th>Nilai</th>'
-    + '<th style="min-width:170px">Sumber '+escapeHtml(nameB)+'</th><th>Nilai</th><th>Gabungan</th><th></th>'
+    + '<th style="min-width:190px">Label Gabungan</th>'+theadUnitCols+'<th>Gabungan</th><th></th>'
     + '</tr></thead><tbody>'
-    + (rowsHtml || '<tr class="map-empty-row"><td colspan="7">Tidak ada baris di kategori ini.</td></tr>')
+    + (rowsHtml || '<tr class="map-empty-row"><td colspan="'+colspanEmpty+'">Tidak ada baris di kategori ini.</td></tr>')
     + '</tbody></table></div>'
     + '<button type="button" class="map-add-btn">+ Tambah Baris</button>'
     + '</div>';
 }
 function addLeftoverRows(key){
-  var itemsA = mergeState.units.a.sections[key], itemsB = mergeState.units.b.sections[key];
+  var n = mergeState.units.length;
+  var itemsByUnit = mergeState.units.map(function(u){ return u.sections[key]; });
   var rows = mergeState.mapping[key];
-  var usedA = {}, usedB = {};
-  rows.forEach(function(r){ if(r.aIdx>-1) usedA[r.aIdx]=true; if(r.bIdx>-1) usedB[r.bIdx]=true; });
-  itemsA.forEach(function(it, idx){ if(!usedA[idx]) rows.push({_rid:makeRid(), label:it.label, aIdx:idx, bIdx:-1, matchType:"a-only"}); });
-  itemsB.forEach(function(it, idx){ if(!usedB[idx]) rows.push({_rid:makeRid(), label:it.label, aIdx:-1, bIdx:idx, matchType:"b-only"}); });
+  var usedByUnit = itemsByUnit.map(function(){ return {}; });
+  rows.forEach(function(r){ r.idxByUnit.forEach(function(idx,u){ if(idx>-1) usedByUnit[u][idx]=true; }); });
+  for(var u=0; u<n; u++){
+    itemsByUnit[u].forEach(function(it, idx){
+      if(!usedByUnit[u][idx]){
+        var idxByUnit = new Array(n).fill(-1);
+        idxByUnit[u] = idx;
+        rows.push({ _rid:makeRid(), label: it.label, idxByUnit: idxByUnit, matchType: "u"+u+"-only" });
+      }
+    });
+  }
 }
 $("mappingContainer").addEventListener("input", function(e){
   if(e.target.classList.contains("map-label")){
@@ -569,12 +645,12 @@ $("mappingContainer").addEventListener("input", function(e){
   }
 });
 $("mappingContainer").addEventListener("change", function(e){
-  if(e.target.classList.contains("map-a") || e.target.classList.contains("map-b")){
+  if(e.target.classList.contains("map-u")){
     var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
     var row = mergeState.mapping[key].find(function(r){ return r._rid===rid; });
     if(!row) return;
-    var val = parseInt(e.target.value,10);
-    if(e.target.classList.contains("map-a")) row.aIdx = val; else row.bIdx = val;
+    var u = parseInt(e.target.dataset.u,10);
+    row.idxByUnit[u] = parseInt(e.target.value,10);
     row.matchType = "manual";
     renderMappingStep();
   }
@@ -586,7 +662,8 @@ $("mappingContainer").addEventListener("click", function(e){
     renderMappingStep();
   } else if(e.target.classList.contains("map-add-btn")){
     var sec = e.target.closest(".map-section"), key = sec.dataset.key;
-    mergeState.mapping[key].push({_rid:makeRid(), label:"", aIdx:-1, bIdx:-1, matchType:"manual"});
+    var n = mergeState.units.length;
+    mergeState.mapping[key].push({ _rid:makeRid(), label:"", idxByUnit:new Array(n).fill(-1), matchType:"manual" });
     renderMappingStep();
   } else if(e.target.classList.contains("map-addleft-btn")){
     var sec2 = e.target.closest(".map-section"), key2 = sec2.dataset.key;
@@ -597,25 +674,35 @@ $("mappingContainer").addEventListener("click", function(e){
 
 // ── STEP 3: HASIL ──
 function computeFinalReport(){
-  var report = { sections:{} };
+  var n = mergeState.units.length;
+  var report = { sections:{}, n:n };
   SECTION_DEFS.forEach(function(def){
-    var itemsA = mergeState.units.a.sections[def.key];
-    var itemsB = mergeState.units.b.sections[def.key];
-    var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.aIdx>-1 || r.bIdx>-1; });
+    var itemsByUnit = mergeState.units.map(function(u){ return u.sections[def.key]; });
+    var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.idxByUnit.some(function(i){ return i>-1; }); });
     var rows = mapRows.map(function(r){
-      var aVal = r.aIdx>-1 ? itemsA[r.aIdx].value : 0;
-      var bVal = r.bIdx>-1 ? itemsB[r.bIdx].value : 0;
-      return { label: r.label || (r.aIdx>-1?itemsA[r.aIdx].label:itemsB[r.bIdx].label), aVal:aVal, bVal:bVal, total:aVal+bVal };
+      var vals = r.idxByUnit.map(function(idx,u){ return idx>-1 ? itemsByUnit[u][idx].value : 0; });
+      var total = vals.reduce(function(s,v){ return s+v; },0);
+      var label = r.label;
+      if(!label){
+        var fi = r.idxByUnit.findIndex(function(i){ return i>-1; });
+        label = itemsByUnit[fi][r.idxByUnit[fi]].label;
+      }
+      return { label:label, vals:vals, total: total };
     });
-    var subtotalA = rows.reduce(function(s,r){return s+r.aVal;},0);
-    var subtotalB = rows.reduce(function(s,r){return s+r.bVal;},0);
-    report.sections[def.key] = { rows:rows, subtotalA:subtotalA, subtotalB:subtotalB, subtotalTotal:subtotalA+subtotalB };
+    var subtotals = new Array(n).fill(0);
+    rows.forEach(function(r){ r.vals.forEach(function(v,u){ subtotals[u]+=v; }); });
+    var subtotalTotal = subtotals.reduce(function(s,v){ return s+v; },0);
+    report.sections[def.key] = { rows:rows, subtotals:subtotals, subtotalTotal:subtotalTotal };
   });
   var s = report.sections;
-  var labaKotor = { a:s.pendapatan.subtotalA-s.hpp.subtotalA, b:s.pendapatan.subtotalB-s.hpp.subtotalB, total:s.pendapatan.subtotalTotal-s.hpp.subtotalTotal };
-  var pendapatanOperasional = { a:labaKotor.a-s.opex.subtotalA, b:labaKotor.b-s.opex.subtotalB, total:labaKotor.total-s.opex.subtotalTotal };
-  var nonOpNet = { a:s.nonopIncome.subtotalA-s.nonopExpense.subtotalA, b:s.nonopIncome.subtotalB-s.nonopExpense.subtotalB, total:s.nonopIncome.subtotalTotal-s.nonopExpense.subtotalTotal };
-  var labaBersih = { a:pendapatanOperasional.a+nonOpNet.a, b:pendapatanOperasional.b+nonOpNet.b, total:pendapatanOperasional.total+nonOpNet.total };
+  function combine(secA, secB, sign){
+    var vals = secA.subtotals.map(function(v,i){ return v + sign*secB.subtotals[i]; });
+    return { vals:vals, total: secA.subtotalTotal + sign*secB.subtotalTotal };
+  }
+  var labaKotor = combine(s.pendapatan, s.hpp, -1);
+  var pendapatanOperasional = { vals: labaKotor.vals.map(function(v,i){ return v - s.opex.subtotals[i]; }), total: labaKotor.total - s.opex.subtotalTotal };
+  var nonOpNet = combine(s.nonopIncome, s.nonopExpense, -1);
+  var labaBersih = { vals: pendapatanOperasional.vals.map(function(v,i){ return v + nonOpNet.vals[i]; }), total: pendapatanOperasional.total + nonOpNet.total };
   report.computed = { labaKotor:labaKotor, pendapatanOperasional:pendapatanOperasional, nonOpNet:nonOpNet, labaBersih:labaBersih };
   return report;
 }
@@ -624,21 +711,24 @@ function contribRowHtml(name, val, totalVal){
   var pct = totalVal ? (val/totalVal*100) : 0;
   return '<div class="stat-row"><span class="stat-name">'+escapeHtml(name)+'</span><span class="stat-val">'+fmtRp(val)+' ('+pct.toFixed(1)+'%)</span></div>';
 }
-function rowHtml(cls, label, aVal, bVal, total, showVals){
+function rowHtmlN(cls, label, vals, total, showVals){
+  var cells;
   if(showVals===false){
-    return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td><td class="num"></td><td class="num"></td><td class="num"></td></tr>';
+    cells = vals.map(function(){ return '<td class="num"></td>'; }).join("");
+    return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td>'+cells+'<td class="num"></td></tr>';
   }
-  return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td><td class="num">'+fmtRp(aVal)+'</td><td class="num">'+fmtRp(bVal)+'</td><td class="num">'+fmtRp(total)+'</td></tr>';
+  cells = vals.map(function(v){ return '<td class="num">'+fmtRp(v)+'</td>'; }).join("");
+  return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td>'+cells+'<td class="num">'+fmtRp(total)+'</td></tr>';
 }
 function renderResultStep(){
-  var nameA = $("fNameA").value.trim() || "Unit A";
-  var nameB = $("fNameB").value.trim() || "Unit B";
+  var n = mergeState.units.length;
+  var names = mergeState.units.map(unitDisplayName);
   var periode = $("fPeriodeLabel").value.trim();
   var report = computeFinalReport();
-  report.nameA = nameA; report.nameB = nameB; report.periode = periode;
+  report.names = names; report.periode = periode;
   mergeState.finalReport = report;
 
-  $("resultUnitNames").textContent = nameA + " + " + nameB;
+  $("resultUnitNames").textContent = names.join(" + ");
   $("resultPeriodLabel").textContent = periode || "—";
 
   var s = report.sections, c = report.computed;
@@ -648,38 +738,40 @@ function renderResultStep(){
     kpiCardHtml("Pendapatan Operasional", fmtRp(c.pendapatanOperasional.total)),
     kpiCardHtml("Laba Bersih Gabungan", fmtRp(c.labaBersih.total), c.labaBersih.total>=0 ? '<span class="kpi-badge baik">● Untung</span>' : '<span class="kpi-badge kurang">● Rugi</span>')
   ].join("");
-  $("resultContribGrid").innerHTML = contribRowHtml(nameA, c.labaBersih.a, c.labaBersih.total) + contribRowHtml(nameB, c.labaBersih.b, c.labaBersih.total);
+  $("resultContribGrid").innerHTML = names.map(function(nm,i){ return contribRowHtml(nm, c.labaBersih.vals[i], c.labaBersih.total); }).join("");
 
-  function itemRows(list){ return list.map(function(r){ return rowHtml("item-row", r.label, r.aVal, r.bVal, r.total); }).join(""); }
+  var blankVals = new Array(n).fill(0);
+  function itemRows(list){ return list.map(function(r){ return rowHtmlN("item-row", r.label, r.vals, r.total); }).join(""); }
   var rows = "";
-  rows += rowHtml("section-header", "PENDAPATAN", 0,0,0,false);
+  rows += rowHtmlN("section-header", "PENDAPATAN", blankVals, 0, false);
   rows += itemRows(s.pendapatan.rows);
-  rows += rowHtml("subtotal-row", "Jumlah Pendapatan", s.pendapatan.subtotalA, s.pendapatan.subtotalB, s.pendapatan.subtotalTotal);
+  rows += rowHtmlN("subtotal-row", "Jumlah Pendapatan", s.pendapatan.subtotals, s.pendapatan.subtotalTotal);
 
-  rows += rowHtml("section-header", "BEBAN POKOK PENJUALAN", 0,0,0,false);
+  rows += rowHtmlN("section-header", "BEBAN POKOK PENJUALAN", blankVals, 0, false);
   rows += itemRows(s.hpp.rows);
-  rows += rowHtml("subtotal-row", "Jumlah Beban Pokok Penjualan", s.hpp.subtotalA, s.hpp.subtotalB, s.hpp.subtotalTotal);
+  rows += rowHtmlN("subtotal-row", "Jumlah Beban Pokok Penjualan", s.hpp.subtotals, s.hpp.subtotalTotal);
 
-  rows += rowHtml("computed-row", "LABA KOTOR", c.labaKotor.a, c.labaKotor.b, c.labaKotor.total);
+  rows += rowHtmlN("computed-row", "LABA KOTOR", c.labaKotor.vals, c.labaKotor.total);
 
-  rows += rowHtml("section-header", "BEBAN OPERASIONAL", 0,0,0,false);
+  rows += rowHtmlN("section-header", "BEBAN OPERASIONAL", blankVals, 0, false);
   rows += itemRows(s.opex.rows);
-  rows += rowHtml("subtotal-row", "Jumlah Beban Operasional", s.opex.subtotalA, s.opex.subtotalB, s.opex.subtotalTotal);
+  rows += rowHtmlN("subtotal-row", "Jumlah Beban Operasional", s.opex.subtotals, s.opex.subtotalTotal);
 
-  rows += rowHtml("computed-row", "PENDAPATAN OPERASIONAL", c.pendapatanOperasional.a, c.pendapatanOperasional.b, c.pendapatanOperasional.total);
+  rows += rowHtmlN("computed-row", "PENDAPATAN OPERASIONAL", c.pendapatanOperasional.vals, c.pendapatanOperasional.total);
 
-  rows += rowHtml("section-header", "PENDAPATAN DAN BEBAN NON OPERASIONAL", 0,0,0,false);
-  rows += rowHtml("section-header sub", "Pendapatan Non Operasional", 0,0,0,false);
+  rows += rowHtmlN("section-header", "PENDAPATAN DAN BEBAN NON OPERASIONAL", blankVals, 0, false);
+  rows += rowHtmlN("section-header sub", "Pendapatan Non Operasional", blankVals, 0, false);
   rows += itemRows(s.nonopIncome.rows);
-  rows += rowHtml("subtotal-row", "Jumlah Pendapatan Non Operasional", s.nonopIncome.subtotalA, s.nonopIncome.subtotalB, s.nonopIncome.subtotalTotal);
-  rows += rowHtml("section-header sub", "Beban Non Operasional", 0,0,0,false);
+  rows += rowHtmlN("subtotal-row", "Jumlah Pendapatan Non Operasional", s.nonopIncome.subtotals, s.nonopIncome.subtotalTotal);
+  rows += rowHtmlN("section-header sub", "Beban Non Operasional", blankVals, 0, false);
   rows += itemRows(s.nonopExpense.rows);
-  rows += rowHtml("subtotal-row", "Jumlah Beban Non Operasional", s.nonopExpense.subtotalA, s.nonopExpense.subtotalB, s.nonopExpense.subtotalTotal);
-  rows += rowHtml("computed-row", "Jumlah Pendapatan dan Beban Non Operasional", c.nonOpNet.a, c.nonOpNet.b, c.nonOpNet.total);
+  rows += rowHtmlN("subtotal-row", "Jumlah Beban Non Operasional", s.nonopExpense.subtotals, s.nonopExpense.subtotalTotal);
+  rows += rowHtmlN("computed-row", "Jumlah Pendapatan dan Beban Non Operasional", c.nonOpNet.vals, c.nonOpNet.total);
 
-  rows += rowHtml("computed-row final", "LABA BERSIH", c.labaBersih.a, c.labaBersih.b, c.labaBersih.total);
+  rows += rowHtmlN("computed-row final", "LABA BERSIH", c.labaBersih.vals, c.labaBersih.total);
 
-  $("reportTableHead").innerHTML = '<tr><th>Deskripsi</th><th class="num">'+escapeHtml(nameA)+'</th><th class="num">'+escapeHtml(nameB)+'</th><th class="num">Gabungan</th></tr>';
+  var headCells = names.map(function(nm){ return '<th class="num">'+escapeHtml(nm)+'</th>'; }).join("");
+  $("reportTableHead").innerHTML = '<tr><th>Deskripsi</th>'+headCells+'<th class="num">Gabungan</th></tr>';
   $("reportTableBody").innerHTML = rows;
 }
 
@@ -690,7 +782,6 @@ function sanitizeSheetName(name){
   return s.slice(0,31);
 }
 function refName(name){ return String(name).replace(/'/g,"''"); }
-function repeatSpace(n){ return new Array(n+1).join(" "); }
 
 // ── STYLE, meniru persis format file Laporan Laba Rugi yang diupload ──
 var NUM_FMT = '_-* #,##0_-;\\-* #,##0_-;_-* "-"??_-;_-@_-';
@@ -729,13 +820,20 @@ function styleSubtotalRow(ws, r, doubleBottom){
 function exportExcel(){
   if(!mergeState.finalReport){ showToast("Proses dulu hasil gabungannya"); return; }
   var report = mergeState.finalReport;
-  var nameA = sanitizeSheetName(report.nameA || "Unit A");
-  var nameB = sanitizeSheetName(report.nameB || "Unit B");
-  if(nameA===nameB) nameB = (nameB+" (2)").slice(0,31);
   var periode = report.periode || "";
+  var n = mergeState.units.length;
 
-  function buildUnitSheet(unitKey){
-    var unit = mergeState.units[unitKey];
+  var sheetNames = [];
+  var usedNames = {};
+  mergeState.units.forEach(function(u,i){
+    var base = sanitizeSheetName(unitDisplayName(u,i));
+    var nm = base, suffix = 2;
+    while(usedNames[nm]){ nm = (base+" ("+suffix+")").slice(0,31); suffix++; }
+    usedNames[nm] = true;
+    sheetNames.push(nm);
+  });
+
+  function buildUnitSheet(u){
     var aoa = [["","Deskripsi", periode || "Nilai"]];
     var cellMap = {};
     var headerRows=[], itemRows=[], subtotalRows=[];
@@ -744,7 +842,7 @@ function exportExcel(){
       headerRows.push(aoa.length);
       cellMap[def.key] = [];
       var subtotal = 0;
-      unit.sections[def.key].forEach(function(it){
+      u.sections[def.key].forEach(function(it){
         aoa.push(["", "    "+it.label, it.value]);
         itemRows.push(aoa.length);
         cellMap[def.key].push(aoa.length);
@@ -761,8 +859,7 @@ function exportExcel(){
     subtotalRows.forEach(function(r){ styleSubtotalRow(ws,r); });
     return { ws:ws, cellMap:cellMap };
   }
-  var sheetA = buildUnitSheet("a");
-  var sheetB = buildUnitSheet("b");
+  var sheetObjs = mergeState.units.map(buildUnitSheet);
 
   var aoa2 = [["","Deskripsi", periode || "Gabungan"]];
   var formulaCells = [];
@@ -770,22 +867,29 @@ function exportExcel(){
   function pushHeader(label){ aoa2.push(["", label, ""]); headerRows2.push(aoa2.length); }
   function addSection(def, itemIndent, headerIndent){
     pushHeader(repeatSpace(headerIndent||0)+def.sectionLabel);
-    var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.aIdx>-1 || r.bIdx>-1; });
-    var itemsA = mergeState.units.a.sections[def.key], itemsB = mergeState.units.b.sections[def.key];
-    var cellMapA = sheetA.cellMap[def.key], cellMapB = sheetB.cellMap[def.key];
+    var mapRows = mergeState.mapping[def.key].filter(function(r){ return r.idxByUnit.some(function(i){ return i>-1; }); });
+    var itemsByUnit = mergeState.units.map(function(u){ return u.sections[def.key]; });
     var startRow = aoa2.length+1;
     mapRows.forEach(function(r){
       var parts = []; var val = 0;
-      if(r.aIdx>-1){ parts.push("'"+refName(nameA)+"'!C"+cellMapA[r.aIdx]); val += itemsA[r.aIdx].value; }
-      if(r.bIdx>-1){ parts.push("'"+refName(nameB)+"'!C"+cellMapB[r.bIdx]); val += itemsB[r.bIdx].value; }
-      var label = r.label || (r.aIdx>-1?itemsA[r.aIdx].label:itemsB[r.bIdx].label);
+      r.idxByUnit.forEach(function(idx, u){
+        if(idx>-1){
+          parts.push("'"+refName(sheetNames[u])+"'!C"+sheetObjs[u].cellMap[def.key][idx]);
+          val += itemsByUnit[u][idx].value;
+        }
+      });
+      var label = r.label;
+      if(!label){
+        var fi = r.idxByUnit.findIndex(function(i){ return i>-1; });
+        label = itemsByUnit[fi][r.idxByUnit[fi]].label;
+      }
       aoa2.push(["", repeatSpace(itemIndent)+label, val]);
       itemRows2.push(aoa2.length);
       formulaCells.push({ row: aoa2.length, formula: parts.join("+") || "0", value: val });
     });
     var endRow = aoa2.length;
-    var subtotalVal = mapRows.reduce(function(s,r){
-      var v=0; if(r.aIdx>-1) v+=itemsA[r.aIdx].value; if(r.bIdx>-1) v+=itemsB[r.bIdx].value; return s+v;
+    var subtotalVal = mapRows.reduce(function(sum,r){
+      var v=0; r.idxByUnit.forEach(function(idx,u){ if(idx>-1) v += itemsByUnit[u][idx].value; }); return sum+v;
     },0);
     aoa2.push(["", def.subtotalLabel, subtotalVal]);
     subtotalRows2.push(aoa2.length);
@@ -836,8 +940,7 @@ function exportExcel(){
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, wsMerged, "Laba Rugi");
-  XLSX.utils.book_append_sheet(wb, sheetA.ws, nameA);
-  XLSX.utils.book_append_sheet(wb, sheetB.ws, nameB);
+  sheetObjs.forEach(function(so, i){ XLSX.utils.book_append_sheet(wb, so.ws, sheetNames[i]); });
 
   var fileLabel = "Laporan Laba Rugi Gabungan" + (periode ? " - "+periode : "");
   var safeFileName = fileLabel.replace(/[\\\/:*?"<>|]/g,"-") + ".xlsx";
@@ -848,7 +951,10 @@ function exportExcel(){
 // ── NAVIGASI STEP ──
 function goToStep(n){
   if(n===2){
-    if(!mergeState.units.a.ready || !mergeState.units.b.ready){ showToast("Upload kedua file laporan dulu"); return; }
+    if(!(mergeState.units.length>=MIN_UNITS && mergeState.units.every(function(u){return u.ready;}))){
+      showToast("Upload file laporan untuk semua unit usaha dulu");
+      return;
+    }
     buildMappingForUnits();
   }
   mergeState.step = n;
@@ -868,10 +974,9 @@ function goToStep(n){
   window.scrollTo({top:0, behavior:"smooth"});
 }
 function resetAll(){
-  mergeState = { step:1, units:{ a:emptyUnit(), b:emptyUnit() }, mapping:{}, finalReport:null };
-  $("fNameA").value=""; $("fNameB").value=""; $("fPeriodeLabel").value="";
-  $("fileInputA").value=""; $("fileInputB").value="";
-  renderUploadCard("a"); renderUploadCard("b");
+  mergeState = { step:1, units: makeDefaultUnits(3), mapping:{}, finalReport:null };
+  $("fPeriodeLabel").value = "";
+  renderUploadGrid();
   checkUploadsReady();
   goToStep(1);
 }
@@ -883,6 +988,7 @@ $("resetBtn").addEventListener("click", function(){ if(confirm("Mulai ulang dari
 $("exportExcelBtn").addEventListener("click", exportExcel);
 $("printBtn").addEventListener("click", function(){ window.print(); });
 
+renderUploadGrid();
 checkUploadsReady();
 </script>
 </body>
