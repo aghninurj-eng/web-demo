@@ -52,6 +52,13 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .step-panel{display:none}
 .step-panel.active{display:block}
 
+.mode-tabs{display:flex;gap:4px;margin:4px 0 20px;border-bottom:1px solid var(--gray-200)}
+.mode-tab{padding:10px 18px;font-size:13.5px;font-weight:600;color:var(--gray-600);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.mode-tab:hover{color:var(--text)}
+.mode-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.mode-panel{display:none}
+.mode-panel.active{display:block}
+
 /* Upload */
 .periode-field{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .periode-field label{font-size:12.5px;font-weight:600;color:var(--gray-600)}
@@ -169,6 +176,13 @@ table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:
       <div class="spacer"></div>
     </div>
 
+    <div class="mode-tabs no-print">
+      <button class="mode-tab active" data-mode="merge" type="button">🔀 Merge Laporan</button>
+      <button class="mode-tab" data-mode="compare" type="button">📊 Perbandingan Periode</button>
+    </div>
+
+    <!-- ══════════ MODE: MERGE LAPORAN ══════════ -->
+    <div class="mode-panel active" id="mergeModePanel">
     <div class="stepper no-print">
       <div class="step-item active" data-step="1"><span class="step-circle">1</span><span class="step-label">Upload File</span></div>
       <div class="step-line" data-idx="1"></div>
@@ -225,6 +239,62 @@ table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:
         </table>
       </div>
     </div>
+    </div>
+    <!-- ══════════ /MODE: MERGE LAPORAN ══════════ -->
+
+    <!-- ══════════ MODE: PERBANDINGAN PERIODE ══════════ -->
+    <div class="mode-panel" id="compareModePanel">
+    <div class="stepper no-print">
+      <div class="step-item active" data-cstep="1"><span class="step-circle">1</span><span class="step-label">Upload File</span></div>
+      <div class="step-line" data-cidx="1"></div>
+      <div class="step-item" data-cstep="2"><span class="step-circle">2</span><span class="step-label">Pemetaan Baris</span></div>
+      <div class="step-line" data-cidx="2"></div>
+      <div class="step-item" data-cstep="3"><span class="step-circle">3</span><span class="step-label">Hasil Perbandingan</span></div>
+    </div>
+
+    <!-- CSTEP 1: UPLOAD -->
+    <div class="step-panel active" id="cStep1Panel">
+      <div class="periode-field">
+        <label>Nama Unit Usaha (opsional)</label>
+        <input type="text" id="cUnitName" placeholder="mis. KYX"/>
+      </div>
+      <div class="upload-grid" id="compareUploadGrid"></div>
+      <div class="step-actions">
+        <button class="btn btn-primary" id="cToStep2Btn" disabled>Lanjut ke Pemetaan →</button>
+      </div>
+    </div>
+
+    <!-- CSTEP 2: PEMETAAN -->
+    <div class="step-panel" id="cStep2Panel">
+      <div id="compareMappingContainer"></div>
+      <div class="step-actions between">
+        <button class="btn btn-outline" id="cBackToStep1Btn">← Kembali</button>
+        <button class="btn btn-primary" id="cToStep3Btn">Lihat Hasil Perbandingan →</button>
+      </div>
+    </div>
+
+    <!-- CSTEP 3: HASIL -->
+    <div class="step-panel" id="cStep3Panel">
+      <div class="topbar-sub no-print" style="margin-bottom:14px">
+        <span id="compareResultUnitName"></span> · <span id="compareResultPeriods"></span>
+      </div>
+      <div class="kpi-grid" id="compareKpiGrid"></div>
+      <div class="result-actions no-print">
+        <button class="btn btn-success" id="compareExportExcelBtn">⬇️ Unduh Excel (.xlsx)</button>
+        <button class="btn btn-outline" id="comparePrintBtn">🖨️ Cetak / PDF</button>
+        <div class="spacer"></div>
+        <button class="btn btn-outline" id="cBackToStep2Btn">← Kembali ke Pemetaan</button>
+        <button class="btn btn-outline" id="cResetBtn">🔄 Mulai Ulang</button>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead id="compareReportHead"></thead>
+          <tbody id="compareReportBody"></tbody>
+        </table>
+      </div>
+    </div>
+    </div>
+    <!-- ══════════ /MODE: PERBANDINGAN PERIODE ══════════ -->
   </div>
 </div>
 
@@ -958,14 +1028,14 @@ function goToStep(n){
     buildMappingForUnits();
   }
   mergeState.step = n;
-  document.querySelectorAll(".step-panel").forEach(function(p){ p.classList.remove("active"); });
+  document.querySelectorAll("#mergeModePanel .step-panel").forEach(function(p){ p.classList.remove("active"); });
   $("step"+n+"Panel").classList.add("active");
-  document.querySelectorAll(".step-item").forEach(function(el){
+  document.querySelectorAll("#mergeModePanel .step-item").forEach(function(el){
     var s = parseInt(el.dataset.step,10);
     el.classList.toggle("active", s===n);
     el.classList.toggle("done", s<n);
   });
-  document.querySelectorAll(".step-line").forEach(function(el){
+  document.querySelectorAll("#mergeModePanel .step-line").forEach(function(el){
     var idx = parseInt(el.dataset.idx,10);
     el.classList.toggle("done", idx<n);
   });
@@ -990,6 +1060,617 @@ $("printBtn").addEventListener("click", function(){ window.print(); });
 
 renderUploadGrid();
 checkUploadsReady();
+
+// ══════════════════════════════════════════════════════════════
+// MODE SWITCHING
+// ══════════════════════════════════════════════════════════════
+document.querySelectorAll(".mode-tab").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".mode-tab").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll(".mode-panel").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    $(btn.dataset.mode==="merge" ? "mergeModePanel" : "compareModePanel").classList.add("active");
+  });
+});
+
+// ══════════════════════════════════════════════════════════════
+// FITUR: PERBANDINGAN PERIODE (1 unit usaha, 2 periode berbeda)
+// ══════════════════════════════════════════════════════════════
+function emptyPeriod(){
+  return { id:"", name:"", ready:false, fileName:"", wb:null, candidates:null, chosenSheet:"",
+    sections:null, rawSubtotals:null, periodLabel:"", unclassifiedCount:0, fallbackWarn:false };
+}
+function makePeriod(){ var p = emptyPeriod(); p.id = makeRid(); return p; }
+function getPeriod(pid){ return compareState.periods.find(function(p){ return p.id===pid; }); }
+function periodDisplayName(p, idx){ return (p.name||"").trim() || p.periodLabel || ("Periode "+(idx+1)); }
+
+var compareState = {
+  step: 1,
+  periods: [ makePeriod(), makePeriod() ],
+  mapping: {},
+  finalReport: null
+};
+
+// ── STEP 1: UPLOAD ──
+function handleCompareFile(pid, file){
+  if(!file) return;
+  var period = getPeriod(pid);
+  if(!period) return;
+  setLoading(true, "Membaca file…");
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var wb = XLSX.read(e.target.result, { type:"array" });
+      var candidates = [];
+      wb.SheetNames.forEach(function(name){
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:"" });
+        var info = findHeaderInfo(rows);
+        if(info) candidates.push({ name:name, info:info, rows:rows });
+      });
+      period.wb = wb;
+      period.fileName = file.name;
+      var fallbackWarn = false;
+      if(candidates.length===0){
+        var rows0 = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, raw:true, defval:"" });
+        candidates = [{ name: wb.SheetNames[0], info:{headerRowIdx:0, descCol:1, valueCol:2, periodLabel:""}, rows: rows0 }];
+        fallbackWarn = true;
+      }
+      period.candidates = candidates;
+      selectSheetForPeriod(pid, candidates[0].name);
+      period.fallbackWarn = fallbackWarn;
+      setLoading(false);
+      if(fallbackWarn) showToast("⚠️ Kolom 'Deskripsi' tidak terdeteksi otomatis — memakai kolom B/C sebagai tebakan, cek hasilnya.");
+      renderCompareUploadGrid();
+      checkCompareUploadsReady();
+    }catch(err){
+      console.error(err);
+      setLoading(false);
+      showToast("Gagal membaca file: "+err.message);
+    }
+  };
+  reader.onerror = function(){ setLoading(false); showToast("Gagal membaca file"); };
+  reader.readAsArrayBuffer(file);
+}
+function selectSheetForPeriod(pid, sheetName){
+  var period = getPeriod(pid);
+  if(!period) return;
+  var cand = period.candidates.find(function(c){ return c.name===sheetName; });
+  if(!cand) return;
+  period.chosenSheet = sheetName;
+  var parsed = parseSheetRows(cand.rows, cand.info.descCol, cand.info.valueCol, cand.info.headerRowIdx);
+  period.sections = parsed.sections;
+  period.rawSubtotals = parsed.rawSubtotals;
+  period.periodLabel = cand.info.periodLabel || "";
+  period.unclassifiedCount = parsed.sections.lainnya.length;
+  period.ready = true;
+  if(!period.name.trim() && period.periodLabel){ period.name = period.periodLabel; }
+}
+function comparePeriodCardHtml(p, idx){
+  var totalRows = 0;
+  if(p.sections){ SECTION_DEFS.forEach(function(d){ totalRows += p.sections[d.key].length; }); }
+  var warnHtml = "";
+  if(p.unclassifiedCount>0){
+    warnHtml = '<div class="upload-warn">⚠️ '+p.unclassifiedCount+' baris tidak terklasifikasi (di luar struktur standar) — tidak ikut dihitung dalam total.</div>';
+  } else if(p.fallbackWarn){
+    warnHtml = '<div class="upload-warn">⚠️ Kolom "Deskripsi" tidak ditemukan otomatis — memakai kolom B/C sebagai tebakan.</div>';
+  }
+  var chip = p.fileName ? (
+      '<div class="file-chip">📄 '+escapeHtml(p.fileName)+' <button type="button" class="c-remove-file-btn" data-pid="'+p.id+'">✕</button></div>'
+    + '<div class="upload-meta">Terdeteksi '+totalRows+' baris akun · Terdeteksi periode: '+escapeHtml(p.periodLabel||"—")+'</div>'
+    + warnHtml
+  ) : "";
+  var sheetSelect = "";
+  if(p.candidates && p.candidates.length>1){
+    sheetSelect = '<div class="field sheet-select-row" style="margin-top:8px"><label>Pilih sheet</label>'
+      + '<select class="c-sheet-select" data-pid="'+p.id+'">'
+      + p.candidates.map(function(c){ return '<option value="'+escapeHtml(c.name)+'"'+(c.name===p.chosenSheet?" selected":"")+'>'+escapeHtml(c.name)+'</option>'; }).join("")
+      + '</select></div>';
+  }
+  return '<div class="upload-card" data-pid="'+p.id+'">'
+    + '<h3><span>📅 Periode '+(idx+1)+'</span></h3>'
+    + '<div class="field"><label>Nama / Label Periode</label><input type="text" class="c-period-name-input" data-pid="'+p.id+'" value="'+escapeHtml(p.name)+'" placeholder="mis. Agustus 2026"/></div>'
+    + '<div class="dropzone" data-pid="'+p.id+'">'
+    +   '<div class="dz-icon">📄</div><div class="dz-text">Klik atau seret file laporan laba rugi ke sini</div><div class="dz-sub">.xlsx / .xls / .csv</div>'
+    + '</div>'
+    + '<input type="file" class="c-period-file-input" data-pid="'+p.id+'" accept=".xlsx,.xls,.csv" style="display:none"/>'
+    + '<div class="unit-file-chip">'+chip+'</div>'
+    + sheetSelect
+    + '</div>';
+}
+function renderCompareUploadGrid(){
+  $("compareUploadGrid").innerHTML = compareState.periods.map(comparePeriodCardHtml).join("");
+}
+function checkCompareUploadsReady(){
+  $("cToStep2Btn").disabled = !compareState.periods.every(function(p){ return p.ready; });
+}
+$("compareUploadGrid").addEventListener("click", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){
+    var card = dz.closest(".upload-card");
+    var fi = card.querySelector(".c-period-file-input");
+    if(fi) fi.click();
+    return;
+  }
+  if(e.target.classList.contains("c-remove-file-btn")){
+    var period = getPeriod(e.target.dataset.pid);
+    if(period){
+      var keepId = period.id, keepName = period.name;
+      var fresh = emptyPeriod();
+      Object.keys(fresh).forEach(function(k){ period[k] = fresh[k]; });
+      period.id = keepId; period.name = keepName;
+    }
+    renderCompareUploadGrid();
+    checkCompareUploadsReady();
+  }
+});
+$("compareUploadGrid").addEventListener("change", function(e){
+  if(e.target.classList.contains("c-period-file-input")){
+    handleCompareFile(e.target.dataset.pid, e.target.files[0]);
+  } else if(e.target.classList.contains("c-sheet-select")){
+    selectSheetForPeriod(e.target.dataset.pid, e.target.value);
+    renderCompareUploadGrid();
+    checkCompareUploadsReady();
+  }
+});
+$("compareUploadGrid").addEventListener("input", function(e){
+  if(e.target.classList.contains("c-period-name-input")){
+    var period = getPeriod(e.target.dataset.pid);
+    if(period) period.name = e.target.value;
+  }
+});
+$("compareUploadGrid").addEventListener("dragover", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){ e.preventDefault(); dz.classList.add("drag"); }
+});
+$("compareUploadGrid").addEventListener("dragleave", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){ dz.classList.remove("drag"); }
+});
+$("compareUploadGrid").addEventListener("drop", function(e){
+  var dz = e.target.closest(".dropzone");
+  if(dz){
+    e.preventDefault(); dz.classList.remove("drag");
+    if(e.dataTransfer.files.length) handleCompareFile(dz.dataset.pid, e.dataTransfer.files[0]);
+  }
+});
+
+// ── STEP 2: PEMETAAN (2 sumber: Periode1 / Periode2, tanpa kolom gabungan) ──
+function buildCompareMapping(){
+  SECTION_DEFS.forEach(function(def){
+    var itemsByPeriod = compareState.periods.map(function(p){ return p.sections[def.key]; });
+    compareState.mapping[def.key] = autoMatchSectionN(itemsByPeriod);
+  });
+}
+function renderCompareMappingStep(){
+  var html = "";
+  SECTION_DEFS.forEach(function(def){ html += renderCompareSectionMapping(def); });
+  $("compareMappingContainer").innerHTML = html;
+}
+function renderCompareSectionMapping(def){
+  var itemsByPeriod = compareState.periods.map(function(p){ return p.sections[def.key]; });
+  var names = compareState.periods.map(periodDisplayName);
+  var rows = compareState.mapping[def.key];
+  var usedByPeriod = itemsByPeriod.map(function(){ return {}; });
+  rows.forEach(function(r){ r.idxByUnit.forEach(function(idx,u){ if(idx>-1) usedByPeriod[u][idx]=r._rid; }); });
+
+  function optsFor(u, items, currentIdx, myRid){
+    var used = usedByPeriod[u];
+    var html = '<option value="-1">— Tidak ada —</option>';
+    items.forEach(function(it, idx){
+      var disabled = (used[idx]!==undefined && used[idx]!==myRid);
+      html += '<option value="'+idx+'"'+(idx===currentIdx?" selected":"")+(disabled?" disabled":"")+'>'+escapeHtml(it.label)+" ("+fmtRp(it.value)+")"+(disabled?" — dipakai baris lain":"")+'</option>';
+    });
+    return html;
+  }
+  var rowsHtml = rows.map(function(r){
+    var vals = r.idxByUnit.map(function(idx,u){ return idx>-1 ? itemsByPeriod[u][idx].value : 0; });
+    var tag = r.matchType==="exact" ? '<span class="match-tag exact">✓ cocok persis</span>'
+      : r.matchType==="fuzzy" ? '<span class="match-tag fuzzy">🤖 mirip — cek</span>'
+      : '<span class="match-tag manual">manual</span>';
+    var unitCells = "";
+    for(var u=0; u<2; u++){
+      unitCells += '<td><select class="cmap-u" data-u="'+u+'">'+optsFor(u, itemsByPeriod[u], r.idxByUnit[u], r._rid)+'</select></td>'
+        + '<td class="map-val">'+fmtRp(vals[u])+'</td>';
+    }
+    return '<tr data-rid="'+r._rid+'" data-key="'+def.key+'">'
+      + '<td><input type="text" class="cmap-label" value="'+escapeHtml(r.label)+'" placeholder="Label"/>'+tag+'</td>'
+      + unitCells
+      + '<td><button type="button" class="cmap-del-btn">✕</button></td>'
+      + '</tr>';
+  }).join("");
+
+  var countsHtml = names.map(function(nm,u){ return escapeHtml(nm)+": "+Object.keys(usedByPeriod[u]).length+"/"+itemsByPeriod[u].length; }).join(" · ");
+  var warnParts = [];
+  names.forEach(function(nm,u){
+    var leftover = itemsByPeriod[u].length - Object.keys(usedByPeriod[u]).length;
+    if(leftover>0) warnParts.push(escapeHtml(nm)+" ("+leftover+" baris)");
+  });
+  var warnHtml = warnParts.length
+    ? '<div class="map-warn">⚠️ Ada baris sumber yang belum dipakai: '+warnParts.join(", ")+' — <button type="button" class="cmap-addleft-btn">tambahkan otomatis sebagai baris terpisah</button></div>'
+    : "";
+
+  return '<div class="map-section" data-key="'+def.key+'">'
+    + '<div class="map-section-head"><div class="map-section-title">'+def.uiTitle+'</div>'
+    + '<div class="map-section-counts">'+countsHtml+'</div></div>'
+    + warnHtml
+    + '<div class="map-table-wrap"><table class="map-table"><thead><tr>'
+    + '<th style="min-width:190px">Label</th>'
+    + '<th style="min-width:160px">Sumber '+escapeHtml(names[0])+'</th><th>Nilai</th>'
+    + '<th style="min-width:160px">Sumber '+escapeHtml(names[1])+'</th><th>Nilai</th><th></th>'
+    + '</tr></thead><tbody>'
+    + (rowsHtml || '<tr class="map-empty-row"><td colspan="6">Tidak ada baris di kategori ini.</td></tr>')
+    + '</tbody></table></div>'
+    + '<button type="button" class="cmap-add-btn">+ Tambah Baris</button>'
+    + '</div>';
+}
+function addCompareLeftoverRows(key){
+  var itemsByPeriod = compareState.periods.map(function(p){ return p.sections[key]; });
+  var rows = compareState.mapping[key];
+  var usedByPeriod = itemsByPeriod.map(function(){ return {}; });
+  rows.forEach(function(r){ r.idxByUnit.forEach(function(idx,u){ if(idx>-1) usedByPeriod[u][idx]=true; }); });
+  for(var u=0; u<2; u++){
+    itemsByPeriod[u].forEach(function(it, idx){
+      if(!usedByPeriod[u][idx]){
+        var idxByUnit = [-1,-1]; idxByUnit[u]=idx;
+        rows.push({ _rid:makeRid(), label: it.label, idxByUnit: idxByUnit, matchType: "u"+u+"-only" });
+      }
+    });
+  }
+}
+$("compareMappingContainer").addEventListener("input", function(e){
+  if(e.target.classList.contains("cmap-label")){
+    var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
+    var row = compareState.mapping[key].find(function(r){ return r._rid===rid; });
+    if(row) row.label = e.target.value;
+  }
+});
+$("compareMappingContainer").addEventListener("change", function(e){
+  if(e.target.classList.contains("cmap-u")){
+    var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
+    var row = compareState.mapping[key].find(function(r){ return r._rid===rid; });
+    if(!row) return;
+    var u = parseInt(e.target.dataset.u,10);
+    row.idxByUnit[u] = parseInt(e.target.value,10);
+    row.matchType = "manual";
+    renderCompareMappingStep();
+  }
+});
+$("compareMappingContainer").addEventListener("click", function(e){
+  if(e.target.classList.contains("cmap-del-btn")){
+    var tr = e.target.closest("tr"), key=tr.dataset.key, rid=tr.dataset.rid;
+    compareState.mapping[key] = compareState.mapping[key].filter(function(r){ return r._rid!==rid; });
+    renderCompareMappingStep();
+  } else if(e.target.classList.contains("cmap-add-btn")){
+    var sec = e.target.closest(".map-section"), key = sec.dataset.key;
+    compareState.mapping[key].push({ _rid:makeRid(), label:"", idxByUnit:[-1,-1], matchType:"manual" });
+    renderCompareMappingStep();
+  } else if(e.target.classList.contains("cmap-addleft-btn")){
+    var sec2 = e.target.closest(".map-section"), key2 = sec2.dataset.key;
+    addCompareLeftoverRows(key2);
+    renderCompareMappingStep();
+  }
+});
+
+// ── STEP 3: HASIL PERBANDINGAN ──
+function computeCompareReport(){
+  var report = { sections:{} };
+  SECTION_DEFS.forEach(function(def){
+    var itemsByPeriod = compareState.periods.map(function(p){ return p.sections[def.key]; });
+    var mapRows = compareState.mapping[def.key].filter(function(r){ return r.idxByUnit.some(function(i){ return i>-1; }); });
+    var rows = mapRows.map(function(r){
+      var vals = r.idxByUnit.map(function(idx,u){ return idx>-1 ? itemsByPeriod[u][idx].value : 0; });
+      var label = r.label;
+      if(!label){
+        var fi = r.idxByUnit.findIndex(function(i){ return i>-1; });
+        label = itemsByPeriod[fi][r.idxByUnit[fi]].label;
+      }
+      return { label:label, vals:vals };
+    });
+    var subtotals = [0,0];
+    rows.forEach(function(r){ r.vals.forEach(function(v,u){ subtotals[u]+=v; }); });
+    report.sections[def.key] = { rows:rows, subtotals:subtotals };
+  });
+  var s = report.sections;
+  function combine(a,b,sign){ return [0,1].map(function(i){ return a.subtotals[i] + sign*b.subtotals[i]; }); }
+  var labaKotor = combine(s.pendapatan, s.hpp, -1);
+  var pendapatanOperasional = [0,1].map(function(i){ return labaKotor[i] - s.opex.subtotals[i]; });
+  var nonOpNet = combine(s.nonopIncome, s.nonopExpense, -1);
+  var labaBersih = [0,1].map(function(i){ return pendapatanOperasional[i] + nonOpNet[i]; });
+  report.computed = { labaKotor:labaKotor, pendapatanOperasional:pendapatanOperasional, nonOpNet:nonOpNet, labaBersih:labaBersih };
+  return report;
+}
+function pctSafe(val, base){ return base ? (val/base) : 0; }
+function fmtPct0(val, base){ return base ? Math.round(pctSafe(val,base)*100)+"%" : "—"; }
+function kpiCompareCardHtml(label, vals, names){
+  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div>'
+    + '<div style="font-size:15px;font-weight:700;margin-bottom:2px">'+escapeHtml(names[0])+': '+fmtRp(vals[0])+'</div>'
+    + '<div style="font-size:15px;font-weight:700;color:var(--gray-600)">'+escapeHtml(names[1])+': '+fmtRp(vals[1])+'</div>'
+    + '</div>';
+}
+function compareRowHtml(cls, label, vals, pendVals, showVals){
+  if(showVals===false){
+    return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>';
+  }
+  return '<tr class="'+cls+'"><td>'+escapeHtml(label)+'</td>'
+    + '<td class="num">'+fmtRp(vals[0])+'</td><td class="num">'+fmtPct0(vals[0], pendVals[0])+'</td>'
+    + '<td class="num">'+fmtRp(vals[1])+'</td><td class="num">'+fmtPct0(vals[1], pendVals[1])+'</td>'
+    + '</tr>';
+}
+function renderCompareResultStep(){
+  var names = compareState.periods.map(periodDisplayName);
+  var unitName = $("cUnitName").value.trim();
+  var report = computeCompareReport();
+  report.names = names; report.unitName = unitName;
+  compareState.finalReport = report;
+
+  $("compareResultUnitName").textContent = unitName || "Unit Usaha";
+  $("compareResultPeriods").textContent = names.join(" vs ");
+
+  var s = report.sections, c = report.computed;
+  var pend = s.pendapatan.subtotals;
+  $("compareKpiGrid").innerHTML = [
+    kpiCompareCardHtml("Pendapatan", pend, names),
+    kpiCompareCardHtml("Laba Kotor", c.labaKotor, names),
+    kpiCompareCardHtml("Laba Bersih", c.labaBersih, names)
+  ].join("");
+
+  var blank = [0,0];
+  function itemRows(list){ return list.map(function(r){ return compareRowHtml("item-row", r.label, r.vals, pend); }).join(""); }
+  var rows = "";
+  rows += compareRowHtml("section-header", "PENDAPATAN", blank, pend, false);
+  rows += itemRows(s.pendapatan.rows);
+  rows += compareRowHtml("subtotal-row", "Jumlah Pendapatan", s.pendapatan.subtotals, pend);
+
+  rows += compareRowHtml("section-header", "BEBAN POKOK PENJUALAN", blank, pend, false);
+  rows += itemRows(s.hpp.rows);
+  rows += compareRowHtml("subtotal-row", "Jumlah Beban Pokok Penjualan", s.hpp.subtotals, pend);
+
+  rows += compareRowHtml("computed-row", "LABA KOTOR", c.labaKotor, pend);
+
+  rows += compareRowHtml("section-header", "BEBAN OPERASIONAL", blank, pend, false);
+  rows += itemRows(s.opex.rows);
+  rows += compareRowHtml("subtotal-row", "Jumlah Beban Operasional", s.opex.subtotals, pend);
+
+  rows += compareRowHtml("computed-row", "PENDAPATAN OPERASIONAL", c.pendapatanOperasional, pend);
+
+  rows += compareRowHtml("section-header", "PENDAPATAN DAN BEBAN NON OPERASIONAL", blank, pend, false);
+  rows += compareRowHtml("section-header sub", "Pendapatan Non Operasional", blank, pend, false);
+  rows += itemRows(s.nonopIncome.rows);
+  rows += compareRowHtml("subtotal-row", "Jumlah Pendapatan Non Operasional", s.nonopIncome.subtotals, pend);
+  rows += compareRowHtml("section-header sub", "Beban Non Operasional", blank, pend, false);
+  rows += itemRows(s.nonopExpense.rows);
+  rows += compareRowHtml("subtotal-row", "Jumlah Beban Non Operasional", s.nonopExpense.subtotals, pend);
+  rows += compareRowHtml("computed-row", "Jumlah Pendapatan dan Beban Non Operasional", c.nonOpNet, pend);
+
+  rows += compareRowHtml("computed-row final", "LABA BERSIH", c.labaBersih, pend);
+
+  $("compareReportHead").innerHTML = '<tr><th>Deskripsi</th><th class="num">'+escapeHtml(names[0])+'</th><th class="num">%</th><th class="num">'+escapeHtml(names[1])+'</th><th class="num">%</th></tr>';
+  $("compareReportBody").innerHTML = rows;
+}
+
+// ── EXPORT KE EXCEL (format sama seperti file Perbandingan contoh) ──
+function styleTitleRowCompare(ws, label0, label1){
+  ["B1","D1","F1"].forEach(function(addr, i){
+    ensureCell(ws, addr).s = { font: FONT_TITLE, alignment:{ horizontal: i===0?"left":"right" }, border:{ bottom: BORDER_THIN } };
+  });
+  ["C1","E1","G1"].forEach(function(addr){ ensureCell(ws, addr).s = { border:{ bottom: BORDER_THIN } }; });
+}
+function styleItemRowCompare(ws, r){
+  ensureCell(ws,"B"+r).s = { font: FONT_BASE, alignment:{ horizontal:"left" } };
+  ["D","F"].forEach(function(col){
+    var c = ws[col+r]; if(c){ c.s = { font: FONT_BASE, alignment:{ horizontal:"right" } }; c.z = NUM_FMT; }
+  });
+  ["E","G"].forEach(function(col){
+    var c = ws[col+r]; if(c){ c.s = { font: FONT_BASE, alignment:{ horizontal:"right" } }; c.z = "0%"; }
+  });
+}
+function styleSubtotalRowCompare(ws, r, doubleBottom){
+  ensureCell(ws,"B"+r).s = { font: FONT_BOLD, alignment:{ horizontal:"left" } };
+  var border = { top: BORDER_THIN };
+  if(doubleBottom) border.bottom = BORDER_DOUBLE;
+  ["D","F"].forEach(function(col){
+    var c = ensureCell(ws, col+r, true);
+    c.s = { font: FONT_BOLD, alignment:{ horizontal:"right" }, border: border };
+    c.z = NUM_FMT;
+  });
+  ["E","G"].forEach(function(col){
+    var c = ensureCell(ws, col+r, true);
+    c.s = { font: FONT_BASE, alignment:{ horizontal:"right" } };
+    c.z = "0%";
+  });
+}
+function exportCompareExcel(){
+  if(!compareState.finalReport){ showToast("Proses dulu hasil perbandingannya"); return; }
+  var report = compareState.finalReport;
+  var names = report.names;
+  var unitName = report.unitName || "";
+
+  var sheetNames = [];
+  var used = {};
+  compareState.periods.forEach(function(p,i){
+    var base = sanitizeSheetName(names[i]);
+    var nm = base, suf=2;
+    while(used[nm]){ nm=(base+" ("+suf+")").slice(0,31); suf++; }
+    used[nm]=true; sheetNames.push(nm);
+  });
+
+  function buildPeriodSheet(p){
+    var aoa = [["","Deskripsi", p.periodLabel || "Nilai"]];
+    var cellMap = {};
+    var headerRows=[], itemRows=[], subtotalRows=[];
+    SECTION_DEFS.forEach(function(def){
+      aoa.push(["", def.sectionLabel, ""]);
+      headerRows.push(aoa.length);
+      cellMap[def.key] = [];
+      var subtotal = 0;
+      p.sections[def.key].forEach(function(it){
+        aoa.push(["", "    "+it.label, it.value]);
+        itemRows.push(aoa.length);
+        cellMap[def.key].push(aoa.length);
+        subtotal += it.value;
+      });
+      aoa.push(["", def.subtotalLabel, subtotal]);
+      subtotalRows.push(aoa.length);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{wch:3},{wch:44},{wch:20}];
+    styleTitleRow(ws);
+    headerRows.forEach(function(r){ styleHeaderRow(ws,r); });
+    itemRows.forEach(function(r){ styleItemRow(ws,r); });
+    subtotalRows.forEach(function(r){ styleSubtotalRow(ws,r); });
+    return { ws:ws, cellMap:cellMap };
+  }
+  var sheetObjs = compareState.periods.map(buildPeriodSheet);
+
+  var aoa2 = [["","Deskripsi","", names[0], "%", names[1], "%"]];
+  var dCells = [], fCells = [];
+  var pctRows = [];
+  var headerRows2=[], itemRows2=[], subtotalRows2=[];
+  var pendSubtotalRow = null;
+
+  function pushHeader(label){ aoa2.push(["", label, "", "", "", "", ""]); headerRows2.push(aoa2.length); }
+  function addSection(def, itemIndent, headerIndent){
+    pushHeader(repeatSpace(headerIndent||0)+def.sectionLabel);
+    var mapRows = compareState.mapping[def.key].filter(function(r){ return r.idxByUnit.some(function(i){ return i>-1; }); });
+    var itemsByPeriod = compareState.periods.map(function(p){ return p.sections[def.key]; });
+    var startRow = aoa2.length+1;
+    mapRows.forEach(function(r){
+      var val0=0, val1=0, f0="0", f1="0";
+      if(r.idxByUnit[0]>-1){ val0 = itemsByPeriod[0][r.idxByUnit[0]].value; f0 = "'"+refName(sheetNames[0])+"'!C"+sheetObjs[0].cellMap[def.key][r.idxByUnit[0]]; }
+      if(r.idxByUnit[1]>-1){ val1 = itemsByPeriod[1][r.idxByUnit[1]].value; f1 = "'"+refName(sheetNames[1])+"'!C"+sheetObjs[1].cellMap[def.key][r.idxByUnit[1]]; }
+      var label = r.label;
+      if(!label){
+        var fi = r.idxByUnit.findIndex(function(i){ return i>-1; });
+        label = itemsByPeriod[fi][r.idxByUnit[fi]].label;
+      }
+      aoa2.push(["", repeatSpace(itemIndent)+label, "", val0, 0, val1, 0]);
+      var rowNum = aoa2.length;
+      itemRows2.push(rowNum);
+      dCells.push({ row:rowNum, formula:f0, value:val0 });
+      fCells.push({ row:rowNum, formula:f1, value:val1 });
+      pctRows.push(rowNum);
+    });
+    var endRow = aoa2.length;
+    var sub0 = mapRows.reduce(function(sum,r){ return sum + (r.idxByUnit[0]>-1 ? itemsByPeriod[0][r.idxByUnit[0]].value : 0); },0);
+    var sub1 = mapRows.reduce(function(sum,r){ return sum + (r.idxByUnit[1]>-1 ? itemsByPeriod[1][r.idxByUnit[1]].value : 0); },0);
+    aoa2.push(["", def.subtotalLabel, "", sub0, 0, sub1, 0]);
+    var subRow = aoa2.length;
+    subtotalRows2.push(subRow);
+    var f0sub = endRow>=startRow ? "SUM(D"+startRow+":D"+endRow+")" : "0";
+    var f1sub = endRow>=startRow ? "SUM(F"+startRow+":F"+endRow+")" : "0";
+    dCells.push({ row:subRow, formula:f0sub, value:sub0 });
+    fCells.push({ row:subRow, formula:f1sub, value:sub1 });
+    pctRows.push(subRow);
+    return { subtotalRow: subRow, val0: sub0, val1: sub1 };
+  }
+
+  var refPend = addSection(SECTION_DEFS[0], 4, 0);
+  pendSubtotalRow = refPend.subtotalRow;
+  var refHpp = addSection(SECTION_DEFS[1], 4, 0);
+  var lk0 = refPend.val0-refHpp.val0, lk1 = refPend.val1-refHpp.val1;
+  aoa2.push(["", "LABA KOTOR", "", lk0, 0, lk1, 0]);
+  var lkRow = aoa2.length;
+  subtotalRows2.push(lkRow); pctRows.push(lkRow);
+  dCells.push({ row:lkRow, formula:"D"+refPend.subtotalRow+"-D"+refHpp.subtotalRow, value:lk0 });
+  fCells.push({ row:lkRow, formula:"F"+refPend.subtotalRow+"-F"+refHpp.subtotalRow, value:lk1 });
+
+  var refOpex = addSection(SECTION_DEFS[2], 4, 0);
+  var po0 = lk0-refOpex.val0, po1 = lk1-refOpex.val1;
+  aoa2.push(["", "PENDAPATAN OPERASIONAL", "", po0, 0, po1, 0]);
+  var poRow = aoa2.length;
+  subtotalRows2.push(poRow); pctRows.push(poRow);
+  dCells.push({ row:poRow, formula:"D"+lkRow+"-D"+refOpex.subtotalRow, value:po0 });
+  fCells.push({ row:poRow, formula:"F"+lkRow+"-F"+refOpex.subtotalRow, value:po1 });
+
+  pushHeader("PENDAPATAN DAN BEBAN NON OPERASIONAL");
+  var refNI = addSection(SECTION_DEFS[3], 8, 4);
+  var refNE = addSection(SECTION_DEFS[4], 8, 4);
+  var nn0 = refNI.val0-refNE.val0, nn1 = refNI.val1-refNE.val1;
+  aoa2.push(["", "Jumlah Pendapatan dan Beban Non Operasional", "", nn0, 0, nn1, 0]);
+  var nnRow = aoa2.length;
+  subtotalRows2.push(nnRow); pctRows.push(nnRow);
+  dCells.push({ row:nnRow, formula:"D"+refNI.subtotalRow+"-D"+refNE.subtotalRow, value:nn0 });
+  fCells.push({ row:nnRow, formula:"F"+refNI.subtotalRow+"-F"+refNE.subtotalRow, value:nn1 });
+
+  var lb0 = po0+nn0, lb1 = po1+nn1;
+  aoa2.push(["", "LABA BERSIH", "", lb0, 0, lb1, 0]);
+  var lbRow = aoa2.length;
+  subtotalRows2.push(lbRow); pctRows.push(lbRow);
+  dCells.push({ row:lbRow, formula:"D"+poRow+"+D"+nnRow, value:lb0 });
+  fCells.push({ row:lbRow, formula:"F"+poRow+"+F"+nnRow, value:lb1 });
+
+  var wsCmp = XLSX.utils.aoa_to_sheet(aoa2);
+  wsCmp["!cols"] = [{wch:3},{wch:44},{wch:2},{wch:18},{wch:7},{wch:18},{wch:7}];
+  dCells.forEach(function(fc){ wsCmp["D"+fc.row] = { t:"n", v: fc.value, f: fc.formula }; });
+  fCells.forEach(function(fc){ wsCmp["F"+fc.row] = { t:"n", v: fc.value, f: fc.formula }; });
+  pctRows.forEach(function(r){
+    var dv = wsCmp["D"+r] ? wsCmp["D"+r].v : 0;
+    var fv = wsCmp["F"+r] ? wsCmp["F"+r].v : 0;
+    var d0 = wsCmp["D"+pendSubtotalRow] ? wsCmp["D"+pendSubtotalRow].v : 0;
+    var f0 = wsCmp["F"+pendSubtotalRow] ? wsCmp["F"+pendSubtotalRow].v : 0;
+    wsCmp["E"+r] = { t:"n", v: d0 ? dv/d0 : 0, f: "D"+r+"/D$"+pendSubtotalRow };
+    wsCmp["G"+r] = { t:"n", v: f0 ? fv/f0 : 0, f: "F"+r+"/F$"+pendSubtotalRow };
+  });
+
+  styleTitleRowCompare(wsCmp, names[0], names[1]);
+  headerRows2.forEach(function(r){ styleHeaderRow(wsCmp,r); });
+  itemRows2.forEach(function(r){ styleItemRowCompare(wsCmp,r); });
+  subtotalRows2.forEach(function(r){ styleSubtotalRowCompare(wsCmp, r, r===lbRow); });
+
+  var wb = XLSX.utils.book_new();
+  var mainSheetName = sanitizeSheetName((unitName ? unitName+" - " : "")+"Perbandingan");
+  XLSX.utils.book_append_sheet(wb, wsCmp, mainSheetName);
+  sheetObjs.forEach(function(so,i){ XLSX.utils.book_append_sheet(wb, so.ws, sheetNames[i]); });
+
+  var fileLabel = "Laporan Perbandingan" + (unitName? " "+unitName:"") + " - " + names[0] + " vs " + names[1];
+  var safeFileName = fileLabel.replace(/[\\\/:*?"<>|]/g,"-") + ".xlsx";
+  XLSX.writeFile(wb, safeFileName);
+  showToast("✓ File Excel perbandingan berhasil diunduh");
+}
+
+// ── NAVIGASI STEP (COMPARE) ──
+function goToCompareStep(n){
+  if(n===2){
+    if(!compareState.periods.every(function(p){ return p.ready; })){
+      showToast("Upload file laporan untuk kedua periode dulu");
+      return;
+    }
+    buildCompareMapping();
+  }
+  compareState.step = n;
+  document.querySelectorAll("#compareModePanel .step-panel").forEach(function(p){ p.classList.remove("active"); });
+  $("cStep"+n+"Panel").classList.add("active");
+  document.querySelectorAll("#compareModePanel .step-item").forEach(function(el){
+    var s = parseInt(el.dataset.cstep,10);
+    el.classList.toggle("active", s===n);
+    el.classList.toggle("done", s<n);
+  });
+  document.querySelectorAll("#compareModePanel .step-line").forEach(function(el){
+    var idx = parseInt(el.dataset.cidx,10);
+    el.classList.toggle("done", idx<n);
+  });
+  if(n===2) renderCompareMappingStep();
+  if(n===3) renderCompareResultStep();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function resetCompareAll(){
+  compareState = { step:1, periods:[ makePeriod(), makePeriod() ], mapping:{}, finalReport:null };
+  $("cUnitName").value = "";
+  renderCompareUploadGrid();
+  checkCompareUploadsReady();
+  goToCompareStep(1);
+}
+$("cToStep2Btn").addEventListener("click", function(){ goToCompareStep(2); });
+$("cBackToStep1Btn").addEventListener("click", function(){ goToCompareStep(1); });
+$("cToStep3Btn").addEventListener("click", function(){ goToCompareStep(3); });
+$("cBackToStep2Btn").addEventListener("click", function(){ goToCompareStep(2); });
+$("cResetBtn").addEventListener("click", function(){ if(confirm("Mulai ulang dari awal? File yang sudah diupload akan hilang.")) resetCompareAll(); });
+$("compareExportExcelBtn").addEventListener("click", exportCompareExcel);
+$("comparePrintBtn").addEventListener("click", function(){ window.print(); });
+
+renderCompareUploadGrid();
+checkCompareUploadsReady();
+
 </script>
 </body>
 </html>
