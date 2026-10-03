@@ -50,6 +50,8 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .btn-primary:hover{background:#3d5de8}
 .btn-outline{background:var(--white);color:var(--gray-800);border:1px solid var(--gray-200)}
 .btn-outline:hover{background:var(--gray-50)}
+.btn-toggle-all{background:var(--white);color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-toggle-all.on{background:var(--blue-lt);color:var(--blue);border-color:var(--blue)}
 .btn-print{background:var(--navy);color:var(--white)}
 .btn-print:hover{background:#252840}
 .nav-arrow{width:32px;height:32px;border-radius:7px;border:1px solid var(--gray-200);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--gray-600);transition:all .15s}
@@ -159,6 +161,50 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
 .week-hour-slot{height:48px;border-bottom:1px solid var(--gray-100);position:relative;cursor:pointer}
 .week-hour-slot:hover{background:var(--blue-lt)}
 .week-event{position:absolute;left:2px;right:2px;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:500;color:var(--white);overflow:hidden;cursor:pointer;z-index:2}
+
+
+/* TIMELINE PER MINGGU */
+.tl-scroll{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
+.tl-board{--lw:180px}
+.tl-head,.tl-group{display:grid;grid-template-columns:var(--lw) repeat(var(--n),minmax(34px,1fr))}
+.tl-head{background:var(--gray-50);border-bottom:1px solid var(--gray-200);position:sticky;top:0}
+.tl-head-corner{position:sticky;left:0;z-index:5;background:var(--gray-50);padding:12px;font-size:10.5px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:flex-end;border-right:1px solid var(--gray-200)}
+.tl-head-day{padding:6px 0;text-align:center;border-right:1px solid var(--gray-200);cursor:pointer;transition:background .12s}
+.tl-head-day:last-child{border-right:none}
+.tl-head-day:hover{background:var(--gray-100)}
+.tl-head-day.weekend{background:#F4F5F9}
+.tl-head-name{font-size:9.5px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.5px}
+.tl-head-num{font-size:12px;font-weight:700;color:var(--text);margin-top:1px}
+.tl-head-day.today .tl-head-num{background:var(--blue);color:var(--white);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0}
+.tl-group{border-bottom:1px solid var(--gray-200);padding:4px 0}
+.tl-group:last-of-type{border-bottom:none}
+.tl-group-label{position:sticky;left:0;z-index:4;background:var(--white);grid-column:1;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12.5px;font-weight:600;color:var(--gray-800);border-right:1px solid var(--gray-200)}
+.tl-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.tl-group-label[data-date]{cursor:pointer}
+.tl-group-label[data-date]:hover{background:var(--gray-100)}
+.tl-label-text{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.tl-label-title{font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tl-label-sub{font-size:10px;font-weight:400;color:var(--gray-400);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tl-add-row .tl-add-label{color:var(--blue);font-weight:600;cursor:pointer}
+.tl-add-row .tl-add-label:hover{background:var(--blue-lt)}
+.tl-add-row .tl-add-label{background:var(--white)}
+.tl-empty{padding:26px 12px;text-align:center;color:var(--gray-400);font-size:13px;border-bottom:1px solid var(--gray-200)}
+.tl-cell{border-right:1px solid var(--gray-100);cursor:pointer;transition:background .12s;margin:-4px 0}
+.tl-cell:last-of-type{border-right:none}
+.tl-cell:hover{background:var(--blue-lt)}
+.tl-cell.weekend{background:#FAFAFC}
+.tl-cell.today{background:rgba(79,110,247,.06)}
+.tl-cell.today:hover,.tl-cell.weekend:hover{background:var(--blue-lt)}
+.tl-bar{align-self:center;margin:2px 1px;height:22px;line-height:22px;border-radius:5px;color:var(--white);font-size:11.5px;font-weight:500;padding:0 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2;min-width:0;transition:opacity .12s,transform .12s;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tl-bar:hover{opacity:.9;transform:translateY(-1px)}
+.tl-bar.continues-left{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.tl-bar.continues-right{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.tl-bar-time{font-size:10px;font-weight:700;opacity:.85}
+.tl-hint{font-size:11.5px;color:var(--gray-400);margin:10px 2px 0}
+@media (max-width:860px){
+  .tl-board{--lw:120px}
+  .tl-group-label{font-size:11.5px;padding:0 8px}
+}
 
 /* MODAL */
 .modal-backdrop{position:fixed;inset:0;background:rgba(15,17,30,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -290,8 +336,9 @@ body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--text);
       <button class="btn btn-outline" id="todayBtn">Hari Ini</button>
       <div class="view-toggle">
         <button class="view-btn active" id="monthViewBtn">Bulan</button>
-        <button class="view-btn" id="weekViewBtn">Minggu</button>
+        <button class="view-btn" id="weekViewBtn">Timeline</button>
       </div>
+      <button class="btn btn-toggle-all on" id="toggleAllBtn" title="Tampilkan semua event di setiap tanggal">☰<span class="btn-label"> Semua Event</span></button>
       <button class="btn btn-print" id="printBtn" title="Cetak PDF">🖨️<span class="btn-label"> Cetak PDF</span></button>
       <button class="btn btn-primary" id="addEventBtn" title="Tambah Event">＋<span class="btn-label"> Tambah Event</span></button>
     </div>
@@ -409,7 +456,8 @@ var state = {
   events: [],
   editingId: null,
   selectedColor: COLORS[0],
-  selectedDate: null
+  selectedDate: null,
+  expandAll: true   // true = tampilkan SEMUA event di tiap hari; false = ringkas (maks 3 baris)
 };
 
 // ── UTILS ──
@@ -515,7 +563,7 @@ function loadEvents(){
 // ── RENDER ──
 function render(){
   if(state.view==="month") renderMonth();
-  else renderWeek();
+  else renderTimeline();
   if(state.selectedDate) renderDayDetail(state.selectedDate);
 }
 
@@ -529,7 +577,7 @@ function renderMonth(){
   var start    = new Date(firstDay);
   start.setDate(start.getDate() - start.getDay());
 
-  var maxLanes = window.innerWidth <= 480 ? 1 : (window.innerWidth <= 860 ? 2 : 3);
+  var maxLanes = state.expandAll ? 999 : (window.innerWidth <= 480 ? 1 : (window.innerWidth <= 860 ? 2 : 3));
   var weekdayRow = DAYS_ID.map(function(d){ return '<div class="cal-weekday">'+d+'</div>'; }).join("");
 
   var weeksHTML = "";
@@ -626,69 +674,123 @@ function renderMonth(){
   });
 }
 
-// ── WEEK VIEW ──
-function renderWeek(){
-  var c = state.cursor;
-  var startOfWeek = new Date(c);
-  startOfWeek.setDate(c.getDate()-c.getDay());
+// ── TIMELINE SEBULAN PENUH (satu baris = satu event dari kalender) ──
+function tlEsc(str){ return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function renderTimeline(){
+  var year = state.cursor.getFullYear(), month = state.cursor.getMonth();
+  var monthStart = new Date(year, month, 1);
+  var monthEnd   = new Date(year, month+1, 0);
+  var N = monthEnd.getDate();
   var days = [];
-  for(var i=0;i<7;i++){
-    var d = new Date(startOfWeek); d.setDate(startOfWeek.getDate()+i); days.push(d);
-  }
-  var fmt = function(d){ return MONTHS_ID[d.getMonth()].slice(0,3)+" "+d.getDate(); };
-  $("monthLabel").textContent = fmt(days[0])+" – "+fmt(days[6])+", "+days[0].getFullYear();
+  for(var i=0;i<N;i++) days.push(new Date(year, month, i+1));
+  $("monthLabel").textContent = MONTHS_ID[month]+" "+year;
 
-  var headerCells = days.map(function(d,i){
-    var t = isToday(d);
-    return '<div class="week-day-head'+(t?" today":"")+'">'
-      +'<div class="week-day-name">'+DAYS_ID[i]+'</div>'
-      +'<div class="week-day-num">'+d.getDate()+'</div>'
-      +'</div>';
-  }).join("");
-
-  var PX_HOUR = 48;
-  var timeSlotsHTML = "";
-  for(var h=0;h<24;h++) timeSlotsHTML+='<div class="week-time-slot">'+(h<10?"0":"")+h+":00</div>";
-
-  var evsByDay = {};
-  days.forEach(function(d){ evsByDay[toYMD(d)]=[]; });
+  // Satu baris per event. Event berulang (recurringId sama) digabung jadi satu baris
+  // dengan beberapa bar.
+  var rowMap = {}, rows = [];
   state.events.forEach(function(ev){
-    if(evsByDay[ev.date]!==undefined) evsByDay[ev.date].push(ev);
+    var evStart = parseDate(ev.date);
+    if(!evStart) return;
+    var evEnd = ev.endDate ? parseDate(ev.endDate) : new Date(evStart.getTime());
+    if(evEnd < monthStart || evStart > monthEnd) return;
+    var key = ev.recurringId ? "rec:"+ev.recurringId : "ev:"+ev.id;
+    if(!rowMap[key]){
+      rowMap[key] = { base: ev, items: [], recurring: !!ev.recurringId };
+      rows.push(rowMap[key]);
+    }
+    rowMap[key].items.push({
+      ev: ev,
+      startCol: Math.max(0, Math.round((evStart-monthStart)/86400000)),
+      endCol:   Math.min(N-1, Math.round((evEnd-monthStart)/86400000)),
+      continuesLeft:  evStart < monthStart,
+      continuesRight: evEnd > monthEnd
+    });
+  });
+  rows.sort(function(a,b){
+    var ca = Math.min.apply(null, a.items.map(function(x){return x.startCol;}));
+    var cb = Math.min.apply(null, b.items.map(function(x){return x.startCol;}));
+    if(ca !== cb) return ca - cb;
+    return (a.base.title||"").localeCompare(b.base.title||"");
   });
 
-  var dayColsHTML = days.map(function(d){
-    var ymd = toYMD(d);
-    var slotsHTML = "";
-    for(var h=0;h<24;h++){
-      var hStr=(h<10?"0":"")+h+":00";
-      slotsHTML+='<div class="week-hour-slot" data-date="'+ymd+'" data-hour="'+hStr+'"></div>';
-    }
-    var eventsHTML = (evsByDay[ymd]||[]).map(function(ev){
-      if(!ev.time) return "";
-      var p=ev.time.split(":"); var sh=parseInt(p[0]); var sm=parseInt(p[1]);
-      var startMin=sh*60+sm; var endMin=startMin+60;
-      if(ev.endTime){ var ep=ev.endTime.split(":"); endMin=parseInt(ep[0])*60+parseInt(ep[1]); }
-      var top=(startMin/60)*PX_HOUR; var ht=Math.max(((endMin-startMin)/60)*PX_HOUR,20);
-      return '<div class="week-event" data-evid="'+ev.id+'" style="background:'+(ev.color||COLORS[0])+';top:'+top+'px;height:'+ht+'px">'+ev.time+' '+ev.title+'</div>';
-    }).join("");
-    return '<div class="week-day-col">'+slotsHTML+eventsHTML+'</div>';
+  var headCells = days.map(function(d){
+    var ymd = toYMD(d), wk = d.getDay()===0||d.getDay()===6;
+    return '<div class="tl-head-day'+(isToday(d)?" today":"")+(wk?" weekend":"")+'" data-date="'+ymd+'">'
+      +'<div class="tl-head-name">'+DAYS_ID[d.getDay()].charAt(0)+'</div>'
+      +'<div class="tl-head-num">'+d.getDate()+'</div></div>';
   }).join("");
+
+  function bgCells(){
+    return days.map(function(d,i){
+      var ymd = toYMD(d), wk = d.getDay()===0||d.getDay()===6;
+      return '<div class="tl-cell'+(isToday(d)?" today":"")+(wk?" weekend":"")+'" style="grid-column:'+(i+2)+';grid-row:1/-1" data-date="'+ymd+'" title="Tambah event pada '+fmtDateShort(ymd)+'"></div>';
+    }).join("");
+  }
+
+  var rowsHTML = rows.map(function(row){
+    var items = row.items;
+    items.sort(function(a,b){
+      if(a.startCol !== b.startCol) return a.startCol - b.startCol;
+      return (b.endCol-b.startCol) - (a.endCol-a.startCol);
+    });
+    var laneEnd = [];
+    items.forEach(function(item){
+      var placed = false;
+      for(var i=0;i<laneEnd.length;i++){
+        if(item.startCol > laneEnd[i]){ laneEnd[i]=item.endCol; item.lane=i; placed=true; break; }
+      }
+      if(!placed){ laneEnd.push(item.endCol); item.lane=laneEnd.length-1; }
+    });
+    var laneCount = Math.max(1, laneEnd.length);
+    var ev0 = row.base;
+    var firstDate = toYMD(days[items[0].startCol]);
+
+    var bars = items.map(function(it){
+      var span = it.endCol - it.startCol + 1;
+      var cls = "tl-bar"+(it.continuesLeft?" continues-left":"")+(it.continuesRight?" continues-right":"");
+      var rangeTxt = (it.ev.endDate && it.ev.endDate!==it.ev.date) ? fmtDateShort(it.ev.date)+" – "+fmtDateShort(it.ev.endDate) : fmtDateShort(it.ev.date);
+      var tip = it.ev.title+" · "+rangeTxt+(it.ev.time ? " · "+it.ev.time+(it.ev.endTime?" – "+it.ev.endTime:"") : "");
+      var inner = span>=3 ? tlEsc(it.ev.title) : "";
+      return '<div class="'+cls+'" style="grid-column:'+(it.startCol+2)+'/span '+span+';grid-row:'+(it.lane+1)+';background:'+(it.ev.color||COLORS[0])+'" data-date="'+toYMD(days[it.startCol])+'" title="'+tlEsc(tip)+'">'+inner+'</div>';
+    }).join("");
+
+    var sub = tlEsc(ev0.category||"General") + (row.recurring ? " · 🔁 "+items.length+"x" : "");
+    return '<div class="tl-group" style="grid-template-rows:repeat('+laneCount+',30px)">'
+      + '<div class="tl-group-label" style="grid-row:1/-1" data-date="'+firstDate+'" title="'+tlEsc(ev0.title)+'">'
+      +   '<span class="tl-dot" style="background:'+(ev0.color||COLORS[0])+'"></span>'
+      +   '<span class="tl-label-text"><span class="tl-label-title">'+tlEsc(ev0.title)+'</span><span class="tl-label-sub">'+sub+'</span></span>'
+      + '</div>'
+      + bgCells() + bars + '</div>';
+  }).join("");
+
+  if(!rows.length) rowsHTML = '<div class="tl-empty">Belum ada event di bulan ini.</div>';
+
+  var addRow = '<div class="tl-group tl-add-row" style="grid-template-rows:30px">'
+    + '<div class="tl-group-label tl-add-label" style="grid-row:1/-1">＋ Event baru</div>'
+    + bgCells() + '</div>';
 
   $("calendarWrap").innerHTML =
-    '<div class="week-grid">'
-    +'<div class="week-header"><div class="week-time-gutter"></div>'+headerCells+'</div>'
-    +'<div class="week-body"><div class="week-time-col">'+timeSlotsHTML+'</div>'+dayColsHTML+'</div>'
-    +'</div>';
+    '<div class="tl-scroll"><div class="tl-board" style="--n:'+N+';min-width:calc(var(--lw) + '+N+' * 34px)">'
+    + '<div class="tl-head"><div class="tl-head-corner">Event</div>'+headCells+'</div>'
+    + rowsHTML + addRow
+    + '</div></div>'
+    + '<div class="tl-hint">'+rows.length+' event di bulan ini · Geser ke samping bila perlu · Klik area kosong untuk menambah event · Klik bar atau nama event untuk detail</div>';
 
-  document.querySelectorAll(".week-hour-slot").forEach(function(el){
-    el.addEventListener("click", function(){ openModal(null, el.dataset.date, el.dataset.hour); });
+  document.querySelectorAll(".tl-cell").forEach(function(el){
+    el.addEventListener("click", function(){ openModal(null, el.dataset.date); });
   });
-  document.querySelectorAll(".week-event").forEach(function(el){
-    el.addEventListener("click", function(e){
-      var ev = state.events.find(function(x){ return x.id===el.dataset.evid; });
-      if(ev) openDayDetail(ev.date);
-      e.stopPropagation();
+  document.querySelectorAll(".tl-bar, .tl-group-label[data-date]").forEach(function(el){
+    el.addEventListener("click", function(e){ e.stopPropagation(); openDayDetail(el.dataset.date); });
+  });
+  document.querySelectorAll(".tl-add-label").forEach(function(el){
+    el.addEventListener("click", function(){
+      var t = new Date();
+      openModal(null, (t.getFullYear()===year && t.getMonth()===month) ? toYMD(t) : toYMD(monthStart));
     });
+  });
+  document.querySelectorAll(".tl-head-day").forEach(function(el){
+    el.addEventListener("click", function(){ openDayDetail(el.dataset.date); });
   });
 }
 
@@ -761,7 +863,7 @@ function buildColorPicker(){
     dot.addEventListener("click", function(){ state.selectedColor=dot.dataset.color; buildColorPicker(); });
   });
 }
-function openModal(id, prefillDate, prefillTime){
+function openModal(id, prefillDate, prefillTime, prefillCategory){
   state.editingId = id||null;
   var ev = id ? state.events.find(function(e){ return e.id===id; }) : null;
   $("modalTitle").textContent = ev ? "Edit Event" : "Tambah Event";
@@ -769,7 +871,7 @@ function openModal(id, prefillDate, prefillTime){
   $("fDate").value     = ev ? (ev.date||"")         : (prefillDate||toYMD(new Date()));
   $("fEndDate").value  = ev ? (ev.endDate||"")      : (prefillDate||toYMD(new Date()));
   $("fDesc").value     = ev ? (ev.description||"")  : "";
-  $("fCategory").value = ev ? (ev.category||"General") : "General";
+  $("fCategory").value = ev ? (ev.category||"General") : (prefillCategory||"General");
   state.selectedColor  = ev ? (ev.color||COLORS[0]) : COLORS[0];
   $("deleteEventBtn").style.display = ev ? "flex" : "none";
 
@@ -1048,13 +1150,8 @@ function printCalendarPDF(){
 
 // ── NAV ──
 function navigate(dir){
-  if(state.view==="month"){
-    state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()+dir, 1);
-  } else {
-    var d = new Date(state.cursor);
-    d.setDate(d.getDate()+dir*7);
-    state.cursor = d;
-  }
+  // Month view dan Timeline sama-sama per bulan
+  state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()+dir, 1);
   state.selectedDate = null;
   $("dayDetail").classList.remove("open");
   render();
@@ -1092,6 +1189,12 @@ $("fRepeat").addEventListener("change", function(){
 });
 $("detailClose").addEventListener("click",  closeDayDetail);
 $("printBtn").addEventListener("click",     printCalendarPDF);
+$("toggleAllBtn").addEventListener("click", function(){
+  state.expandAll = !state.expandAll;
+  $("toggleAllBtn").classList.toggle("on", state.expandAll);
+  $("toggleAllBtn").title = state.expandAll ? "Mode lengkap: semua event ditampilkan" : "Mode ringkas: maks 3 event per hari";
+  render();
+});
 $("eventModal").addEventListener("click",   function(e){ if(e.target===$("eventModal")) closeModal(); });
 document.addEventListener("keydown", function(e){
   if(e.key==="Escape"){ closeModal(); closeDayDetail(); closeSidebar(); }
