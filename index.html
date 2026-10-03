@@ -457,6 +457,7 @@ var state = {
   editingId: null,
   selectedColor: COLORS[0],
   selectedDate: null,
+  printing: false,  // true sementara saat mencetak: event di luar bulan aktif disembunyikan
   expandAll: true   // true = tampilkan SEMUA event di tiap hari; false = ringkas (maks 3 baris)
 };
 
@@ -590,6 +591,14 @@ function renderMonth(){
     state.events.forEach(function(ev){
       var evStart = parseDate(ev.date);
       var evEnd   = ev.endDate ? parseDate(ev.endDate) : new Date(evStart.getTime());
+      if(state.printing){
+        // Saat cetak: buang event di luar bulan ini & potong event lintas bulan
+        // agar bar tidak menjalar ke tanggal bulan sebelum/sesudahnya.
+        var mS = new Date(year, month, 1), mE = new Date(year, month+1, 0);
+        if(evEnd < mS || evStart > mE) return;
+        if(evStart < mS) evStart = mS;
+        if(evEnd > mE)   evEnd = mE;
+      }
       if(evEnd < weekStart || evStart > weekEnd) return;
       items.push({
         ev: ev,
@@ -1049,7 +1058,7 @@ function printCalendarPDF(){
 
   // Build print header
   $("phTitle").textContent = "TeamSpace — Kalender Proyek  |  "+monthLabel;
-  $("phMeta").textContent  = "Dicetak: "+now+"  ·  "+state.events.length+" event";
+  $("phMeta").textContent  = "Dicetak: "+now;
 
   // Build event list — group unique events shown in this month/view
   var year  = state.cursor.getFullYear();
@@ -1067,6 +1076,7 @@ function printCalendarPDF(){
 
   // Sort by date
   relevantEvs.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  $("phMeta").textContent = "Dicetak: "+now+"  ·  "+relevantEvs.length+" event";
 
   // Gabungkan instance dari event berulang (recurringId sama) menjadi SATU item,
   // supaya tidak tampil terpisah — hanya tanggalnya saja yang menjadi banyak.
@@ -1139,13 +1149,19 @@ function printCalendarPDF(){
   $("printHeader").style.display  = "flex";
   $("printEventList").style.display = "block";
 
-  window.print();
+  // Render ulang kalender dalam mode cetak (event di luar bulan ini disembunyikan)
+  state.printing = true;
+  if(state.view==="month") renderMonth();
 
-  // Restore after print
-  setTimeout(function(){
+  var restore = function(){
+    window.removeEventListener("afterprint", restore);
+    state.printing = false;
     $("printHeader").style.display    = "none";
     $("printEventList").style.display = "none";
-  }, 1000);
+    render();
+  };
+  window.addEventListener("afterprint", restore);
+  window.print();
 }
 
 // ── NAV ──
