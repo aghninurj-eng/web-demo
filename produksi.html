@@ -158,6 +158,51 @@ tbody tr:hover{background:var(--gray-50)}
 .section-title{font-size:12.5px;font-weight:700;color:var(--gray-800);margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--gray-100)}
 .section-title:first-of-type{border-top:none;margin-top:0;padding-top:0}
 
+/* ── Sort toolbar, responsive tables, detail modal ── */
+.list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.list-toolbar .lt-title,.list-toolbar h3{font-size:13px;font-weight:700;margin:0}
+.sort-select{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-600);font-weight:500}
+.sort-select select{padding:6px 10px;border:1px solid var(--gray-200);border-radius:7px;font-size:12px;font-family:'Inter',sans-serif;background:#fff;outline:none;color:var(--text)}
+.sort-select select:focus{border-color:var(--blue)}
+.resp-table{min-width:0}
+.resp-table th.num,.resp-table td.num{text-align:right}
+.resp-table td.num{white-space:nowrap}
+.modal.modal-lg{max-width:900px}
+.modal-close{width:32px;height:32px;flex:0 0 32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-600);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--gray-100)}
+.detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.detail-head h2{margin-bottom:3px}
+.detail-sub{font-size:12.5px;color:var(--gray-600)}
+.detail-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.detail-chip{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:9px;padding:10px 13px}
+.detail-chip .dc-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;font-weight:600;color:var(--gray-600)}
+.detail-chip .dc-value{font-size:17px;font-weight:700;margin-top:3px}
+.detail-chip.accent{background:var(--blue-lt);border-color:#c7d2fb}
+.detail-chip.accent .dc-value{color:#3d5de8}
+.detail-note{background:var(--amber-lt);border:1px solid #FDE68A;color:#92400E;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.5;margin-bottom:16px}
+.detail-section{margin-bottom:20px}
+@media(max-width:640px){
+  .modal-overlay{padding:10px;align-items:flex-end}
+  .modal{padding:16px;max-height:94vh;border-radius:14px}
+  .detail-summary{grid-template-columns:1fr 1fr}
+  .list-toolbar{align-items:stretch}
+  .sort-select{width:100%;justify-content:space-between}
+  .sort-select select{flex:1;max-width:60%}
+  .resp-table thead{display:none}
+  .resp-table,.resp-table tbody,.resp-table tr,.resp-table td{display:block;width:100%}
+  .resp-table tr{border:1px solid var(--gray-200);border-radius:9px;margin:0 0 8px;padding:8px 12px;background:#fff}
+  .resp-table tbody tr:last-child td{border-bottom:none}
+  .resp-table td{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:5px 0;border:none;text-align:right;white-space:normal}
+  .resp-table td::before{content:attr(data-label);font-size:11px;font-weight:600;color:var(--gray-600);text-align:left;flex:0 0 auto}
+  .resp-table td.cell-title{font-size:13.5px;font-weight:700;justify-content:flex-start;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid var(--gray-100);text-align:left}
+  .resp-table td.cell-title::before{display:none}
+  .resp-table td.cell-actions{justify-content:flex-end;padding-top:8px}
+  .resp-table td.cell-actions::before{display:none}
+  .resp-table td.cell-empty{justify-content:center;color:var(--gray-400)}
+  .resp-table td.cell-empty::before{display:none}
+  .table-card .resp-table{min-width:0}
+}
+
 /* ── TOAST / LOADING ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:200}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -207,9 +252,13 @@ tbody tr:hover{background:var(--gray-50)}
         </div>
       </div>
 
-      <div class="table-card" style="margin-top:14px">
-        <table>
-          <thead><tr><th>Nama Produk</th><th>Resep</th><th>Jumlah</th><th>HPP / Unit</th><th>Subtotal Biaya</th><th>% dari Total</th><th></th></tr></thead>
+      <div class="list-toolbar" style="margin-top:16px">
+        <div class="lt-title">🧵 Item Produksi</div>
+        <label class="sort-select">Urutkan <select id="ipItemsSort"></select></label>
+      </div>
+      <div class="table-card">
+        <table class="resp-table">
+          <thead><tr><th>Nama Produk</th><th>Resep</th><th class="num">Jumlah</th><th class="num">HPP / Unit</th><th class="num">Subtotal Biaya</th><th class="num">% dari Total</th><th></th></tr></thead>
           <tbody id="ipItemsBody"></tbody>
         </table>
         <div class="empty-state" id="ipEmpty"><div class="icon">🧵</div><p>Belum ada item. Tambahkan produk yang diproduksi hari ini.</p></div>
@@ -217,7 +266,10 @@ tbody tr:hover{background:var(--gray-50)}
 
       <div class="panel-row" style="margin-top:14px">
         <div class="chip-panel">
-          <h3>📦 Ringkasan Bahan Terpakai</h3>
+          <div class="list-toolbar">
+            <h3>📦 Ringkasan Bahan Terpakai</h3>
+            <label class="sort-select">Urutkan <select id="ipBahanSort"></select></label>
+          </div>
           <div id="ipBahanBreakdown"></div>
         </div>
         <div class="chip-panel">
@@ -410,19 +462,40 @@ tbody tr:hover{background:var(--gray-50)}
 
 <!-- ── MODAL: DETAIL RIWAYAT ── -->
 <div class="modal-overlay" id="riwayatDetailModal">
-  <div class="modal">
-    <h2>Detail Laporan Produksi</h2>
-    <div id="rwDetailMeta" style="font-size:12.5px;color:var(--gray-600);margin-bottom:14px"></div>
-    <div class="section-title">Item Produksi</div>
-    <div class="table-card" style="box-shadow:none">
-      <table>
-        <thead><tr><th>Nama Produk</th><th>Resep</th><th>Jumlah</th><th>HPP/Unit</th><th>Subtotal</th><th>% dari Total</th></tr></thead>
-        <tbody id="rwDetailItems"></tbody>
-      </table>
+  <div class="modal modal-lg">
+    <div class="detail-head">
+      <div>
+        <h2>Detail Laporan Produksi</h2>
+        <div class="detail-sub" id="rwDetailDate"></div>
+      </div>
+      <button class="modal-close" id="rwDetailXBtn" aria-label="Tutup">×</button>
     </div>
-    <div class="section-title">Bahan Terpakai</div>
-    <div id="rwDetailBahan"></div>
-    <div class="modal-actions">
+
+    <div class="detail-summary" id="rwDetailSummary"></div>
+    <div class="detail-note" id="rwDetailNote" style="display:none"></div>
+
+    <div class="detail-section">
+      <div class="list-toolbar">
+        <div class="lt-title">🧵 Item Produksi</div>
+        <label class="sort-select">Urutkan <select id="rwItemsSort"></select></label>
+      </div>
+      <div class="table-card" style="box-shadow:none">
+        <table class="resp-table">
+          <thead><tr><th>Nama Produk</th><th>Resep</th><th class="num">Jumlah</th><th class="num">HPP / Unit</th><th class="num">Subtotal</th><th class="num">% dari Total</th></tr></thead>
+          <tbody id="rwDetailItems"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="list-toolbar">
+        <div class="lt-title">📦 Bahan Terpakai</div>
+        <label class="sort-select">Urutkan <select id="rwBahanSort"></select></label>
+      </div>
+      <div id="rwDetailBahan"></div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:4px">
       <button class="btn btn-outline" id="rwDetailCloseBtn">Tutup</button>
     </div>
   </div>
@@ -436,7 +509,7 @@ tbody tr:hover{background:var(--gray-50)}
 // Deploy Code_Produksi.gs sebagai Web App baru (Execute as: Me, Who has access: Anyone),
 // lalu tempel URL /exec hasilnya di sini. Sebelum diganti, halaman ini berjalan dalam
 // MODE DEMO (data tersimpan di Local Storage browser ini saja) supaya bisa langsung dicoba.
-var GAS_URL = "https://script.google.com/macros/s/AKfycbwvfZeUZqt0mSzNOMofJyuM_T6cu6TfiolqOGJnPplNhHbnRCltZgMG0eINCS6HWyyo/exec";
+var GAS_URL = "GANTI_DENGAN_URL_WEB_APP_PRODUKSI_ANDA";
 
 function $(id){ return document.getElementById(id); }
 
@@ -616,7 +689,7 @@ function callGS(fn, arg){
 // ── STATE ──
 var state = {
   bahanBaku: [], resep: [], produk: [], produksi: [],
-  currentItems: [],
+  currentItems: [], detailId: null,
   editingResepId: null, resepLines: [],
   editingBahanId: null,
   editingProdukId: null,
@@ -676,24 +749,63 @@ function computeBahanBreakdown(items){
   return Object.keys(map).map(function(k){ return map[k]; })
     .sort(function(a,b){ return b.totalBiaya-a.totalBiaya; });
 }
-function renderBahanBreakdownInto(elId, breakdown){
-  if(!breakdown.length){ $(elId).innerHTML = '<div class="stat-empty">Belum ada item produksi.</div>'; return; }
-  $(elId).innerHTML = '<table style="width:100%;border-collapse:collapse">'
-    + '<thead><tr>'
-    +   '<th style="text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:6px 4px;border-bottom:1px solid var(--gray-100)">Bahan</th>'
-    +   '<th style="text-align:right;font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:6px 4px;border-bottom:1px solid var(--gray-100)">Kuantitas Terpakai</th>'
-    +   '<th style="text-align:right;font-size:10.5px;text-transform:uppercase;color:var(--gray-600);padding:6px 4px;border-bottom:1px solid var(--gray-100)">Total Biaya</th>'
-    + '</tr></thead><tbody>'
-    + breakdown.map(function(b){
-        var hasSatuan = b.satuan && b.satuan !== "-";
-        var qtyCell = hasSatuan ? (fmtQty(b.totalQty)+" "+escapeHtml(b.satuan)) : '<span style="color:var(--gray-400)">-</span>';
+// ── SORT HELPERS ──
+var ITEM_SORT_OPTIONS = [
+  ["input","Urutan input"],
+  ["nama_asc","Nama Produk (A–Z)"],["nama_desc","Nama Produk (Z–A)"],
+  ["jumlah_desc","Jumlah terbanyak"],["jumlah_asc","Jumlah tersedikit"]
+];
+var BAHAN_SORT_OPTIONS = [
+  ["biaya_desc","Biaya terbesar"],
+  ["nama_asc","Nama Bahan (A–Z)"],["nama_desc","Nama Bahan (Z–A)"],
+  ["qty_desc","Kuantitas terbanyak"],["qty_asc","Kuantitas tersedikit"]
+];
+function fillSortSelect(id, options){
+  $(id).innerHTML = options.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join("");
+}
+function cmpText(a, b){ return String(a||"").localeCompare(String(b||""), "id", { sensitivity:"base" }); }
+// Mengembalikan [{it, idx}] supaya indeks asli tetap diketahui (dipakai tombol Hapus).
+function sortItemEntries(items, mode){
+  var arr = (items||[]).map(function(it, idx){ return { it:it, idx:idx }; });
+  if(mode==="nama_asc")        arr.sort(function(a,b){ return cmpText(a.it.namaProduk,b.it.namaProduk) || a.idx-b.idx; });
+  else if(mode==="nama_desc")  arr.sort(function(a,b){ return cmpText(b.it.namaProduk,a.it.namaProduk) || a.idx-b.idx; });
+  else if(mode==="jumlah_desc")arr.sort(function(a,b){ return (Number(b.it.jumlah)||0)-(Number(a.it.jumlah)||0) || cmpText(a.it.namaProduk,b.it.namaProduk); });
+  else if(mode==="jumlah_asc") arr.sort(function(a,b){ return (Number(a.it.jumlah)||0)-(Number(b.it.jumlah)||0) || cmpText(a.it.namaProduk,b.it.namaProduk); });
+  return arr;
+}
+function bahanHasUnit(b){ return !!(b.satuan && b.satuan !== "-"); }
+function sortBreakdown(list, mode){
+  var arr = (list||[]).slice();
+  var qty = function(b){ return Number(b.totalQty)||0; };
+  if(mode==="nama_asc")       arr.sort(function(a,b){ return cmpText(a.namaBahan,b.namaBahan); });
+  else if(mode==="nama_desc") arr.sort(function(a,b){ return cmpText(b.namaBahan,a.namaBahan); });
+  else if(mode==="qty_desc" || mode==="qty_asc"){
+    var dir = mode==="qty_desc" ? -1 : 1;
+    // Bahan tanpa satuan fisik (mis. jasa) selalu di urutan paling bawah.
+    arr.sort(function(a,b){
+      var ua = bahanHasUnit(a), ub = bahanHasUnit(b);
+      if(ua!==ub) return ua ? -1 : 1;
+      return dir*(qty(a)-qty(b)) || cmpText(a.namaBahan,b.namaBahan);
+    });
+  }
+  else arr.sort(function(a,b){ return (Number(b.totalBiaya)||0)-(Number(a.totalBiaya)||0); });
+  return arr;
+}
+
+function renderBahanBreakdownInto(elId, breakdown, sortMode){
+  if(!breakdown || !breakdown.length){ $(elId).innerHTML = '<div class="stat-empty">Belum ada data bahan terpakai.</div>'; return; }
+  var rows = sortBreakdown(breakdown, sortMode || "biaya_desc");
+  $(elId).innerHTML = '<div class="table-card" style="box-shadow:none"><table class="resp-table">'
+    + '<thead><tr><th>Bahan</th><th class="num">Kuantitas Terpakai</th><th class="num">Total Biaya</th></tr></thead><tbody>'
+    + rows.map(function(b){
+        var qtyCell = bahanHasUnit(b) ? (fmtQty(b.totalQty)+" "+escapeHtml(b.satuan)) : '<span style="color:var(--gray-400)">-</span>';
         return '<tr>'
-          + '<td style="padding:7px 4px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--gray-100)">'+escapeHtml(b.namaBahan)+'</td>'
-          + '<td style="padding:7px 4px;font-size:12.5px;text-align:right;color:var(--gray-600);border-bottom:1px solid var(--gray-100);white-space:nowrap">'+qtyCell+'</td>'
-          + '<td style="padding:7px 4px;font-size:12.5px;text-align:right;font-weight:600;border-bottom:1px solid var(--gray-100);white-space:nowrap">'+fmtRp(b.totalBiaya)+'</td>'
+          + '<td class="cell-title" data-label="Bahan"><b>'+escapeHtml(b.namaBahan)+'</b></td>'
+          + '<td class="num" data-label="Kuantitas" style="color:var(--gray-600)">'+qtyCell+'</td>'
+          + '<td class="num" data-label="Total Biaya"><b>'+fmtRp(b.totalBiaya)+'</b></td>'
           + '</tr>';
       }).join("")
-    + '</tbody></table>';
+    + '</tbody></table></div>';
 }
 
 // ── DATA LOAD ──
@@ -783,25 +895,32 @@ function renderInputTable(){
   $("ipEmpty").style.display = state.currentItems.length ? "none" : "block";
   var totalUnit = state.currentItems.reduce(function(s,it){ return s+(Number(it.jumlah)||0); },0);
   var totalBiaya = state.currentItems.reduce(function(s,it){ return s+it.subtotal; },0);
-  state.currentItems.forEach(function(it, idx){
+  sortItemEntries(state.currentItems, $("ipItemsSort").value).forEach(function(entry){
+    var it = entry.it;
     var pct = totalBiaya>0 ? (it.subtotal/totalBiaya*100) : 0;
     var tr = document.createElement("tr");
-    tr.innerHTML = "<td>"+escapeHtml(it.namaProduk||"(Tanpa nama)")+"</td>"
-      +"<td>"+escapeHtml(it.namaResep)+"</td>"
-      +"<td>"+fmtNum(it.jumlah)+"</td>"
-      +"<td>"+fmtRp(it.hppUnit)+"</td>"
-      +"<td>"+fmtRp(it.subtotal)+"</td>"
-      +"<td>"+pct.toFixed(1)+"%</td>"
-      +'<td><div class="row-actions"><button class="del-btn" data-idx="'+idx+'">Hapus</button></div></td>';
+    tr.innerHTML = '<td class="cell-title" data-label="Nama Produk"><b>'+escapeHtml(it.namaProduk||"(Tanpa nama)")+'</b></td>'
+      +'<td data-label="Resep">'+escapeHtml(it.namaResep)+'</td>'
+      +'<td class="num" data-label="Jumlah">'+fmtNum(it.jumlah)+'</td>'
+      +'<td class="num" data-label="HPP / Unit">'+fmtRp(it.hppUnit)+'</td>'
+      +'<td class="num" data-label="Subtotal Biaya">'+fmtRp(it.subtotal)+'</td>'
+      +'<td class="num" data-label="% dari Total">'+pct.toFixed(1)+'%</td>'
+      +'<td class="cell-actions"><div class="row-actions"><button class="del-btn" data-idx="'+entry.idx+'">Hapus</button></div></td>';
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll(".del-btn").forEach(function(b){
     b.addEventListener("click", function(){ state.currentItems.splice(Number(b.dataset.idx),1); renderInputTable(); });
   });
-  renderBahanBreakdownInto("ipBahanBreakdown", computeBahanBreakdown(state.currentItems));
+  renderBahanBreakdownInto("ipBahanBreakdown", computeBahanBreakdown(state.currentItems), $("ipBahanSort").value);
   $("ipTotalUnit").textContent = fmtNum(totalUnit);
   $("ipTotalBiaya").textContent = fmtRp(totalBiaya);
 }
+fillSortSelect("ipItemsSort", ITEM_SORT_OPTIONS);
+fillSortSelect("ipBahanSort", BAHAN_SORT_OPTIONS);
+fillSortSelect("rwItemsSort", ITEM_SORT_OPTIONS);
+fillSortSelect("rwBahanSort", BAHAN_SORT_OPTIONS);
+$("ipItemsSort").addEventListener("change", renderInputTable);
+$("ipBahanSort").addEventListener("change", renderInputTable);
 $("ipResetBtn").addEventListener("click", function(){
   if(state.currentItems.length && !confirm("Kosongkan semua item produksi yang belum disimpan?")) return;
   state.currentItems = []; $("ipCatatan").value=""; renderInputTable();
@@ -866,19 +985,48 @@ function renderRiwayat(){
 ["rwFrom","rwTo","rwSearch"].forEach(function(id){ $(id).addEventListener("input", renderRiwayat); });
 $("rwClearBtn").addEventListener("click", function(){ $("rwFrom").value=""; $("rwTo").value=""; $("rwSearch").value=""; renderRiwayat(); });
 function openRiwayatDetail(id){
-  var r = state.produksi.find(function(x){ return x.id===id; });
-  if(!r) return;
-  $("rwDetailMeta").textContent = fmtDate(r.tanggal) + (r.catatan? " · "+r.catatan : "");
-  var rTotalBiaya = Number(r.totalBiaya)||0;
-  $("rwDetailItems").innerHTML = (r.items||[]).map(function(it){
-    var pct = rTotalBiaya>0 ? (it.subtotal/rTotalBiaya*100) : 0;
-    return "<tr><td>"+escapeHtml(it.namaProduk||"")+"</td><td>"+escapeHtml(it.namaResep||"")+"</td><td>"+fmtNum(it.jumlah)+"</td><td>"+fmtRp(it.hppUnit)+"</td><td>"+fmtRp(it.subtotal)+"</td><td>"+pct.toFixed(1)+"%</td></tr>";
-  }).join("") || '<tr><td colspan="6" style="text-align:center;color:var(--gray-400)">Tidak ada item</td></tr>';
-  renderBahanBreakdownInto("rwDetailBahan", r.bahanTerpakai || []);
+  state.detailId = id;
+  $("rwItemsSort").value = "input";
+  $("rwBahanSort").value = "biaya_desc";
+  renderRiwayatDetail();
   $("riwayatDetailModal").classList.add("open");
 }
-$("rwDetailCloseBtn").addEventListener("click", function(){ $("riwayatDetailModal").classList.remove("open"); });
-$("riwayatDetailModal").addEventListener("click", function(e){ if(e.target===$("riwayatDetailModal")) $("riwayatDetailModal").classList.remove("open"); });
+function renderRiwayatDetail(){
+  var r = state.produksi.find(function(x){ return x.id===state.detailId; });
+  if(!r) return;
+  var items = r.items || [];
+  var totalBiaya = Number(r.totalBiaya)||0, totalUnit = Number(r.totalUnit)||0;
+  $("rwDetailDate").textContent = fmtDate(r.tanggal);
+  $("rwDetailSummary").innerHTML =
+      '<div class="detail-chip"><div class="dc-label">Jumlah Item</div><div class="dc-value">'+fmtNum(items.length)+'</div></div>'
+    + '<div class="detail-chip"><div class="dc-label">Total Unit</div><div class="dc-value">'+fmtNum(totalUnit)+'</div></div>'
+    + '<div class="detail-chip accent"><div class="dc-label">Total Biaya</div><div class="dc-value">'+fmtRp(totalBiaya)+'</div></div>'
+    + '<div class="detail-chip"><div class="dc-label">Rata-rata / Unit</div><div class="dc-value">'+fmtRp(totalUnit ? totalBiaya/totalUnit : 0)+'</div></div>';
+  var note = $("rwDetailNote");
+  if(r.catatan){ note.style.display = "block"; note.textContent = "📝 " + r.catatan; } else { note.style.display = "none"; }
+
+  var entries = sortItemEntries(items, $("rwItemsSort").value);
+  $("rwDetailItems").innerHTML = entries.length ? entries.map(function(entry){
+    var it = entry.it;
+    var pct = totalBiaya>0 ? (it.subtotal/totalBiaya*100) : 0;
+    return '<tr>'
+      + '<td class="cell-title" data-label="Nama Produk"><b>'+escapeHtml(it.namaProduk||"")+'</b></td>'
+      + '<td data-label="Resep">'+escapeHtml(it.namaResep||"")+'</td>'
+      + '<td class="num" data-label="Jumlah">'+fmtNum(it.jumlah)+'</td>'
+      + '<td class="num" data-label="HPP / Unit">'+fmtRp(it.hppUnit)+'</td>'
+      + '<td class="num" data-label="Subtotal">'+fmtRp(it.subtotal)+'</td>'
+      + '<td class="num" data-label="% dari Total">'+pct.toFixed(1)+'%</td>'
+      + '</tr>';
+  }).join("") : '<tr><td colspan="6" class="cell-empty" style="text-align:center;color:var(--gray-400)">Tidak ada item</td></tr>';
+
+  renderBahanBreakdownInto("rwDetailBahan", r.bahanTerpakai || [], $("rwBahanSort").value);
+}
+function closeRiwayatDetail(){ $("riwayatDetailModal").classList.remove("open"); state.detailId = null; }
+$("rwItemsSort").addEventListener("change", renderRiwayatDetail);
+$("rwBahanSort").addEventListener("change", renderRiwayatDetail);
+$("rwDetailCloseBtn").addEventListener("click", closeRiwayatDetail);
+$("rwDetailXBtn").addEventListener("click", closeRiwayatDetail);
+$("riwayatDetailModal").addEventListener("click", function(e){ if(e.target===$("riwayatDetailModal")) closeRiwayatDetail(); });
 function deleteProduksi(id){
   if(!confirm("Hapus laporan produksi ini?")) return;
   setLoading(true, "Menghapus…");
@@ -1425,7 +1573,7 @@ $("produkCancelImportBtn").addEventListener("click", resetProdukImport);
 document.addEventListener("keydown", function(e){
   if(e.key==="Escape"){
     closeResepModal(); closeBahanModal(); closeProdukModal();
-    $("riwayatDetailModal").classList.remove("open");
+    closeRiwayatDetail();
   }
 });
 
