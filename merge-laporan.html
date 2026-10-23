@@ -154,13 +154,17 @@ table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:
 #loading.show{display:flex}
 
 .no-print{}
-@page { size: portrait; margin: 14mm; }
+@page { margin: 14mm; }
 @media print {
   body{background:#fff !important}
   .no-print{display:none !important}
   .wrap{max-width:none;padding:0}
   .table-card{box-shadow:none;border:none}
 }
+
+.orient-toggle{display:inline-flex;background:var(--gray-100);border-radius:8px;padding:3px;gap:2px}
+.orient-btn{padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;color:var(--gray-600);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.orient-btn.active{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 </style>
 </head>
 <body>
@@ -227,6 +231,10 @@ table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:
       </div>
       <div class="result-actions no-print">
         <button class="btn btn-success" id="exportExcelBtn">⬇️ Unduh Excel (.xlsx)</button>
+        <div class="orient-toggle">
+          <button type="button" class="orient-btn" data-orient="portrait">📄 Potret</button>
+          <button type="button" class="orient-btn active" data-orient="landscape">📃 Lanskap</button>
+        </div>
         <button class="btn btn-outline" id="printBtn">🖨️ Cetak / PDF</button>
         <div class="spacer"></div>
         <button class="btn btn-outline" id="backToStep2Btn">← Kembali ke Pemetaan</button>
@@ -281,6 +289,10 @@ table.report-table{width:100%;border-collapse:collapse;font-size:13px;min-width:
       <div class="kpi-grid" id="compareKpiGrid"></div>
       <div class="result-actions no-print">
         <button class="btn btn-success" id="compareExportExcelBtn">⬇️ Unduh Excel (.xlsx)</button>
+        <div class="orient-toggle">
+          <button type="button" class="orient-btn" data-orient="portrait">📄 Potret</button>
+          <button type="button" class="orient-btn active" data-orient="landscape">📃 Lanskap</button>
+        </div>
         <button class="btn btn-outline" id="comparePrintBtn">🖨️ Cetak / PDF</button>
         <div class="spacer"></div>
         <button class="btn btn-outline" id="cBackToStep2Btn">← Kembali ke Pemetaan</button>
@@ -903,30 +915,54 @@ function exportExcel(){
     sheetNames.push(nm);
   });
 
+  // Sheet tiap unit memuat struktur lengkap seperti laporan aslinya:
+  // subtotal, LABA KOTOR, PENDAPATAN OPERASIONAL, Jumlah Non Operasional, LABA BERSIH (semua berupa formula).
   function buildUnitSheet(u){
     var aoa = [["","Deskripsi", periode || "Nilai"]];
     var cellMap = {};
+    var formulas = [];
     var headerRows=[], itemRows=[], subtotalRows=[];
-    SECTION_DEFS.forEach(function(def){
-      aoa.push(["", def.sectionLabel, ""]);
-      headerRows.push(aoa.length);
+    function pushHeader(label){ aoa.push(["", label, ""]); headerRows.push(aoa.length); }
+    function addSec(def, itemIndent, headerIndent){
+      pushHeader(repeatSpace(headerIndent)+def.sectionLabel);
       cellMap[def.key] = [];
-      var subtotal = 0;
+      var start = aoa.length+1, total = 0;
       u.sections[def.key].forEach(function(it){
-        aoa.push(["", "    "+it.label, it.value]);
+        aoa.push(["", repeatSpace(itemIndent)+it.label, it.value]);
         itemRows.push(aoa.length);
         cellMap[def.key].push(aoa.length);
-        subtotal += it.value;
+        total += it.value;
       });
-      aoa.push(["", def.subtotalLabel, subtotal]);
+      var end = aoa.length;
+      aoa.push(["", def.subtotalLabel, total]);
       subtotalRows.push(aoa.length);
-    });
+      formulas.push({ row: aoa.length, formula: end>=start ? "SUM(C"+start+":C"+end+")" : "0", value: total });
+      return { row: aoa.length, val: total };
+    }
+    function addCalc(label, formula, value){
+      aoa.push(["", label, value]);
+      subtotalRows.push(aoa.length);
+      formulas.push({ row: aoa.length, formula: formula, value: value });
+      return { row: aoa.length, val: value };
+    }
+    var pend = addSec(SECTION_DEFS[0], 4, 0);
+    var hpp  = addSec(SECTION_DEFS[1], 4, 0);
+    var lk   = addCalc("LABA KOTOR", "C"+pend.row+"-C"+hpp.row, pend.val-hpp.val);
+    var opex = addSec(SECTION_DEFS[2], 4, 0);
+    var po   = addCalc("PENDAPATAN OPERASIONAL", "C"+lk.row+"-C"+opex.row, lk.val-opex.val);
+    pushHeader("PENDAPATAN DAN BEBAN NON OPERASIONAL");
+    var ni   = addSec(SECTION_DEFS[3], 8, 4);
+    var ne   = addSec(SECTION_DEFS[4], 8, 4);
+    var nn   = addCalc("Jumlah Pendapatan dan Beban Non Operasional", "C"+ni.row+"-C"+ne.row, ni.val-ne.val);
+    var lb   = addCalc("LABA BERSIH", "C"+po.row+"+C"+nn.row, po.val+nn.val);
+
     var ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws["!cols"] = [{wch:3},{wch:44},{wch:20}];
+    ws["!cols"] = [{wch:3},{wch:48},{wch:20}];
+    formulas.forEach(function(fc){ ws["C"+fc.row] = { t:"n", v: fc.value, f: fc.formula }; });
     styleTitleRow(ws);
     headerRows.forEach(function(r){ styleHeaderRow(ws,r); });
     itemRows.forEach(function(r){ styleItemRow(ws,r); });
-    subtotalRows.forEach(function(r){ styleSubtotalRow(ws,r); });
+    subtotalRows.forEach(function(r){ styleSubtotalRow(ws, r, r===lb.row); });
     return { ws:ws, cellMap:cellMap };
   }
   var sheetObjs = mergeState.units.map(buildUnitSheet);
@@ -1072,6 +1108,33 @@ document.querySelectorAll(".mode-tab").forEach(function(btn){
     $(btn.dataset.mode==="merge" ? "mergeModePanel" : "compareModePanel").classList.add("active");
   });
 });
+
+// ══════════════════════════════════════════════════════════════
+// ORIENTASI CETAK / PDF (Potret / Lanskap) — berlaku di kedua mode
+// ══════════════════════════════════════════════════════════════
+var printOrientation = "landscape";
+function applyPrintOrientationStyle(){
+  var styleEl = document.getElementById("printOrientStyle");
+  if(!styleEl){
+    styleEl = document.createElement("style");
+    styleEl.id = "printOrientStyle";
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = "@page { size: "+printOrientation+"; }";
+}
+function setPrintOrientation(o){
+  printOrientation = o;
+  document.querySelectorAll(".orient-btn").forEach(function(b){
+    b.classList.toggle("active", b.dataset.orient===o);
+  });
+  applyPrintOrientationStyle();
+}
+document.querySelectorAll(".orient-toggle").forEach(function(toggle){
+  toggle.addEventListener("click", function(e){
+    if(e.target.classList.contains("orient-btn")) setPrintOrientation(e.target.dataset.orient);
+  });
+});
+applyPrintOrientationStyle();
 
 // ══════════════════════════════════════════════════════════════
 // FITUR: PERBANDINGAN PERIODE (1 unit usaha, 2 periode berbeda)
